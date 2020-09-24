@@ -14,13 +14,13 @@ const ContainerStyled = styled.div`
 `;
 
 const HomePage = () => {
-  const formRef = React.useRef();
+  const formRef = React.useRef<React.ElementRef<typeof Form>>(null);
 
-  const [isReady, setIsReady] = React.useState();
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [uploadPercent, setUploadPercent] = React.useState();
-  const [isComplete, setIsComplete] = React.useState(false);
-  const [uploadError, setUploadError] = React.useState();
+  const [isReady, setIsReady] = React.useState<boolean|undefined>();
+  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const [uploadPercent, setUploadPercent] = React.useState<number>();
+  const [isComplete, setIsComplete] = React.useState<boolean>(false);
+  const [uploadError, setUploadError] = React.useState<string>();
 
   React.useEffect(() => {
     fetch(`${strapi.backendURL}/mux/mux-settings`)
@@ -32,7 +32,7 @@ const HomePage = () => {
       });
   }, []);
 
-  const uploadFile = (endpoint, file) => {
+  const uploadFile = (endpoint:string, file:File) => {
     setUploadPercent(0);
     
     const uploadTask = createUpload({ endpoint, file });
@@ -44,7 +44,7 @@ const HomePage = () => {
     uploadTask.on('success', () => setIsComplete(true));
   }
 
-  const handleOnClick = React.useCallback(() => formRef.current.submit());
+  const handleOnClick = React.useCallback(() => formRef.current?.submit(), []);
 
   const handleOnSubmit = React.useCallback(async (title, uploadMethod, media) => {
     setIsSubmitting(true);
@@ -60,6 +60,8 @@ const HomePage = () => {
       body.append("url", media);
     } else if(uploadMethod === 'upload') {
       submitUrl = `${strapi.backendURL}/mux/submitDirectUpload`;
+    } else {
+      throw new Error('Unable to determine upload type');
     }
 
     const response = await fetch(submitUrl, {

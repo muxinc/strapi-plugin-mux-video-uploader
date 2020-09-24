@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Logo = () => <svg width="215px" height="70px" viewBox="0 0 215 70" version="1.1">
+const Logo = () => (<svg width="215px" height="70px" viewBox="0 0 215 70" version="1.1">
     <defs>
         <linearGradient x1="-213.617434%" y1="50.0143293%" x2="100.003663%" y2="50.0143293%" id="linearGradient-1">
             <stop stopColor="#FF4E00" offset="0%"></stop>
@@ -64,6 +64,6 @@ const Logo = () => <svg width="215px" height="70px" viewBox="0 0 215 70" version
             </g>
         </g>
     </g>
-</svg>;
+</svg>);
 
 export default Logo;

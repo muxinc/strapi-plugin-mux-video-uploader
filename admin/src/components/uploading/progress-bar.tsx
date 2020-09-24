@@ -34,9 +34,13 @@ const ProgressTextStyled = styled.span`
   }
 `;
 
-const ProgressBar = (props) => {
+interface Props {
+  percent: number;
+}
+
+const ProgressBar = (props:Props) => {
   const { percent } = props;
-  const [progress, setProgress] = React.useState(0);
+  const [progress, setProgress] = React.useState<number>(0);
 
   React.useEffect(() => {
     if(percent <= progress) return;

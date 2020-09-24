@@ -6,7 +6,7 @@ import lifecycles from './lifecycles';
 import trads from './translations';
 import Settings from './containers/Settings';
 
-export default strapi => {
+export default (strapi:any) => {
   const pluginDescription = pluginPkg.strapi.description || pluginPkg.description;
   const icon = pluginPkg.strapi.icon;
   const name = pluginPkg.strapi.name;
@@ -35,7 +35,7 @@ export default strapi => {
     initializer: Initializer,
     injectedComponents: [],
     isReady: false,
-    isRequired: pluginPkg.strapi.required || false,
+    // isRequired: pluginPkg.strapi.required || false,
     layout: null,
     lifecycles,
     mainComponent: App,

@@ -3,6 +3,8 @@ import styled from 'styled-components';
 import { Label, InputErrors } from 'strapi-helper-plugin';
 import { Enumeration, InputText } from '@buffetjs/core';
 
+import { UploadMethod } from './types';
+
 const FirstRowStyled = styled.div`
   display: grid;
   width: 100%;
@@ -24,28 +26,30 @@ const FileInputText = styled(InputText)`
   padding: 3px;
 }`;
 
-const Form = (props, ref) => {
+interface Props {
+  onSubmit: (title:string, uploadMethod:UploadMethod, media: string | File | undefined) => any;
+}
+
+interface FormHandles {
+  submit(): void;
+}
+
+const Form:React.ForwardRefRenderFunction<FormHandles, Props> = (props, ref) => {
   const [title, setTitle] = React.useState('');
   const [titleErrs, setTitleErrs] = React.useState([]);
-  const [url, setUrl] = React.useState('');
+  const [url, setUrl] = React.useState<string>('');
   const [urlErrs, setUrlErrs] = React.useState([]);
-  const [uploadMethod, setUploadMethod] = React.useState('url');
-  const [file, setFile] = React.useState();
+  const [uploadMethod, setUploadMethod] = React.useState<UploadMethod>('url');
+  const [file, setFile] = React.useState<File>();
 
   React.useImperativeHandle(ref, () => ({
     submit: async () => {
       setTitleErrs([]);
       setUrlErrs([]);
 
-      let media;
-      
-      if(uploadMethod === 'url') {
-        media = url;
-      } else if(uploadMethod === 'upload') {
-        media = file;
-      }
+      const media = uploadMethod === 'url' ? url : file;
 
-      const errors = await props.onSubmit(title, uploadMethod, media);
+      const errors = props.onSubmit(title, uploadMethod, media);
 
       if(errors === undefined) return;
 
@@ -54,7 +58,7 @@ const Form = (props, ref) => {
     }
   }), [title, uploadMethod, url, file]);
 
-  const handleOnUploadMethodChange = ({ target: { value } }) => {
+  const handleOnUploadMethodChange = ({ target: { value } }: { target: { value: UploadMethod }}) => {
     setUrlErrs([]);
     setUploadMethod(value);
   }
@@ -65,10 +69,9 @@ const Form = (props, ref) => {
         <Label message={'Url'} />
         <InputText
           name='upload-url'
-          onChange={({ target: { value } }) => {
+          onChange={({ target: { value } }:InputTextOnChange) => {
             setUrl(value);
           }}
-          placeholder="Url of asset"
           type="text"
           placeholder='https://storage.googleapis.com/muxdemofiles/mux-video-intro.mp4'
           value={url}
@@ -80,7 +83,7 @@ const Form = (props, ref) => {
         <Label message={'File'} />
         <FileInputText
           name='upload-file'
-          onChange={({ target: { files } }) => {
+          onChange={({ target: { files } }:InputFileOnChange) => {
             setFile(files[0]);
           }}
           type="file"
@@ -99,7 +102,7 @@ const Form = (props, ref) => {
           <Label message={'Title'} />
           <InputText
             name="title"
-            onChange={({ target: { value } }) => {
+            onChange={({ target: { value } }:InputTextOnChange) => {
               setTitle(value);
             }}
             placeholder="Title of asset"

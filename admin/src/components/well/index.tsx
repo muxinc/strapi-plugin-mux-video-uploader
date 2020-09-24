@@ -10,7 +10,9 @@ const ContainerStyled = styled.div`
   margin-bottom: 17px;
 `;
 
-const Well = (props) => {
+interface Props {}
+
+const Well:React.FunctionComponent<Props> = (props) => {
   return <ContainerStyled>{props.children}</ContainerStyled>
 };
 

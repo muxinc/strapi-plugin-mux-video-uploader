@@ -12,7 +12,15 @@ const TitleStyled = styled.h1`
   margin-left: 3rem;
 `;
 
-const Header = (props) => {
+interface Props extends DefaultProps {
+  disableSubmit: boolean;
+}
+
+interface DefaultProps {
+  onSubmitClick: () => void;
+}
+
+const Header = (props:Props) => {
   return (<ContainerStyled justifyContent='space-between' alignItems='center'>
     <Flex alignItems='center'>
     <Logo />
@@ -23,7 +31,7 @@ const Header = (props) => {
 };
 
 Header.defaultProps = {
-  onSubmitClick: function() {}
+  onSubmitClick: () => {}
 }
 
 export default Header;

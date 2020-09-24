@@ -18,7 +18,11 @@ const ProgressBarWrapper = styled.div`
   width: 60%;
 `;
 
-const Uploading = (props) => {
+interface Props {
+  percent: number;
+}
+
+const Uploading = (props:Props) => {
   return (<ContainerStyled>
     <RowStyled>
       <h1>Uploading to Mux</h1>

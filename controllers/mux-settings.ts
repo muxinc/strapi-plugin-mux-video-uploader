@@ -1,9 +1,10 @@
-const { pick, isEmpty } = require('lodash');
+import { pick, isEmpty } from 'lodash';
+import { Context } from 'koa';
 
-const { setConfig, getConfig, deleteConfig } = require("../services/mux");
+import { setConfig, getConfig, deleteConfig } from "../services/mux";
 
 module.exports = {
-  isConfiged: async (ctx) => {
+  isConfiged: async (ctx:Context) => {
     const config = await getConfig('general');
 
     if(!config.access_token) ctx.send(false);
@@ -12,13 +13,13 @@ module.exports = {
     else ctx.send(true);
   },
 
-  clearConfig: async (ctx) => {
+  clearConfig: async (ctx:Context) => {
     await deleteConfig('general');
 
     ctx.send({ message: 'ok' });
   },
 
-  saveConfig: async (ctx) => {
+  saveConfig: async (ctx:Context) => {
     const config = pick(ctx.request.body, 'access_token', 'secret_key', 'webhook_signing_secret');
 
     let successful = false;

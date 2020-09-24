@@ -42,11 +42,11 @@ const LongRowStyled = styled.div`
   padding-bottom: 3rem;
 `;
 
-const Settings = ({ settingsBaseURL }) => {
+const Settings = () => {
   const [cancelDisabled, setCancelDisabled] = React.useState(true);
-  const [accessToken, setAccesToken] = React.useState();
-  const [secretKey, setSecretKey] = React.useState();
-  const [webhookSigningSecret, setWebhookSigningSecret] = React.useState();
+  const [accessToken, setAccesToken] = React.useState<string|undefined>();
+  const [secretKey, setSecretKey] = React.useState<string|undefined>();
+  const [webhookSigningSecret, setWebhookSigningSecret] = React.useState<string|undefined>();
 
   const onSaveClick = React.useCallback(async () => {
     const body = new FormData();
@@ -110,7 +110,7 @@ const Settings = ({ settingsBaseURL }) => {
               <Label message='Access Token' />
               <InputText
                 name="access_token"
-                onChange={({ target: { value } }) => {
+                onChange={({ target: { value } }: InputTextOnChange) => {
                   setAccesToken(value);
                   setCancelDisabled(false);
                 }}
@@ -124,7 +124,7 @@ const Settings = ({ settingsBaseURL }) => {
               <Label message='Secret Key' />
               <InputText
                 name="secret_key"
-                onChange={({ target: { value } }) => {
+                onChange={({ target: { value } }: InputTextOnChange) => {
                   setSecretKey(value);
                   setCancelDisabled(false);
                 }}
@@ -138,7 +138,7 @@ const Settings = ({ settingsBaseURL }) => {
               <Label message='Webhook Signing Secret' />
               <InputText
                 name="webhook_signing_secret"
-                onChange={({ target: { value } }) => {
+                onChange={({ target: { value } }: InputTextOnChange) => {
                   setWebhookSigningSecret(value);
                   setCancelDisabled(false);
                 }}

@@ -1,14 +1,14 @@
-import { useEffect, useRef } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 
 import pluginId from '../../pluginId';
 
-const Initializer = ({ updatePlugin }) => {
-  const ref = useRef();
+const Initializer = ({ updatePlugin }: any) => {
+  const ref = React.useRef<any>();
 
   ref.current = updatePlugin;
 
-  useEffect(() => {
+  React.useEffect(() => {
     ref.current(pluginId, 'isReady', true);
   }, []);
 

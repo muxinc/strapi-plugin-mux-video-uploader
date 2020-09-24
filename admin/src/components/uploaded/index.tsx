@@ -17,7 +17,13 @@ const RowStyled = styled.div`
   margin-bottom: 3rem;
 `;
 
-const Uploaded = (props) => {
+interface Props extends DefaultProps {}
+
+interface DefaultProps {
+  onReset: () => void;
+}
+
+const Uploaded = (props:Props) => {
   return (<ContainerStyled>
     <RowStyled>
       <h1>
@@ -57,5 +63,9 @@ const Uploaded = (props) => {
       <Button color="primary" label="Go Back" onClick={props.onReset} />
   </ContainerStyled>)
 };
+
+Uploaded.defaultProps = {
+  onReset: () => {}
+} as DefaultProps;
 
 export default Uploaded;

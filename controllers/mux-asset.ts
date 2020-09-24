@@ -1,14 +1,16 @@
-const { sanitizeEntity, parseMultipartData } = require('strapi-utils');
+// @ts-ignore
+import { sanitizeEntity, parseMultipartData } from 'strapi-utils';
+import { Context } from 'koa';
 
 module.exports = {
 
-  index: async (ctx) => {
+  index: async (ctx:Context) => {
     ctx.send({
       message: 'ok'
     });
   },
 
-  find: async (ctx) => {
+  find: async (ctx:Context) => {
     let entities;
 
     if (ctx.query._q) {
@@ -17,10 +19,10 @@ module.exports = {
       entities = await strapi.entityService.find({params: ctx.query}, {model: 'plugins::mux.mux-asset'});
     }
 
-    return entities.map(entity => sanitizeEntity(entity, {model: { options: {}, attributes:[]}}));
+    return entities.map((entity:any) => sanitizeEntity(entity, {model: { options: {}, attributes:[]}}));
   },
 
-  findOne: async (ctx) => {
+  findOne: async (ctx:Context) => {
     const { id } = ctx.params;
 
     const entity = await strapi.entityService.findOne({ id }, {model: 'plugins::mux.mux-asset'});
@@ -28,14 +30,14 @@ module.exports = {
     return sanitizeEntity(entity, {model: { options: {}, attributes:[]}});
   },
 
-  count: (ctx) => {
+  count: (ctx:Context) => {
     if (ctx.query._q) {
       return strapi.entityService.countSearch({params: ctx.query}, {model: 'plugins::mux.mux-asset'});
     }
     return strapi.entityService.count({params: ctx.query}, {model: 'plugins::mux.mux-asset'});
   },
 
-  create: async (ctx) => {
+  create: async (ctx:Context) => {
     let entity;
     
     if (ctx.is('multipart')) {
@@ -49,7 +51,7 @@ module.exports = {
     return sanitizeEntity(entity, {model: { options: {}, attributes:[]}});
   },
 
-  update: async (ctx) => {
+  update: async (ctx:Context) => {
     const { id } = ctx.params;
 
     let entity;
@@ -65,7 +67,7 @@ module.exports = {
     return sanitizeEntity(entity, {model: { options: {}, attributes:[]}});
   },
 
-  delete: async (ctx) => {
+  delete: async (ctx:Context) => {
     const { id } = ctx.params;
 
     const entity = await strapi.entityService.delete({ params: { id } }, {model: 'plugins::mux.mux-asset'});
