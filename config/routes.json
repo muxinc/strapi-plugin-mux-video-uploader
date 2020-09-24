@@ -76,7 +76,7 @@
     {
       "method": "DELETE",
       "path": "/mux-asset/:id",
-      "handler": "mux-asset.delete",
+      "handler": "mux-asset.del",
       "config": {
         "policies": []
       }
