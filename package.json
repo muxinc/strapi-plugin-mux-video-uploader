@@ -1,0 +1,34 @@
+{
+  "name": "strapi-plugin-mux-video-uploader",
+  "version": "1.0.0",
+  "description": "This plugin allows you to upload your content to Mux and use it with Strapi.",
+  "strapi": {
+    "name": "Mux Video Uploader",
+    "icon": "plug",
+    "description": "This plugin allows you to upload your content to Mux and use it with Strapi."
+  },
+  "dependencies": {
+    "@mux/mux-node": "^3.0.4",
+    "@mux/upchunk": "^2.0.0",
+    "axios": "^0.20.0",
+    "crypto-js": "^4.0.0",
+    "styled-components": "^5.2.0"
+  },
+  "author": {
+    "name": "Erik Peña",
+    "email": "erikpena@users.noreply.github.com",
+    "url": "https://github.com/erikpena"
+  },
+  "maintainers": [
+    {
+      "name": "Erik Peña",
+    "email": "erikpena@users.noreply.github.com",
+    "url": "https://github.com/erikpena"
+    }
+  ],
+  "engines": {
+    "node": ">=10.0.0",
+    "npm": ">=6.0.0"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,110 @@
+{
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/",
+      "handler": "mux.index",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/submitDirectUpload",
+      "handler": "mux.submitDirectUpload",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/submitRemoteUpload",
+      "handler": "mux.submitRemoteUpload",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/webhook-handler",
+      "handler": "mux.muxWebhookHandler",
+      "config": {
+        "policies": []
+      }
+    },
+    
+    {
+      "method": "GET",
+      "path": "/mux-asset",
+      "handler": "mux-asset.find",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/mux-asset/count",
+      "handler": "mux-asset.count",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/mux-asset/:id",
+      "handler": "mux-asset.findOne",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/mux-asset",
+      "handler": "mux-asset.create",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/mux-asset/:id",
+      "handler": "mux-asset.update",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/mux-asset/:id",
+      "handler": "mux-asset.delete",
+      "config": {
+        "policies": []
+      }
+    },
+    
+    {
+      "method": "GET",
+      "path": "/mux-settings",
+      "handler": "mux-settings.isConfiged",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/mux-settings",
+      "handler": "mux-settings.saveConfig",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/mux-settings",
+      "handler": "mux-settings.clearConfig",
+      "config": {
+        "policies": []
+      }
+    }
+  ]
+}
