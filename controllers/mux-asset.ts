@@ -78,6 +78,7 @@ export {
   index,
   find,
   findOne,
+  count,
   create,
   update,
   del
