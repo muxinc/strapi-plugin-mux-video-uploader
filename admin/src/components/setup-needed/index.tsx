@@ -3,6 +3,8 @@ import styled from 'styled-components';
 import { Button } from '@buffetjs/core';
 import { useHistory } from "react-router-dom";
 
+import pluginId from '../../pluginId';
+
 const ContainerStyled = styled.div`
   display: flex;
   flex-direction: column;
@@ -18,7 +20,7 @@ const SetupNeeded = () => {
   const history = useHistory();
 
   const onSettingsClick = React.useCallback(() => {
-    history.push("/home");
+    history.push(`/settings/${pluginId}/general`);
   }, []);
 
   return (<ContainerStyled>
