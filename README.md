@@ -12,7 +12,7 @@ This plugin provides the ability to upload content via a url or a direct file up
 npm i strapi-plugin-mux-video-uploader
 ```
 
-or
+*- or -*
 
 ```
 yarn add strapi-plugin-mux-video-uploader
@@ -61,7 +61,7 @@ Feel free to check issues page.
 
 ## FAQ
 
-#### My Strapi instance is not publically available, can I still use Webhooks?
+#### My Strapi instance is not publicly available, can I still use Webhooks?
 
 Yes!  However, in order to make it work, you'll need a "Webhook Relay" that runs from within your network.  You can use a Webhook Relay service like Smee (https://smee.io/) or ngrok (https://ngrok.com/) to forward Webhook events to an instance of [Strapi](https://strapi.io/) behind a firewall.
 
@@ -73,3 +73,4 @@ Yes!  However, in order to make it work, you'll need a "Webhook Relay" that runs
 
 - [Mux - Webhooks](https://docs.mux.com/docs/webhooks)
 - [Mux - Authentication](https://docs.mux.com/docs/authentication)
+- [Strapi.io](https://strapi.io/)
