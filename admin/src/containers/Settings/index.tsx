@@ -69,7 +69,7 @@ const Settings = () => {
       return;
     }
 
-    const response = await fetch(`${strapi.backendURL}/mux/mux-settings`, {
+    const response = await fetch(`${strapi.backendURL}/mux-video-uploader/mux-settings`, {
       method: "POST",
       body
     });

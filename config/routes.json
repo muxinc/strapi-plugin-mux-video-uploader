@@ -2,108 +2,121 @@
   "routes": [
     {
       "method": "GET",
-      "path": "/",
+      "path": "/mux-video-uploader/",
       "handler": "mux.index",
       "config": {
-        "policies": []
+        "policies": [],
+        "prefix": false
       }
     },
     {
       "method": "POST",
-      "path": "/submitDirectUpload",
+      "path": "/mux-video-uploader/submitDirectUpload",
       "handler": "mux.submitDirectUpload",
       "config": {
-        "policies": []
+        "policies": [],
+        "prefix": false
       }
     },
     {
       "method": "POST",
-      "path": "/submitRemoteUpload",
+      "path": "/mux-video-uploader/submitRemoteUpload",
       "handler": "mux.submitRemoteUpload",
       "config": {
-        "policies": []
+        "policies": [],
+        "prefix": false
       }
     },
     {
       "method": "POST",
-      "path": "/webhook-handler",
+      "path": "/mux-video-uploader/webhook-handler",
       "handler": "mux.muxWebhookHandler",
       "config": {
-        "policies": []
+        "policies": [],
+        "prefix": false
       }
     },
     
     {
       "method": "GET",
-      "path": "/mux-asset",
+      "path": "/mux-video-uploader/mux-asset",
       "handler": "mux-asset.find",
       "config": {
-        "policies": []
+        "policies": [],
+        "prefix": false
       }
     },
     {
       "method": "GET",
-      "path": "/mux-asset/count",
+      "path": "/mux-video-uploader/mux-asset/count",
       "handler": "mux-asset.count",
       "config": {
-        "policies": []
+        "policies": [],
+        "prefix": false
       }
     },
     {
       "method": "GET",
-      "path": "/mux-asset/:id",
+      "path": "/mux-video-uploader/mux-asset/:id",
       "handler": "mux-asset.findOne",
       "config": {
-        "policies": []
+        "policies": [],
+        "prefix": false
       }
     },
     {
       "method": "POST",
-      "path": "/mux-asset",
+      "path": "/mux-video-uploader/mux-asset",
       "handler": "mux-asset.create",
       "config": {
-        "policies": []
+        "policies": [],
+        "prefix": false
       }
     },
     {
       "method": "PUT",
-      "path": "/mux-asset/:id",
+      "path": "/mux-video-uploader/mux-asset/:id",
       "handler": "mux-asset.update",
       "config": {
-        "policies": []
+        "policies": [],
+        "prefix": false
       }
     },
     {
       "method": "DELETE",
-      "path": "/mux-asset/:id",
+      "path": "/mux-video-uploader/mux-asset/:id",
       "handler": "mux-asset.del",
       "config": {
-        "policies": []
+        "policies": [],
+        "prefix": false
       }
     },
     
     {
       "method": "GET",
-      "path": "/mux-settings",
+      "path": "/mux-video-uploader/mux-settings",
       "handler": "mux-settings.isConfiged",
       "config": {
-        "policies": []
+        "policies": [],
+        "prefix": false
       }
     },
     {
       "method": "POST",
-      "path": "/mux-settings",
+      "path": "/mux-video-uploader/mux-settings",
       "handler": "mux-settings.saveConfig",
       "config": {
-        "policies": []
+        "policies": [],
+        "prefix": false
       }
     },
     {
       "method": "DELETE",
-      "path": "/mux-settings",
+      "path": "/mux-video-uploader/mux-settings",
       "handler": "mux-settings.clearConfig",
       "config": {
-        "policies": []
+        "policies": [],
+        "prefix": false
       }
     }
   ]

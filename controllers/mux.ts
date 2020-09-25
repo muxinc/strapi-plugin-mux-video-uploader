@@ -28,7 +28,7 @@ const submitDirectUpload = async (ctx:Context) => {
 
   data.upload_id = body.id;
 
-  await strapi.entityService.create({ data }, { model: 'plugins::mux.mux-asset' });
+  await strapi.entityService.create({ data }, { model: 'plugins::strapi-plugin-mux-video-uploader.mux-asset' });
 
   ctx.send(body);
 };
@@ -46,10 +46,11 @@ const submitRemoteUpload = async (ctx:Context) => {
     return;
   }
 
+  // @ts-ignore
   const result = await axios({
     url: 'https://api.mux.com/video/v1/assets',
     method: "post",
-    validateStatus: () => false,
+    validateStatus: false,
     auth: {
       username: config.access_token,
       password: config.secret_key
@@ -60,7 +61,7 @@ const submitRemoteUpload = async (ctx:Context) => {
 
   data.asset_id = result.data.data.id;
 
-  const response = await strapi.entityService.create({ data }, { model: 'plugins::mux.mux-asset' });
+  const response = await strapi.entityService.create({ data }, { model: 'plugins::strapi-plugin-mux-video-uploader.mux-asset' });
 
   ctx.send(response);
 };
@@ -108,7 +109,7 @@ const muxWebhookHandler = async (ctx:Context) => {
     return;
   }
 
-  const result = await strapi.entityService.update(payload, {model: 'plugins::mux.mux-asset'});
+  const result = await strapi.entityService.update(payload, {model: 'plugins::strapi-plugin-mux-video-uploader.mux-asset'});
 
   ctx.send(result);
 };

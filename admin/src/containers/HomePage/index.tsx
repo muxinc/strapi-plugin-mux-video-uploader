@@ -23,7 +23,7 @@ const HomePage = () => {
   const [uploadError, setUploadError] = React.useState<string>();
 
   React.useEffect(() => {
-    fetch(`${strapi.backendURL}/mux/mux-settings`)
+    fetch(`${strapi.backendURL}/mux-video-uploader/mux-settings`)
       .then((response) => response.json())
       .then((data) => {
         setIsReady(data);
@@ -55,11 +55,11 @@ const HomePage = () => {
     let submitUrl;
     
     if(uploadMethod === 'url') {
-      submitUrl = `${strapi.backendURL}/mux/submitRemoteUpload`;
+      submitUrl = `${strapi.backendURL}/mux-video-uploader/submitRemoteUpload`;
 
       body.append("url", media);
     } else if(uploadMethod === 'upload') {
-      submitUrl = `${strapi.backendURL}/mux/submitDirectUpload`;
+      submitUrl = `${strapi.backendURL}/mux-video-uploader/submitDirectUpload`;
     } else {
       throw new Error('Unable to determine upload type');
     }
