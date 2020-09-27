@@ -8,6 +8,7 @@ import Form from '../../components/form';
 import Uploading from '../../components/uploading';
 import Uploaded from '../../components/uploaded';
 import SetupNeeded from '../../components/setup-needed';
+import { getIsConfigured, submitUpload } from '../../services/strapi';
 
 const ContainerStyled = styled.div`
   padding: 3.1rem 2.5rem 0 2.5rem;
@@ -23,13 +24,11 @@ const HomePage = () => {
   const [uploadError, setUploadError] = React.useState<string>();
 
   React.useEffect(() => {
-    fetch(`${strapi.backendURL}/mux-video-uploader/mux-settings`)
-      .then((response) => response.json())
-      .then((data) => {
-        setIsReady(data);
+    getIsConfigured().then(data => { console.log(data);
+      setIsReady(data === true);
 
-        if(!data) setIsSubmitting(true);
-      });
+      if(!data) setIsSubmitting(true);
+    });
   }, []);
 
   const uploadFile = (endpoint:string, file:File) => {
@@ -49,27 +48,16 @@ const HomePage = () => {
   const handleOnSubmit = React.useCallback(async (title, uploadMethod, media) => {
     setIsSubmitting(true);
 
-    const body = new FormData();
-    body.append("title", title);
-
-    let submitUrl;
+    let result;
     
-    if(uploadMethod === 'url') {
-      submitUrl = `${strapi.backendURL}/mux-video-uploader/submitRemoteUpload`;
+    try {
+      result = await submitUpload(title, uploadMethod, media);
+    } catch(error) {
+      setUploadError(error);
 
-      body.append("url", media);
-    } else if(uploadMethod === 'upload') {
-      submitUrl = `${strapi.backendURL}/mux-video-uploader/submitDirectUpload`;
-    } else {
-      throw new Error('Unable to determine upload type');
+      return;
     }
 
-    const response = await fetch(submitUrl, {
-      method: "POST",
-      body
-    });
-
-    const result = await response.json();
     const { statusCode, data } = result;
 
     if(statusCode && statusCode !== 200) {

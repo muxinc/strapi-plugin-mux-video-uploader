@@ -4,6 +4,7 @@ import { Label } from 'strapi-helper-plugin';
 import styled from 'styled-components';
 
 import Well from './../../components/well';
+import { setMuxSettings } from '../../services/strapi';
 
 const ContainerStyled = styled.div`
   &> * {
@@ -69,10 +70,7 @@ const Settings = () => {
       return;
     }
 
-    const response = await fetch(`${strapi.backendURL}/mux-video-uploader/mux-settings`, {
-      method: "POST",
-      body
-    });
+    const response = await setMuxSettings(body);
 
     if(response.status === 200) {
       strapi.notification.success('Changes saved');
