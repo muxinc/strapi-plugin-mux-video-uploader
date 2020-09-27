@@ -21,10 +21,12 @@ const SecondRowStyled = styled.div`
   padding-bottom: 3rem;
 `;
 
-const FileInputText = styled(InputText)`
-& > input {
-  padding: 3px;
-}`;
+const FileInputText = styled.input`
+  display: block;
+  border: 1px solid #E3E9F3;
+  width: 100%;
+  padding: .5rem;
+`;
 
 interface Props {
   onSubmit: (title:string, uploadMethod:UploadMethod, media: string | File | undefined) => any;
@@ -83,10 +85,9 @@ const Form:React.ForwardRefRenderFunction<FormHandles, Props> = (props, ref) => 
         <Label message={'File'} />
         <FileInputText
           name='upload-file'
-          onChange={({ target: { files } }:InputFileOnChange) => {
-            setFile(files[0]);
-          }}
+          onChange={({ target: { files }}) => files && setFile(files[0])}
           type="file"
+          accept="video/*"
         />
         <InputErrors errors={urlErrs} />
       </div>);
