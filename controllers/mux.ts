@@ -3,8 +3,11 @@ import Mux from '@mux/mux-node';
 import { Context } from 'koa';
 
 import { getConfig } from '../services/mux';
+import pluginId from '../admin/src/pluginId';
 
 const { Webhooks } = Mux;
+
+const model = `plugins::${pluginId}.mux-asset`;
 
 const index = async (ctx:Context) => ctx.send({ message: 'ok' });
 
@@ -28,7 +31,7 @@ const submitDirectUpload = async (ctx:Context) => {
 
   data.upload_id = body.id;
 
-  await strapi.entityService.create({ data }, { model: 'plugins::strapi-plugin-mux-video-uploader.mux-asset' });
+  await strapi.entityService.create({ data }, { model });
 
   ctx.send(body);
 };
@@ -61,7 +64,7 @@ const submitRemoteUpload = async (ctx:Context) => {
 
   data.asset_id = result.data.data.id;
 
-  const response = await strapi.entityService.create({ data }, { model: 'plugins::strapi-plugin-mux-video-uploader.mux-asset' });
+  const response = await strapi.entityService.create({ data }, { model });
 
   ctx.send(response);
 };
@@ -109,7 +112,7 @@ const muxWebhookHandler = async (ctx:Context) => {
     return;
   }
 
-  const result = await strapi.entityService.update(payload, {model: 'plugins::strapi-plugin-mux-video-uploader.mux-asset'});
+  const result = await strapi.entityService.update(payload, { model });
 
   ctx.send(result);
 };
