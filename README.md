@@ -47,7 +47,16 @@ On this view, set the appropriate values to their fields and click the Save butt
 
 ### Permissions
 
-*TBD*
+Currently, anyone that has administrative access to your Strapi instance will be able to utilize the plugin for uploading and managing content.
+
+The only real permission that needs to be set to function is the public access to the `muxwebhookhandler` method.  This is needed so that Mux can send Webhook events to your Strapi instance for updating `MuxAsset` content types.
+
+To enable this permission, do the following steps—
+
+- Log into the Strapi admin UI and navigate to "Roles & Permissions"
+- Click on the edit button aside the "Public" role
+- Drop down the "MUX-VIDEO-UPLOADER" section and check the box nexzt to `muxwebhookhandler`
+- Save changes
 
 ## Features
 
