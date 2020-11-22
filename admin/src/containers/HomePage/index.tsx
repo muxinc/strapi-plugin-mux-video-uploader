@@ -24,7 +24,7 @@ const HomePage = () => {
   const [uploadError, setUploadError] = React.useState<string>();
 
   React.useEffect(() => {
-    getIsConfigured().then(data => { console.log(data);
+    getIsConfigured().then(data => {
       setIsReady(data === true);
 
       if(!data) setIsSubmitting(true);
