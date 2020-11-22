@@ -1,8 +1,9 @@
+import { auth } from 'strapi-helper-plugin';
 
 const SERVICE_URI = strapi.backendURL;
 
 function getJwtToken() {
-  return window.sessionStorage.getItem('jwtToken')?.replace(/\"/g, '');
+  return auth.getToken();
 }
 
 const getIsConfigured = () => {
