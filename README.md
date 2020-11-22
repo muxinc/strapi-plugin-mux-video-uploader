@@ -12,7 +12,7 @@ This plugin provides the ability to upload content via a url or a direct file up
 npm i strapi-plugin-mux-video-uploader
 ```
 
-*- or -*
+_- or -_
 
 ```
 yarn add strapi-plugin-mux-video-uploader
@@ -25,7 +25,7 @@ yarn add strapi-plugin-mux-video-uploader
 - A [Mux](https://mux.com) account
 - You will need both the **Access Token** and **Secret Key** scoped with "Full Access" permissions which can be created in the [Mux Dashboard](https://dashboard.mux.com/settings/access-tokens)
 - The **Webhook Signing Secret** which can be created in the [Mux Dashboard](https://dashboard.mux.com/settings/webhooks) (See the [Webhooks](#Webhooks) section for more info)
-- Tested with [Strapi](https://strapi.io/) v3.1.4
+- Tested with [Strapi](https://strapi.io/) v3.3.3 Community Edition
 
 ### Webhooks
 
@@ -49,7 +49,7 @@ On this view, set the appropriate values to their fields and click the Save butt
 
 Currently, anyone that has administrative access to your Strapi instance will be able to utilize the plugin for uploading and managing content.
 
-The only real permission that needs to be set to function is the public access to the `muxwebhookhandler` method.  This is needed so that Mux can send Webhook events to your Strapi instance for updating `MuxAsset` content types.
+The only real permission that needs to be set to function is the public access to the `muxwebhookhandler` method. This is needed so that Mux can send Webhook events to your Strapi instance for updating `MuxAsset` content types.
 
 To enable this permission, do the following steps—
 
@@ -65,6 +65,7 @@ To enable this permission, do the following steps—
 - A `MuxAsset` content-type is provided to track asset readiness and that can be referenced by other [Strapi](https://strapi.io/) content-types
 
 ## Contributing
+
 Contributions, issues and feature requests are welcome!
 
 Feel free to check issues page.
@@ -73,7 +74,7 @@ Feel free to check issues page.
 
 #### My Strapi instance is not publicly available, can I still use Webhooks?
 
-Yes!  However, in order to make it work, you'll need a "Webhook Relay" that runs from within your network.  You can use a Webhook Relay service like Smee (https://smee.io/) or ngrok (https://ngrok.com/) to forward Webhook events to an instance of [Strapi](https://strapi.io/) behind a firewall.
+Yes! However, in order to make it work, you'll need a "Webhook Relay" that runs from within your network. You can use a Webhook Relay service like Smee (https://smee.io/) or ngrok (https://ngrok.com/) to forward Webhook events to an instance of [Strapi](https://strapi.io/) behind a firewall.
 
 ## Thanks
 
