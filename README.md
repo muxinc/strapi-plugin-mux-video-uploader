@@ -8,6 +8,8 @@ This plugin provides the ability to upload content via a url or a direct file up
 
 ## Install
 
+Test updates for new branch
+
 ```
 npm i strapi-plugin-mux-video-uploader
 ```
