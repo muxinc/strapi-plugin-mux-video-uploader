@@ -4,6 +4,8 @@ import { Context } from 'koa';
 
 import { getConfig } from '../services/mux';
 import pluginId from '../admin/src/pluginId';
+import util from "util";
+import { sign } from 'node:crypto';
 
 const { Webhooks } = Mux;
 
@@ -73,16 +75,32 @@ const muxWebhookHandler = async (ctx:Context) => {
   const body = ctx.request.body;
   const sig = ctx.request.headers['mux-signature'];
 
+
   const config = await getConfig('general');
 
-  if(sig === undefined || sig === '') {
+  if(sig === undefined || sig === '' || (Array.isArray(sig) && sig.length < 0)) {
     ctx.throw(401, 'Webhook signature is missing');
   }
+  
+  if(Array.isArray(sig) && sig.length > 0) {
+    ctx.throw(401, 'we have an unexpected amount of signatures');
+  }
+
+  let sig2;
+
+  if(Array.isArray(sig)){
+    sig2 = sig[0];
+  }
+  else{
+    sig2 = sig;
+  }
+
+  const sig3 = sig2;
 
   let isSigValid;
   
   try {
-    isSigValid = Webhooks.verifyHeader(JSON.stringify(body), sig, config.webhook_signing_secret);
+    isSigValid = Webhooks.verifyHeader(JSON.stringify(body), sig3, config.webhook_signing_secret);
   } catch(err) {
     ctx.throw(403, err);
 
