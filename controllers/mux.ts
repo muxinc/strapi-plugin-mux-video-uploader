@@ -73,7 +73,6 @@ const muxWebhookHandler = async (ctx:Context) => {
   const body = ctx.request.body;
   const sigHttpHeader = ctx.request.headers['mux-signature'];
 
-
   const config = await getConfig('general');
 
   if(sigHttpHeader === undefined || sigHttpHeader === '' || (Array.isArray(sigHttpHeader) && sigHttpHeader.length < 0)) {
