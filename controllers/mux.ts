@@ -71,10 +71,11 @@ const submitRemoteUpload = async (ctx:Context) => {
 
 const muxWebhookHandler = async (ctx:Context) => {
   const body = ctx.request.body;
-  const sig = ctx.request.headers['mux-signature'];
+  //const sig = ctx.request.headers['mux-signature'];
 
   const config = await getConfig('general');
 
+  /*
   if(sig === undefined || sig === '') {
     ctx.throw(401, 'Webhook signature is missing');
   }
@@ -88,6 +89,7 @@ const muxWebhookHandler = async (ctx:Context) => {
 
     return;
   }
+  */
 
   const { type, data } = body;
 
