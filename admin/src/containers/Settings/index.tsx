@@ -1,10 +1,11 @@
 import React from 'react';
 import { Button, Flex, InputText } from '@buffetjs/core';
-import { Label } from 'strapi-helper-plugin';
+import { CheckPagePermissions, Label } from 'strapi-helper-plugin';
 import styled from 'styled-components';
 
 import Well from './../../components/well';
 import { setMuxSettings } from '../../services/strapi';
+import pluginPermissions from './../../permissions';
 
 const ContainerStyled = styled.div`
   &> * {
@@ -90,64 +91,70 @@ const Settings = () => {
   }, []);
 
   return (
-    <ContainerStyled>
-      <Flex alignItems='center' justifyContent='space-between'>
-        <div>
-          <H1Styled>Settings</H1Styled>
-          <SubHeadingStyled>Mux Video Uploader</SubHeadingStyled>
-        </div>
-        <ButtonWrapperStyled>
-          <Button color="cancel" label="Cancel" onClick={onCancelClick} disabled={cancelDisabled} />
-          <Button color="success" label="Save" onClick={onSaveClick} />
-        </ButtonWrapperStyled>
-      </Flex>
-      <Flex>
-        <Well>
-          <ShortRowStyled>
+    <>
+      <CheckPagePermissions 
+        permissions={pluginPermissions.settings}
+      >
+        <ContainerStyled>
+          <Flex alignItems='center' justifyContent='space-between'>
             <div>
-              <Label message='Access Token' />
-              <InputText
-                name="access_token"
-                onChange={({ target: { value } }: InputTextOnChange) => {
-                  setAccesToken(value);
-                  setCancelDisabled(false);
-                }}
-                type="password"
-                value={accessToken}
-              />
+              <H1Styled>Settings</H1Styled>
+              <SubHeadingStyled>Mux Video Uploader</SubHeadingStyled>
             </div>
-          </ShortRowStyled>
-          <LongRowStyled>
-            <div>
-              <Label message='Secret Key' />
-              <InputText
-                name="secret_key"
-                onChange={({ target: { value } }: InputTextOnChange) => {
-                  setSecretKey(value);
-                  setCancelDisabled(false);
-                }}
-                type="password"
-                value={secretKey}
-              />
-            </div>
-          </LongRowStyled>
-          <ShortRowStyled>
-            <div>
-              <Label message='Webhook Signing Secret' />
-              <InputText
-                name="webhook_signing_secret"
-                onChange={({ target: { value } }: InputTextOnChange) => {
-                  setWebhookSigningSecret(value);
-                  setCancelDisabled(false);
-                }}
-                type="password"
-                value={webhookSigningSecret}
-              />
-            </div>
-          </ShortRowStyled>
-        </Well>
-      </Flex>
-    </ContainerStyled>
+            <ButtonWrapperStyled>
+              <Button color="cancel" label="Cancel" onClick={onCancelClick} disabled={cancelDisabled} />
+              <Button color="success" label="Save" onClick={onSaveClick} />
+            </ButtonWrapperStyled>
+          </Flex>
+          <Flex>
+            <Well>
+              <ShortRowStyled>
+                <div>
+                  <Label message='Access Token' />
+                  <InputText
+                    name="access_token"
+                    onChange={({ target: { value } }: InputTextOnChange) => {
+                      setAccesToken(value);
+                      setCancelDisabled(false);
+                    }}
+                    type="password"
+                    value={accessToken}
+                  />
+                </div>
+              </ShortRowStyled>
+              <LongRowStyled>
+                <div>
+                  <Label message='Secret Key' />
+                  <InputText
+                    name="secret_key"
+                    onChange={({ target: { value } }: InputTextOnChange) => {
+                      setSecretKey(value);
+                      setCancelDisabled(false);
+                    }}
+                    type="password"
+                    value={secretKey}
+                  />
+                </div>
+              </LongRowStyled>
+              <ShortRowStyled>
+                <div>
+                  <Label message='Webhook Signing Secret' />
+                  <InputText
+                    name="webhook_signing_secret"
+                    onChange={({ target: { value } }: InputTextOnChange) => {
+                      setWebhookSigningSecret(value);
+                      setCancelDisabled(false);
+                    }}
+                    type="password"
+                    value={webhookSigningSecret}
+                  />
+                </div>
+              </ShortRowStyled>
+            </Well>
+          </Flex>
+        </ContainerStyled>
+      </CheckPagePermissions>
+    </>
   );
 };
 
