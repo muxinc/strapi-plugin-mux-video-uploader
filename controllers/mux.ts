@@ -92,15 +92,19 @@ const muxWebhookHandler = async (ctx:Context) => {
     sig = sigHttpHeader;
   }
 
-  let isSigValid;
-  
-  try {
-    isSigValid = Webhooks.verifyHeader(JSON.stringify(body), sig, config.webhook_signing_secret);
-  } catch(err) {
-    ctx.throw(403, err);
+  // TODO: Currently commented out because we should be using the raw request body for verfiying
+  // Webhook signatures, NOT JSON.stringify.  Strapi does not currently allow for access to the
+  // Koa.js request (the middleware used for parsing requests).
 
-    return;
-  }
+  // let isSigValid;
+  
+  // try {
+  //   isSigValid = Webhooks.verifyHeader(JSON.stringify(body), sig, config.webhook_signing_secret);
+  // } catch(err) {
+  //   ctx.throw(403, err);
+
+  //   return;
+  // }
 
   const { type, data } = body;
 
