@@ -3,11 +3,11 @@ import Mux from '@mux/mux-node';
 import { Context } from 'koa';
 
 import { getConfig } from '../services/mux';
-import pluginPkg from './../package.json';
+import pluginId from './../admin/src/pluginId';
 
 const { Webhooks } = Mux;
 
-const model = `plugins::${pluginPkg.name}.mux-asset`;
+const model = `plugins::${pluginId}.mux-asset`;
 
 const index = async (ctx:Context) => ctx.send({ message: 'ok' });
 

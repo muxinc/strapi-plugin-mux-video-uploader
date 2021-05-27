@@ -1,4 +1,4 @@
-import pluginPkg from '../../package.json';
+import pluginId from './../../admin/src/pluginId';
 
 export = async () => {
   const actions = [
@@ -7,13 +7,13 @@ export = async () => {
       category: "Mux Video Uploader",
       displayName: "Access the Mux Video Uploader Settings page",
       uid: "settings.write",
-      pluginName: pluginPkg.name,
+      pluginName: pluginId
     },
     {
       section: 'plugins',
       displayName: 'Read',
       uid: 'read',
-      pluginName: pluginPkg.name,
+      pluginName: pluginId
     },
   ];
 
