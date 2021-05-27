@@ -2,9 +2,9 @@
 import { sanitizeEntity, parseMultipartData } from 'strapi-utils';
 import { Context } from 'koa';
 
-import pluginId from '../admin/src/pluginId';
+import pluginPkg from './../package.json';
 
-const model = `plugins::${pluginId}.mux-asset`;
+const model = `plugins::${pluginPkg.name}.mux-asset`;
 
 const index = async (ctx:Context) => {
   ctx.send({

@@ -58,13 +58,7 @@ export default (strapi:any) => {
             defaultMessage: name,
           },
           name,
-          permissions: [
-            // Uncomment to set the permissions of the plugin here
-            // {
-            //   action: '', // the action name should be plugins::plugin-name.actionType
-            //   subject: null,
-            // },
-          ],
+          permissions: pluginPermissions.main
         },
       ],
     },
