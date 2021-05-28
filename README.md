@@ -66,26 +66,6 @@ To enable this permission, do the following steps—
 - [Mux](https://mux.com) updates [Strapi](https://strapi.io/) when the asset is ready
 - A `MuxAsset` content-type is provided to track asset readiness and that can be referenced by other [Strapi](https://strapi.io/) content-types
 
-## Upgrading
-
-Ensure that the version of Strapi that you are using is compatible with the version of the mux-video-uploader (See the [Dependencies](#Dependencies) section).
-
-Be sure to follow Strapi's [Update Strapi version](https://strapi.io/documentation/developer-docs/latest/update-migration-guides/update-version.html) documentation for upgrading/migration considerations.
-
-Next, run the appropriate command to bring the mux-video-uploader to the latest version—
-
-```
-npm i strapi-plugin-mux-video-uploader@latest
-```
-
-_- or -_
-
-```
-yarn upgrade strapi-plugin-mux-video-uploader --latest
-```
-
-After starting your Strapi project, you will likely need to re-enable public access to the `muxwebhookhandler` method.  See the [Permissions](#Permissions) for more details.
-
 ## Contributing
 
 Contributions, issues and feature requests are welcome!
