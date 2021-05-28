@@ -29,6 +29,8 @@ yarn add strapi-plugin-mux-video-uploader
 
 ### Webhooks
 
+**Please note**: We've currently disabled webhook signature verification as there is not a way to access the raw request body from the Koa.js middleware (which Strapi is using for parsing requests).  This is needed to ensure that we are verifying the signature and that the request JSON payload has properties in the same order that was used for generating the signature.
+
 When setting up your Webhook configuration in the [Mux Dashboard](https://dashboard.mux.com/settings/webhooks), the "URL to notify" field should be in the format of—
 
 ```
@@ -47,9 +49,9 @@ On this view, set the appropriate values to their fields and click the Save butt
 
 ### Permissions
 
-Currently, anyone that has administrative access to your Strapi instance will be able to utilize the plugin for uploading and managing content.
+Currently, anyone with "Super Admin" access to your Strapi instance will be able to utilize the plugin for uploading and managing content.
 
-The only real permission that needs to be set to function is the public access to the `muxwebhookhandler` method. This is needed so that Mux can send Webhook events to your Strapi instance for updating `MuxAsset` content types.
+Aside from admin permissions, a **public** user role needs to be configured to allow access to the `muxwebhookhandler` method. This is needed so that Mux can send Webhook events to your Strapi instance for updating `MuxAsset` content types.
 
 To enable this permission, do the following steps—
 

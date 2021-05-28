@@ -5,26 +5,13 @@ import Initializer from './containers/Initializer';
 import lifecycles from './lifecycles';
 import trads from './translations';
 import Settings from './containers/Settings';
+import getTrad from './utils/getTrad';
+import pluginPermissions from './permissions';
 
 export default (strapi:any) => {
   const pluginDescription = pluginPkg.strapi.description || pluginPkg.description;
   const icon = pluginPkg.strapi.icon;
   const name = pluginPkg.strapi.name;
-
-  const menuSection = {
-    id: pluginId,
-    title: {
-      id: `${pluginId}.foo`,
-      defaultMessage: 'Mux Video Uploader',
-    },
-    links: [
-      {
-        title: 'General',
-        to: `${strapi.settingsBaseURL}/${pluginId}/general`,
-        name: 'General',
-      }
-    ],
-  };
 
   const plugin = {
     blockerComponent: null,
@@ -35,7 +22,8 @@ export default (strapi:any) => {
     initializer: Initializer,
     injectedComponents: [],
     isReady: false,
-    // isRequired: pluginPkg.strapi.required || false,
+    // @ts-ignore
+    isRequired: pluginPkg.strapi.required || false,
     layout: null,
     lifecycles,
     mainComponent: App,
@@ -43,8 +31,22 @@ export default (strapi:any) => {
     preventComponentRendering: false,
     trads,
     settings: {
-      mainComponent: Settings,
-      menuSection,
+      menuSection: {
+        id: pluginId,
+        title: getTrad('SettingsNav.section-label'),
+        links: [
+          {
+            title: {
+              id: getTrad('SettingsNav.link.settings'),
+              defaultMessage: 'Settings',
+            },
+            name: 'settings',
+            to: `${strapi.settingsBaseURL}/${pluginId}`,
+            Component: Settings,
+            permissions: pluginPermissions.settings
+          },
+        ],
+      }
     },
     menu: {
       pluginsSectionLinks: [
@@ -56,13 +58,7 @@ export default (strapi:any) => {
             defaultMessage: name,
           },
           name,
-          permissions: [
-            // Uncomment to set the permissions of the plugin here
-            // {
-            //   action: '', // the action name should be plugins::plugin-name.actionType
-            //   subject: null,
-            // },
-          ],
+          permissions: pluginPermissions.main
         },
       ],
     },

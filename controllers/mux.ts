@@ -3,7 +3,7 @@ import Mux from '@mux/mux-node';
 import { Context } from 'koa';
 
 import { getConfig } from '../services/mux';
-import pluginId from '../admin/src/pluginId';
+import pluginId from './../admin/src/pluginId';
 
 const { Webhooks } = Mux;
 
@@ -71,23 +71,40 @@ const submitRemoteUpload = async (ctx:Context) => {
 
 const muxWebhookHandler = async (ctx:Context) => {
   const body = ctx.request.body;
-  const sig = ctx.request.headers['mux-signature'];
+  const sigHttpHeader = ctx.request.headers['mux-signature'];
 
   const config = await getConfig('general');
 
-  if(sig === undefined || sig === '') {
+  if(sigHttpHeader === undefined || sigHttpHeader === '' || (Array.isArray(sigHttpHeader) && sigHttpHeader.length < 0)) {
     ctx.throw(401, 'Webhook signature is missing');
   }
-
-  let isSigValid;
   
-  try {
-    isSigValid = Webhooks.verifyHeader(JSON.stringify(body), sig, config.webhook_signing_secret);
-  } catch(err) {
-    ctx.throw(403, err);
-
-    return;
+  if(Array.isArray(sigHttpHeader) && sigHttpHeader.length > 1) {
+    ctx.throw(401, 'we have an unexpected amount of signatures');
   }
+
+  let sig;
+
+  if(Array.isArray(sigHttpHeader)){
+    sig = sigHttpHeader[0];
+  }
+  else{
+    sig = sigHttpHeader;
+  }
+
+  // TODO: Currently commented out because we should be using the raw request body for verfiying
+  // Webhook signatures, NOT JSON.stringify.  Strapi does not currently allow for access to the
+  // Koa.js request (the middleware used for parsing requests).
+
+  // let isSigValid;
+  
+  // try {
+  //   isSigValid = Webhooks.verifyHeader(JSON.stringify(body), sig, config.webhook_signing_secret);
+  // } catch(err) {
+  //   ctx.throw(403, err);
+
+  //   return;
+  // }
 
   const { type, data } = body;
 

@@ -2,7 +2,7 @@
 import { sanitizeEntity, parseMultipartData } from 'strapi-utils';
 import { Context } from 'koa';
 
-import pluginId from '../admin/src/pluginId';
+import pluginId from './../admin/src/pluginId';
 
 const model = `plugins::${pluginId}.mux-asset`;
 
