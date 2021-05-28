@@ -1,4 +1,4 @@
-# Strapi plugin mux
+# Mux Video Uploader
 
 ## Summary
 
@@ -25,7 +25,7 @@ yarn add strapi-plugin-mux-video-uploader
 - A [Mux](https://mux.com) account
 - You will need both the **Access Token** and **Secret Key** scoped with "Full Access" permissions which can be created in the [Mux Dashboard](https://dashboard.mux.com/settings/access-tokens)
 - The **Webhook Signing Secret** which can be created in the [Mux Dashboard](https://dashboard.mux.com/settings/webhooks) (See the [Webhooks](#Webhooks) section for more info)
-- Tested with [Strapi](https://strapi.io/) v3.3.3 Community Edition
+- Tested with [Strapi](https://strapi.io/) v3.6.2 Community Edition
 
 ### Webhooks
 
