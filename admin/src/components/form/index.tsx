@@ -87,7 +87,7 @@ const Form:React.ForwardRefRenderFunction<FormHandles, Props> = (props, ref) => 
           name='upload-file'
           onChange={({ target: { files }}) => files && setFile(files[0])}
           type="file"
-          accept="video/*"
+          accept="audio/*,video/*"
         />
         <InputErrors errors={urlErrs} />
       </div>);
