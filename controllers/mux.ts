@@ -49,11 +49,9 @@ const submitRemoteUpload = async (ctx:Context) => {
     return;
   }
 
-  // @ts-ignore
-  const result = await axios({
-    url: 'https://api.mux.com/video/v1/assets',
+  const result = await axios('https://api.mux.com/video/v1/assets', {
     method: "post",
-    validateStatus: false,
+    validateStatus: () => false,
     auth: {
       username: config.access_token,
       password: config.secret_key
@@ -67,6 +65,34 @@ const submitRemoteUpload = async (ctx:Context) => {
   const response = await strapi.entityService.create({ data }, { model });
 
   ctx.send(response);
+};
+
+const deleteMuxAsset = async (ctx:Context) => {
+  const data = ctx.request.body;
+
+  if(!data.id) {
+    ctx.badRequest("ValidationError", { errors: { "id": ["id needs to be defined"]}});
+
+    return;
+  }
+
+  strapi.entityService.delete({ id: data.id }, { model });
+  
+  const config = await getConfig('general');
+
+  const result = await axios(`https://api.mux.com/video/v1/assets/${data.id}`, {
+    method: "delete",
+    auth: {
+      username: config.access_token,
+      password: config.secret_key
+    },
+    headers: { 'Content-Type': 'application/json' }
+  });
+
+  ctx.send({
+    strapi: result,
+    mux: result.status === 204
+  });
 };
 
 const muxWebhookHandler = async (ctx:Context) => {
@@ -123,6 +149,14 @@ const muxWebhookHandler = async (ctx:Context) => {
         isReady: true
       }
     };
+  } else if(type === 'video.asset.errored') {
+    payload = {
+      params: { upload_id: data.upload_id },
+      data: {
+        asset_id: data.id,
+        error_message: `${data.errors.type}: ${data.errors.messages[0] || ''}`
+      }
+    };
   } else {
     ctx.send('ignored');
 
@@ -138,5 +172,6 @@ export {
   index,
   submitDirectUpload,
   submitRemoteUpload,
+  deleteMuxAsset,
   muxWebhookHandler
 };
