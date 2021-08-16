@@ -7,3 +7,8 @@ export interface SearchVector {
   field: SearchField;
   value: any;
 }
+
+export interface SortVector {
+  field: string;
+  desc: boolean;
+}

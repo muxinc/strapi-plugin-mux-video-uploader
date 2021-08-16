@@ -10,7 +10,7 @@ import { getIsConfigured, getMuxAssets } from '../../services/strapi';
 import Layout from '../Layout';
 import AssetGrid from '../../components/asset-grid';
 import { GetMuxAssetsResponse, MuxAsset } from '../../../../models/mux-asset';
-import { SearchField, SearchVector } from '../../services/strapi/types';
+import { SearchField, SearchVector, SortVector } from '../../services/strapi/types';
 import ModalDetails from '../../components/modal-details';
 import usePrevious from '../../utils/use-previous';
 import ModalNewUpload from '../../components/modal-new-upload';
@@ -93,9 +93,11 @@ const HomePage = () => {
       };
     }
 
+    const sortVector:SortVector = { field: 'created_at', desc: true };
+
     const start = pageStart * pageLimit;
 
-    const data = await getMuxAssets(searchVector, start, pageLimit);
+    const data = await getMuxAssets(searchVector, sortVector, start, pageLimit);
     
     setMuxAssets(data);
   }
@@ -148,9 +150,9 @@ const HomePage = () => {
   
   const handleOnMuxAssetClick = (muxAsset:MuxAsset) => setSelectedAsset(muxAsset);
 
-  const handleOnDetailsClose = (updatedMuxAsset:MuxAsset) => {
+  const handleOnDetailsClose = (refresh?:boolean) => {
     setSelectedAsset(undefined);
-    if(!updatedMuxAsset) return;
+    if(!refresh) return;
     loadMuxAssets();
   }
 
