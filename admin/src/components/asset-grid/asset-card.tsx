@@ -61,7 +61,11 @@ const AssetCard = (props:Props) => {
     }
   }, [muxAsset]);
 
-  const thumbnailImageUrl = generateImageUrl(muxAsset.playback_id);
+  const thumbnailImageUrl = muxAsset.playback_id !== null ? 
+    // If we have a playback_id, construct a thumnail url
+    generateImageUrl(muxAsset.playback_id) :
+    // Else, we use a transparent single-pixel png data uri
+    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
 
   const handleOnClick = () => {
     onClick(muxAsset);
