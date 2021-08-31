@@ -53,7 +53,20 @@ const HomePage = () => {
     try {
       result = await submitUpload(title, uploadMethod, media);
     } catch(error) {
-      setUploadError(error);
+      switch(typeof error) {
+        case 'string': {
+          setUploadError(error);
+          break;
+        }
+        case 'object': {
+          setUploadError((error as Error).message);
+          break;
+        }
+        default: {
+          setUploadError('Unknown error encountered');
+          break;
+        }
+      }
 
       return;
     }
