@@ -174,8 +174,21 @@ const ModalNewUpload = (props:Props) => {
     
     try {
       result = await submitUpload(state.title, activeTab, media);
-    } catch(error:any) {
-      setUploadError(error);
+    } catch(err) {
+      switch(typeof err) {
+        case 'string': {
+          setUploadError(err);
+          break;
+        }
+        case 'object': {
+          setUploadError((err as Error).message);
+          break;
+        }
+        default: {
+          setUploadError('Unknown error encountered');
+          break;
+        }
+      }
 
       return;
     }
