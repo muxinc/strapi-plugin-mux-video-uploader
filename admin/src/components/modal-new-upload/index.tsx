@@ -174,7 +174,7 @@ const ModalNewUpload = (props:Props) => {
     
     try {
       result = await submitUpload(state.title, activeTab, media);
-    } catch(error) {
+    } catch(error:any) {
       setUploadError(error);
 
       return;
