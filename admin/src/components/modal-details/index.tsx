@@ -91,7 +91,7 @@ const ModalDetails = (props:Props) => {
 
   const handleValidate = (values:FormProps) => {
     const errors:FormikErrors<FormProps> = {};
-    if (values.title) {
+    if (!values.title) {
       errors.title = 'Required';
     }
     return errors;
@@ -100,7 +100,7 @@ const ModalDetails = (props:Props) => {
   const handleOnSubmit = async (values:FormProps, actions:FormikHelpers<FormProps>) => {
     if(Object.keys(touchedFields).length > 0) {
       const data:any = { id: muxAsset.id };
-      
+
       if(touchedFields.title) {
         data.title = values.title;
       }
