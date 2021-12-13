@@ -98,7 +98,7 @@ const HomePage = () => {
     const start = pageStart * pageLimit;
 
     const data = await getMuxAssets(searchVector, sortVector, start, pageLimit);
-    
+
     setMuxAssets(data);
   }
 
