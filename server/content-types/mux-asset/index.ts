@@ -1,8 +1,11 @@
-{
+export = {
   "kind": "collectionType",
   "collectionName": "muxassets",
   "info": {
-    "name": "MuxAsset"
+    "name": "mux-asset",
+    "displayName": "Mux Asset",
+    "singularName": "mux-asset",
+    "pluralName": "mux-assets"
   },
   "pluginOptions": {
     "content-manager": {
@@ -47,4 +50,4 @@
       "required": false
     }
   }
-}
+};

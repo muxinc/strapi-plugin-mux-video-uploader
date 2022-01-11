@@ -1,48 +1,49 @@
 import React from 'react';
 import { Button, Flex, InputText } from '@buffetjs/core';
-import { CheckPagePermissions, Label } from 'strapi-helper-plugin';
+import { CheckPagePermissions, Label } from '@strapi/helper-plugin';
+import { Main } from '@strapi/design-system';
 import styled from 'styled-components';
 
 import Well from './../../components/well';
 import { setMuxSettings } from '../../services/strapi';
 import pluginPermissions from './../../permissions';
 
-const ContainerStyled = styled.div`
-  &> * {
-    margin-bottom: 30px;
-  }
-`;
-
-const H1Styled = styled.h1`
-  margin: 5px 0 0 0;
-`;
-
-const SubHeadingStyled = styled.span`
-  color: #787E8F;
-  font-size: 1.3rem;
-`;
-
-const ButtonWrapperStyled = styled.div`
-  &> * {
-    margin-left: 15px;
-  }
-`;
-
-const ShortRowStyled = styled.div`
-  display: grid;
-  width: 100%;
-  grid-template-columns: 40% auto;
-  grid-gap: 1rem;
-  padding-bottom: 3rem;
-`;
-
-const LongRowStyled = styled.div`
-  display: grid;
-  width: 100%;
-  grid-template-columns: 65% auto;
-  grid-gap: 1rem;
-  padding-bottom: 3rem;
-`;
+// const ContainerStyled = styled.div`
+//   &> * {
+//     margin-bottom: 30px;
+//   }
+// `;
+// 
+// const H1Styled = styled.h1`
+//   margin: 5px 0 0 0;
+// `;
+// 
+// const SubHeadingStyled = styled.span`
+//   color: #787E8F;
+//   font-size: 1.3rem;
+// `;
+// 
+// const ButtonWrapperStyled = styled.div`
+//   &> * {
+//     margin-left: 15px;
+//   }
+// `;
+// 
+// const ShortRowStyled = styled.div`
+//   display: grid;
+//   width: 100%;
+//   grid-template-columns: 40% auto;
+//   grid-gap: 1rem;
+//   padding-bottom: 3rem;
+// `;
+// 
+// const LongRowStyled = styled.div`
+//   display: grid;
+//   width: 100%;
+//   grid-template-columns: 65% auto;
+//   grid-gap: 1rem;
+//   padding-bottom: 3rem;
+// `;
 
 const Settings = () => {
   const [cancelDisabled, setCancelDisabled] = React.useState(true);
@@ -91,11 +92,10 @@ const Settings = () => {
   }, []);
 
   return (
-    <>
-      <CheckPagePermissions 
-        permissions={pluginPermissions.settings}
-      >
-        <ContainerStyled>
+    <CheckPagePermissions permissions={pluginPermissions.accessRoles}>
+      <Main>
+        <span>test</span>
+        {/* <ContainerStyled>
           <Flex alignItems='center' justifyContent='space-between'>
             <div>
               <H1Styled>Settings</H1Styled>
@@ -152,9 +152,9 @@ const Settings = () => {
               </ShortRowStyled>
             </Well>
           </Flex>
-        </ContainerStyled>
-      </CheckPagePermissions>
-    </>
+        </ContainerStyled> */}
+      </Main>
+    </CheckPagePermissions>
   );
 };
 

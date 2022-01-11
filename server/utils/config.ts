@@ -1,23 +1,17 @@
 import _ from 'lodash';
 
-const NAME = 'mux';
-const CONFIG_KEY = 'config';
-
-const getStore = () => strapi.store({
-  environment: strapi.config.environment,
-  type: 'plugin',
-  name: NAME,
-});
+import { CONFIG_KEY, CONFIG_NAME } from './../constants';
+import { getCoreStore } from './';
 
 function configKey(key:string) { return `${CONFIG_KEY}_${key}` };
 
 const deleteConfig = (key:string) => strapi.query('core_store').delete(
-  { key: `plugin_${NAME}_${CONFIG_KEY}_${key}` });
+  { key: `plugin_${CONFIG_NAME}_${CONFIG_KEY}_${key}` });
 
-const getConfig = async (key:string) => (await getStore().get({ key: configKey(key) })) || {};
+const getConfig = async (key:string) => (await getCoreStore().get({ key: configKey(key) })) || {};
 
 const setConfig = async (key:string, value:any) => {
-  const storedConfig = (await getStore().get({ key: configKey(key) })) || {};
+  const storedConfig = (await getCoreStore().get({ key: configKey(key) })) || {};
 
   const currentConfig = { ...storedConfig };
   
@@ -28,7 +22,7 @@ const setConfig = async (key:string, value:any) => {
   });
 
   if (!_.isEqual(currentConfig, storedConfig)) { 
-    getStore().set({
+    getCoreStore().set({
       key: configKey(key),
       value: currentConfig,
     });
@@ -38,7 +32,7 @@ const setConfig = async (key:string, value:any) => {
 
   return false;
 };
-
+  
 export {
   deleteConfig,
   getConfig,
