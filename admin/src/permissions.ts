@@ -5,8 +5,11 @@ const pluginPermissions = {
   // If the plugin link should be displayed in the menu
   // And also if the plugin is accessible. This use case is found when a user types the url of the
   // plugin directly in the browser
-  settings: [{ action: `plugins::${pluginId}.settings.write`, subject: null }],
-  main: [{ action: `plugins::${pluginId}.read`, subject: null }]
+  accessRoles: [
+    { action: `plugin::${pluginId}.settings.write`, subject: null },
+    { action: `plugin::${pluginId}.settings.read`, subject: null }
+  ],
+  main: [{ action: `plugin::${pluginId}.read`, subject: null }]
 };
 
 export default pluginPermissions;

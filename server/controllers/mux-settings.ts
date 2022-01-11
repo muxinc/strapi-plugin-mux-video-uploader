@@ -1,10 +1,10 @@
 import { pick, isEmpty } from 'lodash';
 import { Context } from 'koa';
 
-import { setConfig, getConfig, deleteConfig } from "../services/strapi";
+import { Config } from "../utils";
 
 const isConfiged = async (ctx:Context) => {
-  const config = await getConfig('general');
+  const config = await Config.getConfig('general');
 
   if(!config.access_token) ctx.send(false);
   else if(!config.secret_key) ctx.send(false);
@@ -13,7 +13,7 @@ const isConfiged = async (ctx:Context) => {
 };
 
 const clearConfig = async (ctx:Context) => {
-  await deleteConfig('general');
+  await Config.deleteConfig('general');
 
   ctx.send({ message: 'ok' });
 };
@@ -24,7 +24,7 @@ const saveConfig = async (ctx:Context) => {
   let successful = false;
 
   if(!isEmpty(config)) {
-    successful = await setConfig('general', config);
+    successful = await Config.setConfig('general', config);
   }
 
   if(isEmpty(config) || !successful) {
@@ -34,7 +34,7 @@ const saveConfig = async (ctx:Context) => {
   }
 };
 
-export {
+export = {
   isConfiged,
   clearConfig,
   saveConfig

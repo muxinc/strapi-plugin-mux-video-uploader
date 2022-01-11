@@ -1,3 +1,4 @@
+
 export interface MuxAsset extends MuxAssetUpdate {
   upload_id: string;
   asset_id: string | null;

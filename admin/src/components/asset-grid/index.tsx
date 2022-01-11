@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import { MuxAsset } from '../../../../models/mux-asset';
+import { MuxAsset } from '../../../../types';
 import AssetCard from './asset-card';
 
 const Container = styled.div`

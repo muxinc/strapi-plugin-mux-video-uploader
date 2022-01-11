@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { DateTime } from 'luxon';
 
-import { MuxAsset } from '../../../../models/mux-asset';
+import { MuxAsset } from '../../../../types';
 
 const Container = styled.div`
   display: flex;

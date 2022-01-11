@@ -1,21 +1,19 @@
-import axios from 'axios';
 import Mux from '@mux/mux-node';
 import { Context } from 'koa';
 
-import { createAsset, deleteAsset, getAssetIdByUploadId, getDirectUploadUrl } from '../services/mux';
-import { getConfig } from '../services/strapi';
-import pluginId from './../admin/src/pluginId';
+import { getService, Config } from '../utils';
+import pluginId from './../../admin/src/pluginId';
 
 const { Webhooks } = Mux;
 
-const model = `plugins::${pluginId}.mux-asset`;
+const model = `plugin::${pluginId}.mux-asset`;
 
 const index = async (ctx:Context) => ctx.send({ message: 'ok' });
 
 const submitDirectUpload = async (ctx:Context) => {
   const data = ctx.request.body;
 
-  const result = await getDirectUploadUrl(ctx.request.header.origin);
+  const result = await getService('mux').getDirectUploadUrl(ctx.request.header.origin);
 
   data.upload_id = result.id;
 
@@ -33,7 +31,7 @@ const submitRemoteUpload = async (ctx:Context) => {
     return;
   }
 
-  const result = await createAsset(data.url);
+  const result = await getService('mux').createAsset(data.url);
 
   data.asset_id = result.id;
 
@@ -56,9 +54,9 @@ const deleteMuxAsset = async (ctx:Context) => {
   const result = { success: true, deletedOnMux: false };
 
   if(data.delete_on_mux === "true") {
-    const assetId = data.asset_id !== '' ? data.asset_id : await getAssetIdByUploadId(data.upload_id);
+    const assetId = data.asset_id !== '' ? data.asset_id : await getService('mux').getAssetIdByUploadId(data.upload_id);
 
-    const deletedOnMux = await deleteAsset(assetId);
+    const deletedOnMux = await getService('mux').deleteAsset(assetId);
 
     result.deletedOnMux = deletedOnMux;
   }
@@ -70,7 +68,7 @@ const muxWebhookHandler = async (ctx:Context) => {
   const body = ctx.request.body;
   const sigHttpHeader = ctx.request.headers['mux-signature'];
 
-  const config = await getConfig('general');
+  const config = await Config.getConfig('general');
 
   if(sigHttpHeader === undefined || sigHttpHeader === '' || (Array.isArray(sigHttpHeader) && sigHttpHeader.length < 0)) {
     ctx.throw(401, 'Webhook signature is missing');
@@ -139,7 +137,7 @@ const muxWebhookHandler = async (ctx:Context) => {
   ctx.send(result);
 };
 
-export {
+export = {
   index,
   submitDirectUpload,
   submitRemoteUpload,

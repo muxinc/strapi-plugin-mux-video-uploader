@@ -16,7 +16,7 @@ import {
   TabsPanel,
   TabPanel,
   Tabs
-} from 'strapi-helper-plugin';
+} from '@strapi/helper-plugin';
 
 import { submitUpload } from '../../services/strapi';
 import Uploaded from './uploaded';
@@ -31,10 +31,10 @@ const ModalContainer = styled.div`
   }
 `;
 
-const HeaderTitle = styled(HeaderModalTitle)`
-  text-transform: none;
-  align-items: center;
-`;
+// const HeaderTitle = styled(HeaderModalTitle)`
+//   text-transform: none;
+//   align-items: center;
+// `;
 
 const BodyWrapper = styled.div`
   margin: 0 15px;
@@ -323,28 +323,29 @@ const ModalNewUpload = (props:Props) => {
   };
 
   return (
-    <ModalContainer>
-      {/* Extends reactstrap's Modal options: https://getbootstrap.com/docs/4.0/components/modal/#options */}
-      <Modal isOpen={isOpen} onToggle={closeXHandler} backdrop='static' keyboard={false}>
-        <HeaderModal>
-          <section>
-            <HeaderTitle>New upload</HeaderTitle>
-          </section>
-        </HeaderModal>
-        <form onSubmit={handleOnSubmit}>
-          <ModalForm>
-            <ModalBody>
-              <BodyWrapper>
-                {renderBody()}
-              </BodyWrapper>
-            </ModalBody>
-          </ModalForm>
-          <ModalFooter>
-            {renderFooter()}
-          </ModalFooter>
-        </form>
-      </Modal>
-    </ModalContainer>
+    <>
+      {/* <ModalContainer>
+        <Modal isOpen={isOpen} onToggle={closeXHandler} backdrop='static' keyboard={false}>
+          <HeaderModal>
+            <section>
+              <HeaderTitle>New upload</HeaderTitle>
+            </section>
+          </HeaderModal>
+          <form onSubmit={handleOnSubmit}>
+            <ModalForm>
+              <ModalBody>
+                <BodyWrapper>
+                  {renderBody()}
+                </BodyWrapper>
+              </ModalBody>
+            </ModalForm>
+            <ModalFooter>
+              {renderFooter()}
+            </ModalFooter>
+          </form>
+        </Modal>
+      </ModalContainer> */}
+    </>
   )
 }
 

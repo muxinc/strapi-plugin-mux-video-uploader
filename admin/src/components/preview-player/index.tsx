@@ -1,7 +1,7 @@
 import React from 'react';
 import videojs from '@mux/videojs-kit';
 
-import { MuxAsset } from '../../../../models/mux-asset';
+import { MuxAsset } from '../../../../types';
 
 import '@mux/videojs-kit/dist/index.css';  
 

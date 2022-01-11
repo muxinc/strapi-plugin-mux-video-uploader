@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { Label, InputErrors } from 'strapi-helper-plugin';
+import { Label, InputErrors } from '@strapi/helper-plugin';
 import { Enumeration, InputText } from '@buffetjs/core';
 
 import { UploadMethod } from './types';

@@ -1,19 +1,20 @@
 import React from 'react';
 import { Button, InputText, Select } from '@buffetjs/core';
-import { GlobalPagination } from 'strapi-helper-plugin';
+import { CheckPagePermissions, GlobalPagination } from '@strapi/helper-plugin';
 import styled from 'styled-components';
 import { DebouncedFunc } from 'lodash';
 import debounce from 'lodash.debounce';
 
+import { GetMuxAssetsResponse, MuxAsset } from '../../../../types';
 import SetupNeeded from '../../components/setup-needed';
 import { getIsConfigured, getMuxAssets } from '../../services/strapi';
 import Layout from '../Layout';
 import AssetGrid from '../../components/asset-grid';
-import { GetMuxAssetsResponse, MuxAsset } from '../../../../models/mux-asset';
 import { SearchField, SearchVector, SortVector } from '../../services/strapi/types';
 import ModalDetails from '../../components/modal-details';
 import usePrevious from '../../utils/use-previous';
 import ModalNewUpload from '../../components/modal-new-upload';
+import pluginPermissions from '../../permissions';
 
 const SEARCH_FIELDS = [{ 
   label: 'By Title',
@@ -172,43 +173,45 @@ const HomePage = () => {
   if(!isReady) return <SetupNeeded />;
 
   return (
-    <Layout>
-      <div>
-        <ControlsContainer>
-          <SearchContainer>
-            <Select
-              options={SEARCH_FIELDS}
-              value={searchField}
-              onChange={handleOnSearchFieldChange}
-            />
-            <InputText
-              placeholder="Search text"
-              type="text"
-              value={searchValue}
-              onChange={handleOnSearchValueChange}
-            />
-          </SearchContainer>
-          <NewUploadButtonContainer>
-            <Button color="primary" label="New Upload" onClick={handleOnNewUploadClick} />
-          </NewUploadButtonContainer>
-        </ControlsContainer>
-        <AssetGrid muxAssets={muxAssets?.items} onMuxAssetClick={handleOnMuxAssetClick} />
-        <GlobalPagination
-          count={muxAssets?.totalCount}
-          params={{_page: pageStart + 1, _limit: pageLimit}}
-          onChangeParams={handleOnPaginateChange}
-        />
-        <ModalDetails 
-          isOpen={selectedAsset !== undefined}
-          muxAsset={selectedAsset}
-          onToggle={handleOnDetailsClose}
-        />
-        <ModalNewUpload
-          isOpen={isNewUploadOpen}
-          onToggle={handleOnNewUploadClose}
-        />
-      </div>
-    </Layout>
+    <CheckPagePermissions permissions={pluginPermissions.main}>
+      <Layout>
+        <div>
+          <ControlsContainer>
+            <SearchContainer>
+              <Select
+                options={SEARCH_FIELDS}
+                value={searchField}
+                onChange={handleOnSearchFieldChange}
+              />
+              <InputText
+                placeholder="Search text"
+                type="text"
+                value={searchValue}
+                onChange={handleOnSearchValueChange}
+              />
+            </SearchContainer>
+            <NewUploadButtonContainer>
+              <Button color="primary" label="New Upload" onClick={handleOnNewUploadClick} />
+            </NewUploadButtonContainer>
+          </ControlsContainer>
+          <AssetGrid muxAssets={muxAssets?.items} onMuxAssetClick={handleOnMuxAssetClick} />
+          <GlobalPagination
+            count={muxAssets?.totalCount}
+            params={{_page: pageStart + 1, _limit: pageLimit}}
+            onChangeParams={handleOnPaginateChange}
+          />
+          <ModalDetails 
+            isOpen={selectedAsset !== undefined}
+            muxAsset={selectedAsset}
+            onToggle={handleOnDetailsClose}
+          />
+          <ModalNewUpload
+            isOpen={isNewUploadOpen}
+            onToggle={handleOnNewUploadClose}
+          />
+        </div>
+      </Layout>
+    </CheckPagePermissions>
   );
 };
 

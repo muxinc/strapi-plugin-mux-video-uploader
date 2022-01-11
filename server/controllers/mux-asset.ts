@@ -1,10 +1,9 @@
-// @ts-ignore
-import { sanitizeEntity, parseMultipartData } from 'strapi-utils';
+import { sanitizeEntity, parseMultipartData } from '@strapi/utils';
 import { Context } from 'koa';
 
-import pluginId from './../admin/src/pluginId';
+import pluginId from './../../admin/src/pluginId';
 
-const model = `plugins::${pluginId}.mux-asset`;
+const model = `plugin::${pluginId}.mux-asset`;
 
 const search = (ctx:Context) => {
   if (ctx.query._q) {
@@ -86,7 +85,7 @@ const del = async (ctx:Context) => {
   return sanitizeEntity(entity, {model: { options: {}, attributes:[]}});
 };
 
-export {
+export = {
   index,
   find,
   findOne,

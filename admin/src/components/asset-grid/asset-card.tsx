@@ -1,11 +1,10 @@
 import React from 'react';
 import { Text } from '@buffetjs/core';
 import { LoadingIndicator } from '@buffetjs/styles';
-
 import styled from 'styled-components';
-import { MuxAsset } from '../../../../models/mux-asset';
-import { generateImageUrl } from '../../utils/mux';
 
+import { MuxAsset } from '../../../../types';
+import { generateImageUrl } from '../../utils/mux';
 import errorIcon from './../../static/error-icon.svg';
 
 const ContainerStyled = styled.div`

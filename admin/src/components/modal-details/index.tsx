@@ -2,19 +2,19 @@ import React from 'react';
 import { Button, InputText, Padded, Toggle } from '@buffetjs/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrashAlt } from '@fortawesome/free-solid-svg-icons';
-import { HeaderModal, HeaderModalTitle, Label, Modal, ModalBody, ModalForm, ModalFooter, PopUpWarning } from 'strapi-helper-plugin';
+import { ModalLayout, ModalBody, ModalHeader, ModalFooter } from '@strapi/design-system/ModalLayout';
 import styled from 'styled-components';
-import { Formik, Form, FormikErrors, FormikHelpers, ErrorMessage, Field, FieldProps, FormikTouched } from 'formik';
+import { Formik, FormikErrors, FormikHelpers, ErrorMessage, Field, FieldProps, FormikTouched } from 'formik';
 
-import { MuxAsset } from '../../../../models/mux-asset';
+import { MuxAsset } from '../../../../types';
 import PreviewPlayer from '../preview-player';
 import Summary from './summary';
 import { deleteMuxAsset, setMuxAsset } from '../../services/strapi';
 
-const HeaderTitle = styled(HeaderModalTitle)`
-  text-transform: none;
-  align-items: center;
-`;
+// const HeaderTitle = styled(HeaderModalTitle)`
+//   text-transform: none;
+//   align-items: center;
+// `;
 
 const BodyWrapper = styled.div`
   display: flex;
@@ -117,9 +117,11 @@ const ModalDetails = (props:Props) => {
     onToggle(true);
   };
 
+  if (!isOpen) return null;
+
   return (
     <>
-      <Modal isOpen={isOpen} onToggle={onToggle}>
+      {/* <ModalLayout isOpen={isOpen} onToggle={onToggle}>
         <HeaderModal onToggle={onToggle}>
           <section>
             <HeaderTitle>Details</HeaderTitle>
@@ -201,7 +203,7 @@ const ModalDetails = (props:Props) => {
             </form>
           )}
         </Formik>
-      </Modal>
+      </ModalLayout>
       <PopUpWarning
         isOpen={showDeleteWarning}
         toggleModal={toggleDeleteWarning}
@@ -212,7 +214,7 @@ const ModalDetails = (props:Props) => {
         popUpWarningType="danger"
         isConfirmButtonLoading={isProcessing}
         onConfirm={handleOnDeleteConfirm}
-      />
+      /> */}
     </>
   )
 }
