@@ -1,15 +1,9 @@
 import React from 'react';
-import styled from 'styled-components';
+import { Box } from '@strapi/design-system/Box';
+import { Grid, GridItem } from '@strapi/design-system/Grid';
 
 import { MuxAsset } from '../../../../types';
 import AssetCard from './asset-card';
-
-const Container = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  grid-gap: 30px;
-  align-items: start;
-`;
 
 interface DefaultProps {
   onMuxAssetClick: (muxAsset:MuxAsset) => void;
@@ -24,12 +18,18 @@ const AssetGrid = (props:Props) => {
 
   if(muxAssets === undefined) return null;
 
-  const assets = muxAssets.map((muxAsset) => <AssetCard muxAsset={muxAsset} onClick={onMuxAssetClick} />);
-  
+  const assets = muxAssets.map((muxAsset) =>
+    <GridItem col={3} xs={12}>
+      <AssetCard muxAsset={muxAsset} onClick={onMuxAssetClick} />
+    </GridItem>
+  );
+
   return (
-    <Container>
-      {assets}
-    </Container>
+    <Box paddingTop={5}>
+      <Grid gap={4}>
+        {assets}
+      </Grid>
+    </Box>
   );
 };
 

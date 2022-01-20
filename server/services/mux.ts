@@ -2,6 +2,17 @@ import axios from 'axios';
 
 import { Config } from "./../utils";
 
+export interface UploadInfo {
+  id: string
+}
+
+export interface MuxService {
+  getAssetIdByUploadId: (uploadId: string) => Promise<string>;
+  getDirectUploadUrl: (corsOrigin?: string) => Promise<UploadInfo>;
+  createAsset: (url: string) => Promise<any>;
+  deleteAsset: (assetId: string) => Promise<boolean>;
+} 
+
 export default ({ strapi }: { strapi: any }) => ({
   async getAssetIdByUploadId(uploadId:string) {
     const config = await Config.getConfig('general');

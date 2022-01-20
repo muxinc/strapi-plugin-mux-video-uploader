@@ -1,34 +1,11 @@
 import React from 'react';
-import styled from 'styled-components';
 import { DateTime } from 'luxon';
+import { Box } from '@strapi/design-system/Box';
+import { Grid, GridItem } from '@strapi/design-system/Grid';
+import { Stack } from '@strapi/design-system/Stack';
+import { Typography } from '@strapi/design-system/Typography';
 
 import { MuxAsset } from '../../../../types';
-
-const Container = styled.div`
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  padding: 7px 16px;
-  background-color: #FAFAFA;
-  color #9EA7B8;
-
-  & > section {
-    padding: 9px 0;
-  }
-`;
-
-const Label = styled.div`
-  font-weight: bold;
-`;
-
-const DoubleSection = styled.section`
-  display: flex;
-  flex: 1;
-
-  & > div {
-    flex: 1;
-  }
-`;
 
 interface Props {
   muxAsset?: MuxAsset;
@@ -43,30 +20,48 @@ const Summary = (props:Props) => {
   const updated = DateTime.fromISO(muxAsset.updated_at).toFormat('yyyy-MM-dd HH:mm:ss');
 
   return (
-    <Container>
-      <section>
-        <Label>Asset Id</Label>
-        <span>{muxAsset.asset_id}</span>
-      </section>
-      <section>
-        <Label>Upload Id</Label>
-        <span>{muxAsset.upload_id}</span>
-      </section>
-      <section>
-        <Label>Playback Id</Label>
-        <span>{muxAsset.playback_id}</span>
-      </section>
-      <DoubleSection>
-        <div>
-          <Label>Created</Label>
-          <span>{created}</span>
-        </div>
-        <div>
-          <Label>Updated</Label>
-          <span>{updated}</span>
-        </div>
-      </DoubleSection>
-    </Container>
+    <Box padding={3} background="neutral150">
+      <Stack>
+        <Box paddingBottom={4}>
+          <Stack>
+            <Typography variant="pi" fontWeight="bold">Asset Id</Typography>
+            <Typography variant="pi">{muxAsset.asset_id}</Typography>
+          </Stack>
+        </Box>
+        <Box paddingBottom={4}>
+          <Stack>
+            <Typography variant="pi" fontWeight="bold">Upload Id</Typography>
+            <Typography variant="pi">{muxAsset.upload_id}</Typography>
+          </Stack>
+        </Box>
+        <Box paddingBottom={4}>
+          <Stack>
+            <Typography variant="pi" fontWeight="bold">Playback Id</Typography>
+            <Typography variant="pi">{muxAsset.playback_id}</Typography>
+          </Stack>
+        </Box>
+        <Box>
+          <Grid gap={4}>
+            <GridItem col={6} s={12}>
+              <Box>
+                <Stack>
+                  <Typography variant="pi" fontWeight="bold">Created</Typography>
+                  <Typography variant="pi">{created}</Typography>
+                </Stack>
+              </Box>
+            </GridItem>
+            <GridItem col={6} s={12}>
+              <Box>
+                <Stack>
+                  <Typography variant="pi" fontWeight="bold">Updated</Typography>
+                  <Typography variant="pi">{updated}</Typography>
+                </Stack>
+              </Box>
+            </GridItem>
+          </Grid>
+        </Box>
+      </Stack>
+    </Box>
   );
 };
 

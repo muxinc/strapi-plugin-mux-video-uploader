@@ -1,7 +1,6 @@
 import pluginId from './../admin/src/pluginId';
 
 export = async ({ strapi }: { strapi: any }) => {
-  console.log('bootstrapping');
   const actions = [
     // App
     {
@@ -20,9 +19,9 @@ export = async ({ strapi }: { strapi: any }) => {
     },
     {
       section: "plugins",
-      displayName: "Write",
+      displayName: "Update",
       subCategory: "settings",
-      uid: "settings.write",
+      uid: "settings.update",
       pluginName: pluginId
     },
   ];

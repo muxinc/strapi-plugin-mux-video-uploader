@@ -1,14 +1,14 @@
 import React from 'react';
-import { Text } from '@buffetjs/core';
-import { LoadingIndicator } from '@buffetjs/styles';
 import styled from 'styled-components';
+import { Box } from '@strapi/design-system/Box';
+import { Loader } from '@strapi/design-system/Loader';
+import { Typography } from '@strapi/design-system/Typography';
 
 import { MuxAsset } from '../../../../types';
 import { generateImageUrl } from '../../utils/mux';
 import errorIcon from './../../static/error-icon.svg';
 
-const ContainerStyled = styled.div`
-  margin-bottom: 16px;
+const BoxStyled = styled(Box)`
   cursor: pointer;
 `;
 
@@ -22,7 +22,7 @@ interface BackdropProps {
 
 const BackdropStyled = styled.div<BackdropProps>`
   aspect-ratio: 16 / 9;
-  background-color: #333740;
+  background-color: ${({ theme }) => theme.colors.neutral800};
   background-image: url(${props => props.imageUrl});
   background-repeat: no-repeat;
   background-size: cover;
@@ -56,7 +56,7 @@ const AssetCard = (props:Props) => {
     if(muxAsset.error_message !== null) {
       return (<img src={errorIcon} />);
     } else if(isLoading) {
-      return (<LoadingIndicator />);
+      return (<Loader small color="neutral0">Loading</Loader>);
     }
   }, [muxAsset]);
 
@@ -66,7 +66,7 @@ const AssetCard = (props:Props) => {
     // Else, we use a transparent single-pixel png data uri
     'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
 
-  const handleOnClick = () => {
+  const handleOnClick = () => { console.log('hi')
     onClick(muxAsset);
   }
 
@@ -74,15 +74,15 @@ const AssetCard = (props:Props) => {
   const errorTitle = isLoading && "Asset encountered an error";
 
   return (
-    <ContainerStyled onClick={handleOnClick} title={errorTitle || loadingTitle || undefined}>
+    <BoxStyled onClick={handleOnClick} title={errorTitle || loadingTitle || undefined}>
       <BackdropContainerStyled>
         <BackdropStyled imageUrl={thumbnailImageUrl} />
         <LoadingIndicatorContainerStyled>
           {renderStatus()}
         </LoadingIndicatorContainerStyled>
       </BackdropContainerStyled>
-      <Text fontSize='md' fontWeight='bold'>{muxAsset.title}</Text>
-    </ContainerStyled>
+      <Typography variant="omega" fontWeight="bold">{muxAsset.title}</Typography>
+    </BoxStyled>
   );
 };
 

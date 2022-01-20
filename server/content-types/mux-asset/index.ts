@@ -3,14 +3,18 @@ export = {
   "collectionName": "muxassets",
   "info": {
     "name": "mux-asset",
+    "description": "Represents a Mux Asset item, including upload and playback details",
     "displayName": "Mux Asset",
     "singularName": "mux-asset",
     "pluralName": "mux-assets"
   },
   "pluginOptions": {
     "content-manager": {
-      "visible": false
-    }
+      "visible": true,
+    },
+    "content-type-builder": {
+      "visible": true,
+    },
   },
   "options": {
     "increments": true,
