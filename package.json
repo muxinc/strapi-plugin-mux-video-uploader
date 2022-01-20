@@ -39,8 +39,6 @@
     "strapi": "^3.6.2"
   },
   "scripts": {
-    "postinstall": "tsc",
-    "build": "tsc",
     "clean": "find . -type f -name '*.js' -delete"
   },
   "author": {

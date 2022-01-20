@@ -9,5 +9,5 @@ package-lock.json
 npm-debug.log
 .idea
 
-*.js
+# *.js
 .env
