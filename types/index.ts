@@ -20,3 +20,11 @@ export interface GetMuxAssetsResponse {
   items: MuxAsset[];
   totalCount: number;
 }
+
+export interface InputTextOnChange {
+  target: { value: string }
+};
+
+export interface InputFileOnChange {
+  target: { files: File[] }
+};

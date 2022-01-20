@@ -1,71 +1,34 @@
 import React from 'react';
 import { createUpload, UpChunk } from '@mux/upchunk';
-import { Button, InputText } from '@buffetjs/core';
-import { InputText as Input, InputWrapper } from '@buffetjs/styles';
-import styled from 'styled-components';
-import {
-  HeaderModal,
-  HeaderModalTitle,
-  Label,
-  Modal,
-  ModalBody,
-  ModalForm,
-  ModalFooter,
-  Tab,
-  TabsNav,
-  TabsPanel,
-  TabPanel,
-  Tabs
-} from '@strapi/helper-plugin';
+import { Formik, FormikErrors, FormikHelpers } from 'formik';
+import { Form } from '@strapi/helper-plugin';
+import { Box } from '@strapi/design-system/Box';
+import { Button } from '@strapi/design-system/Button';
+import { Grid, GridItem } from '@strapi/design-system/Grid';
+import { ModalBody, ModalFooter } from '@strapi/design-system/ModalLayout';
+import { Tabs, Tab, TabGroup, TabPanels, TabPanel } from '@strapi/design-system/Tabs';
+import { TextInput } from '@strapi/design-system/TextInput';
+import { Typography } from '@strapi/design-system/Typography';
 
-import { submitUpload } from '../../services/strapi';
+import { submitUpload, UploadInfo } from '../../services/strapi';
 import Uploaded from './uploaded';
 import Uploading from './uploading';
+import { FileInput } from '../file-input';
+import { ModalBlocking, ModalHeader } from '../modal-blocking';
 
-type TAB_ORIGIN = 'from_computer' | 'from_url';
+interface FormValues {
+  from_computer_title: string;
+  from_url_title: string;
+  file?: File[];
+  url?: string;
+}
 
-const ModalContainer = styled.div`
-  & .modal {
-    background-color: #f00;
-    pointer-events: none;
-  }
-`;
-
-// const HeaderTitle = styled(HeaderModalTitle)`
-//   text-transform: none;
-//   align-items: center;
-// `;
-
-const BodyWrapper = styled.div`
-  margin: 0 15px;
-  width: 100%;
-
-  // The below is done because using Strapi's tab system
-  // will drop any styled-components abstraction.
-  & > div > div:first-child {
-    justify-content: flex-start;
-  }
-
-  & > div > div:first-child > button {
-    margin-right: 20px;
-    margin-left: 0;
-  }
-`;
-
-const InputContainer = styled.fieldset`
-  & > div {
-    margin-bottom: 20px;
-  }
-`;
-
-const TitleInput = styled(InputText)`
-  max-width: 520px;
-`;
-
-const FileInput = styled(Input)`
-  max-width: 430px;
-  padding: 3px;
-`;
+const INITIAL_VALUES: FormValues = {
+  from_computer_title: '',
+  from_url_title: '',
+  file: undefined,
+  url: undefined
+};
 
 interface DefaultProps {
   onToggle: (refresh: boolean) => void;
@@ -75,25 +38,17 @@ interface Props extends DefaultProps{
   isOpen: boolean;
 }
 
-interface FormState {
-  title?: string;
-  file?: File[];
-  url?: string;
-}
-
 const ModalNewUpload = (props:Props) => {
   const { isOpen, onToggle } = props;
 
-  const [activeTab, setActiveTab] = React.useState<TAB_ORIGIN|undefined>();
-  const [state, setState] = React.useState<FormState>({});
+  const [activeTab, setActiveTab] = React.useState<number>(0);
   const [uploadPercent, setUploadPercent] = React.useState<number>();
   const [isComplete, setIsComplete] = React.useState<boolean>(false);
   const [uploadError, setUploadError] = React.useState<string>();
 
   const uploadRef = React.useRef<UpChunk|undefined>();
-  const observerRef = React.useRef<IntersectionObserver|undefined>();
 
-  const uploadFile = (endpoint:string, file:File) => {
+  const uploadFile = (endpoint: string, file: File) => {
     setUploadPercent(0);
     
     uploadRef.current = createUpload({ endpoint, file });
@@ -109,71 +64,63 @@ const ModalNewUpload = (props:Props) => {
   }
 
   const handleOnReset = () => {
-    setActiveTab('from_computer');
-    setState({});
+    setActiveTab(0);
     setUploadPercent(undefined);
     setIsComplete(false);
     setUploadError(undefined);
   }
 
-  React.useEffect(() => {
-    if(isOpen) {
-      observerRef.current = new IntersectionObserver((entries) => {
-        for(let i = 0; i < entries.length; i++) {
-            if(entries[i].isIntersecting !== true) continue;
+  const generateUploadInfo = (body: FormValues): UploadInfo => {
+    const errors: FormikErrors<FormValues> = {};
 
-            if(entries[i].target.id === 'upload-origin-0-tabpanel') {
-              setActiveTab('from_computer');
-            }
-            else if(entries[i].target.id === 'upload-origin-1-tabpanel') {
-              setActiveTab('from_url');
-            }
-        }
-      }, { threshold: [.1] });
-    
-      setTimeout(() => {
-        const fromComputerPanel = document.querySelector('#upload-origin-0-tabpanel');
-        const fromUrlPanel = document.querySelector('#upload-origin-1-tabpanel');
+    if (activeTab === 0) {
+      if (!body.from_computer_title) {
+        errors.from_computer_title = 'No title specified';  
+      }
 
-        if(fromComputerPanel !== null) {
-          observerRef.current?.observe(fromComputerPanel);
-        } else {
-          console.error('Unable to query "From computer" tab panel');
-        }
-
-        if(fromUrlPanel !== null) {
-          observerRef.current?.observe(fromUrlPanel);
-        } else {
-          console.error('Unable to query "From url" tab panel');
-        }
-      }, 300);
+      if (body.file !== undefined) {
+        return {
+          origin: 'from_computer',
+          title: body.from_computer_title,
+          media: body.file
+        };
+      } else {
+        errors.file = 'File needs to be selected';
+      }
     }
-    else {
-      observerRef.current?.disconnect();
+
+    else if (activeTab === 1) {
+      if (!body.from_url_title) {
+        errors.from_url_title = 'No title specified';
+      }
+
+      if (body.url !== undefined) {
+        return {
+          origin: 'from_url',
+          title: body.from_url_title,
+          media: body.url
+        };
+      } else {
+        errors.url = 'No url specified';
+      }
     }
-  }, [isOpen]);
 
-  const handleOnSubmit = async (e:any) => {
-    e.preventDefault();
-
-    if(state.title === undefined || (state.file === undefined && state.url === undefined) || activeTab === undefined) return;
-
-    let media;
-
-    if(activeTab === 'from_computer' && state.file !== undefined) {
-      media = state.file[0];
-    } else if(activeTab === 'from_url' && state.url !== undefined) {
-      media = state.url;
-    } else {
-      console.log('Unable to determine upload origin');
+    throw errors;
+  };
+  
+  const handleOnSubmit = async (body: FormValues, { resetForm, setErrors }: FormikHelpers<FormValues>) => {
+    let uploadInfo;
+    try {
+      uploadInfo = generateUploadInfo(body);
+    } catch (errors) {
+      setErrors(errors as FormikErrors<FormValues>);
 
       return;
     }
 
     let result;
-    
     try {
-      result = await submitUpload(state.title, activeTab, media);
+      result = await submitUpload(uploadInfo);
     } catch(err) {
       switch(typeof err) {
         case 'string': {
@@ -197,9 +144,9 @@ const ModalNewUpload = (props:Props) => {
 
     if(statusCode && statusCode !== 200) {
       return data?.errors;
-    } else if(activeTab === 'from_computer') {
-      uploadFile(result.url, media as File);
-    } else if(activeTab === 'from_url') {
+    } else if(activeTab === 0) {
+      uploadFile(result.url, uploadInfo.media[0] as File);
+    } else if(activeTab === 1) {
       setUploadPercent(100);
       setIsComplete(true);
     } else {
@@ -207,9 +154,13 @@ const ModalNewUpload = (props:Props) => {
     }
   };
 
-  const handleOnTitleChange = (e:InputTextOnChange) => setState({ ...state, title: e.target.value });
-  const handleOnFileChange = (e:InputFileOnChange) => setState({ ...state, file: e.target.files });
-  const handleOnUrlChange = (e:InputTextOnChange) => setState({ ...state, url: e.target.value });
+  const handleOnTabChange = (tabId: number) => setActiveTab(tabId);
+
+  // const handleOnTitleChange = (e: InputTextOnChange) => setState({ ...state, title: e.target.value });
+  // const handleOnFileChange = (e: InputFileOnChange) => {
+  //   console.log(e); setState({ ...state, file: e.target.files });
+  // }
+  // const handleOnUrlChange = (e: InputTextOnChange) => setState({ ...state, url: e.target.value });
 
   const handleOnModalClose = (forceRefresh: boolean = false) => {
     onToggle(forceRefresh);
@@ -223,77 +174,87 @@ const ModalNewUpload = (props:Props) => {
 
   const handleOnModalFinish = () => handleOnModalClose(true);
 
-  const closeXHandler = React.useCallback(() => {
-    if(isComplete || uploadPercent === undefined) {
-      handleOnModalClose();
-    }
-  }, [isComplete, uploadPercent]);
-
-  const renderBody = () => {
-    if(isComplete) {
+  const renderBody = (
+    errors: FormikErrors<FormValues>,
+    values: FormValues,
+    setFieldValue: (field: string, value: any, shouldValidate?: boolean | undefined) => void,
+    handleChange: (e: React.ChangeEvent<any>) => void
+  ) => {
+    if (isComplete) {
       return (<Uploaded onReset={handleOnReset} />);
-    } else if(uploadPercent !== undefined) {
+    } else if (uploadPercent !== undefined) {
       return (<Uploading percent={uploadPercent} />);
     } else {
       return (
-        <TabsNav defaultSelection={0} label="Upload origin" id="upload-origin">
-          <Tabs>
-            <Tab>From computer</Tab>
-            <Tab>From url</Tab>
-          </Tabs>
-          <TabsPanel>
-            <TabPanel>
-              <InputContainer disabled={activeTab !== 'from_computer'}>
-                <div>
-                  <Label message="Title" />
-                  <TitleInput
-                    name="from-computer-title"
-                    type="text"
-                    value={state.title}
-                    onChange={handleOnTitleChange}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label message='File' />
-                  <InputWrapper>
-                    <FileInput
-                      id="file"
-                      name="file"
-                      type="file"
-                      onChange={handleOnFileChange}
-                      required
-                    />
-                  </InputWrapper>
-                </div>
-              </InputContainer>
-            </TabPanel>
-            <TabPanel>
-            <InputContainer disabled={activeTab !== 'from_url'}>
-                <div>
-                  <Label message="Title" />
-                  <TitleInput
-                    name="from-url-title"
-                    type="text"
-                    value={state.title}
-                    onChange={handleOnTitleChange}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label message='Url' />
-                  <TitleInput
-                    name="from-url-url"
-                    type="url"
-                    value={state.url}
-                    onChange={handleOnUrlChange}
-                    required
-                  />
-                </div>
-              </InputContainer>
-            </TabPanel>
-          </TabsPanel>
-        </TabsNav>
+        <Box background="neutral0">
+          <TabGroup label="Upload origin" variant="simple" onTabChange={handleOnTabChange}>
+            <Tabs>
+              <Tab>From computer</Tab>
+              <Tab>From url</Tab>
+            </Tabs>
+            <TabPanels>
+              <TabPanel>
+                <Box padding={1} background="neutral0">
+                  <Grid>
+                    <GridItem col={6} xs={12} s={12}>
+                      <Box paddingTop={2} paddingBottom={2}>
+                        <TextInput
+                          label="Title"
+                          name="from_computer_title"
+                          // error={content.length > 5 ? 'Content is too long' : undefined}
+                          value={values.from_computer_title}
+                          error={errors.from_computer_title}
+                          onChange={handleChange}
+                        />
+                      </Box>
+                    </GridItem>
+                    <GridItem col={8} xs={12} s={12}>
+                      <Box paddingTop={2} paddingBottom={2}>
+                        <FileInput
+                          name="file"
+                          label="File"
+                          error={errors.file}
+                          required
+                          onFiles={(files: File[]) => setFieldValue('file', files)}
+                        />
+                      </Box>
+                    </GridItem>
+                  </Grid>
+                </Box>
+              </TabPanel>
+              <TabPanel>
+                <Box padding={1} background="neutral0">
+                  <Grid>
+                    <GridItem col={6} xs={12} s={12}>
+                      <Box paddingTop={2} paddingBottom={2}>
+                        <TextInput
+                          label="Title"
+                          name="from_url_title"
+                          // error={content.length > 5 ? 'Content is too long' : undefined}
+                          value={values.from_url_title}
+                          error={errors.from_url_title}
+                          onChange={handleChange}
+                        />
+                      </Box>
+                    </GridItem>
+                    <GridItem col={8} xs={12} s={12}>
+                      <Box paddingTop={2} paddingBottom={2}>
+                        <TextInput
+                          label="Url"
+                          name="from_url_url"
+                          // error={content.length > 5 ? 'Content is too long' : undefined}
+                          value={values.url}
+                          error={errors.url}
+                          onChange={handleChange}
+                        />
+                      </Box>
+                    </GridItem>
+                  </Grid>
+                </Box>
+              </TabPanel>
+            </TabPanels>
+          </TabGroup>
+        </Box>
       );
     }
   };
@@ -301,50 +262,59 @@ const ModalNewUpload = (props:Props) => {
   const renderFooter = () => {
     if(isComplete) {
       return (
-        <section>
-          <div />
-          <Button onClick={handleOnModalFinish} color="primary">Finish</Button>
-        </section>
+        // <section>
+        //   <div />
+        //   <Button onClick={handleOnModalFinish} color="primary">Finish</Button>
+        // </section>
+        <ModalFooter endActions={<Button onClick={handleOnModalFinish}>Finish</Button>} />
       );
     } else if(uploadPercent !== undefined) {
       return (
-        <section>
-          <Button onClick={handleOnAbort} color="cancel">Cancel</Button>
-        </section>
+        // <section>
+        //   <Button onClick={handleOnAbort} color="cancel">Cancel</Button>
+        // </section>
+        <ModalFooter startActions={<Button onClick={handleOnAbort} variant="tertiary">Cancel</Button>} />
       );
     } else {
       return (
-        <section>
-          <Button onClick={handleOnModalClose} color="cancel">Cancel</Button>
-          <Button type="submit" color="success">Submit</Button>
-        </section>
+        // <section>
+        //   <Button onClick={handleOnModalClose} color="cancel">Cancel</Button>
+        //   <Button type="submit" color="success">Submit</Button>
+        // </section>
+        <ModalFooter
+          startActions={<Button onClick={handleOnModalClose} variant="tertiary">Cancel</Button>}
+          endActions={<Button type="submit">Submit</Button>}
+        />
       );
     }
   };
 
   return (
     <>
-      {/* <ModalContainer>
-        <Modal isOpen={isOpen} onToggle={closeXHandler} backdrop='static' keyboard={false}>
-          <HeaderModal>
-            <section>
-              <HeaderTitle>New upload</HeaderTitle>
-            </section>
-          </HeaderModal>
-          <form onSubmit={handleOnSubmit}>
-            <ModalForm>
-              <ModalBody>
-                <BodyWrapper>
-                  {renderBody()}
-                </BodyWrapper>
-              </ModalBody>
-            </ModalForm>
-            <ModalFooter>
-              {renderFooter()}
-            </ModalFooter>
-          </form>
-        </Modal>
-      </ModalContainer> */}
+      <ModalBlocking isOpen={isOpen}>
+        <ModalHeader>
+          <Typography fontWeight="bold" textColor="neutral800" as="h2" id="title">
+            New upload
+          </Typography>
+        </ModalHeader>
+          <Formik
+            onSubmit={handleOnSubmit}
+            initialValues={INITIAL_VALUES}
+            validateOnChange={false}
+            enableReinitialize
+          >
+            {({ errors, values, setFieldValue, handleChange }) => {
+              return (
+                <Form>
+                  <ModalBody>
+                    {renderBody(errors, values, setFieldValue, handleChange)}
+                  </ModalBody>
+                  {renderFooter()}
+                </Form>
+              );
+            }}
+          </Formik>
+      </ModalBlocking>
     </>
   )
 }

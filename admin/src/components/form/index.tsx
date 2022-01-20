@@ -4,6 +4,7 @@ import { Label, InputErrors } from '@strapi/helper-plugin';
 import { Enumeration, InputText } from '@buffetjs/core';
 
 import { UploadMethod } from './types';
+import { InputTextOnChange } from '../../../../types';
 
 const FirstRowStyled = styled.div`
   display: grid;

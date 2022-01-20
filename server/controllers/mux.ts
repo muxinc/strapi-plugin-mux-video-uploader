@@ -17,7 +17,7 @@ const submitDirectUpload = async (ctx:Context) => {
 
   data.upload_id = result.id;
 
-  await strapi.entityService.create({ data }, { model });
+  await strapi.entityService.create(model, { data });
 
   ctx.send(result);
 };
@@ -49,7 +49,7 @@ const deleteMuxAsset = async (ctx:Context) => {
     return;
   }
 
-  strapi.entityService.delete({ params: { id: data.id } }, { model });
+  strapi.entityService.delete(model, data.id);
 
   const result = { success: true, deletedOnMux: false };
 
@@ -132,7 +132,8 @@ const muxWebhookHandler = async (ctx:Context) => {
     return;
   }
 
-  const result = await strapi.entityService.update(payload, { model });
+  // const result = await strapi.entityService.update(payload, { model });
+  const result = await strapi.entityService.update(model, data.id);
 
   ctx.send(result);
 };

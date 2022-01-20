@@ -1,20 +1,26 @@
 import React from 'react';
-import { Button, InputText, Select } from '@buffetjs/core';
-import { CheckPagePermissions, GlobalPagination } from '@strapi/helper-plugin';
-import styled from 'styled-components';
+import { useIntl } from 'react-intl';
 import { DebouncedFunc } from 'lodash';
 import debounce from 'lodash.debounce';
+import { CheckPagePermissions, GlobalPagination } from '@strapi/helper-plugin';
+import Plus from '@strapi/icons/Plus';
+import { Button } from '@strapi/design-system/Button';
+import { Grid, GridItem } from '@strapi/design-system/Grid';
+import { HeaderLayout, Layout, ContentLayout } from '@strapi/design-system/Layout';
+import { Main } from '@strapi/design-system/Main';
+import { Searchbar, SearchForm } from '@strapi/design-system/Searchbar';
+import { Select, Option } from '@strapi/design-system/Select';
 
 import { GetMuxAssetsResponse, MuxAsset } from '../../../../types';
 import SetupNeeded from '../../components/setup-needed';
 import { getIsConfigured, getMuxAssets } from '../../services/strapi';
-import Layout from '../Layout';
 import AssetGrid from '../../components/asset-grid';
 import { SearchField, SearchVector, SortVector } from '../../services/strapi/types';
 import ModalDetails from '../../components/modal-details';
 import usePrevious from '../../utils/use-previous';
 import ModalNewUpload from '../../components/modal-new-upload';
 import pluginPermissions from '../../permissions';
+import getTrad from '../../utils/getTrad';
 
 const SEARCH_FIELDS = [{ 
   label: 'By Title',
@@ -23,49 +29,6 @@ const SEARCH_FIELDS = [{
   label: 'By Asset Id',
   value: SearchField.BY_ASSET_ID
 }] as const;
-
-const ControlsContainer = styled.div`
-  margin-top: 20px;
-  margin-bottom: 30px;
-  display: flex;
-  flex: 1;
-  flex-wrap: wrap;
-`;
-
-const SearchContainer = styled.div`
-  display: flex;
-
-  @media screen and (max-width: 944px) {
-    width: 100%;
-  }
-
-  @media screen and (min-width: 945px) {
-    flex: 1;
-  }
-
-  & > * {
-    margin-bottom: 30px;
-    margin-right: 1rem;
-    flex: 1;
-  }
-`;
-
-const NewUploadButtonContainer = styled.div`
-  display: flex;
-  flex: 1;
-  justify-content: flex-end;
-  align-items: center;
-  padding-left: 1rem;
-  margin-bottom: 30px;
-
-  @media screen and (max-width: 839px) {
-    width: 100%;
-  }
-
-  @media screen and (min-width: 840px) {
-    flex: 1;
-  }
-`;
 
 const HomePage = () => {
   const [isReady, setIsReady] = React.useState<boolean>(false);
@@ -79,6 +42,8 @@ const HomePage = () => {
   const [pageLimit] = React.useState<number>(20);
   const [pageStart, setPageStart] = React.useState<number>(0);
 
+  const { formatMessage } = useIntl();
+
   const prevSearchField = usePrevious(searchField);
   const prevSearchValue = usePrevious(searchValue);
   const prevPageLimit = usePrevious(pageLimit);
@@ -87,7 +52,7 @@ const HomePage = () => {
   const loadMuxAssets = async () => {
     let searchVector:SearchVector|undefined = undefined;
 
-    if(searchValue !== undefined) {
+    if(searchValue !== undefined && searchValue) {
       searchVector = {
         field: searchField,
         value: searchValue
@@ -129,8 +94,8 @@ const HomePage = () => {
     }
   }, [isReady, searchField, searchValue, pageStart, pageLimit]);
 
-  const handleOnSearchFieldChange = (event:any) => {
-    const field = event?.target.value === '' ? undefined : event?.target.value;
+  const handleOnSearchFieldChange = (field: SearchField) => {
+    // const field = event?.target.value === '' ? undefined : event?.target.value;
 
     if(field !== undefined && field !== searchField) {
       setPageStart(0);
@@ -173,45 +138,106 @@ const HomePage = () => {
   if(!isReady) return <SetupNeeded />;
 
   return (
-    <CheckPagePermissions permissions={pluginPermissions.main}>
+    <>
       <Layout>
-        <div>
-          <ControlsContainer>
-            <SearchContainer>
-              <Select
-                options={SEARCH_FIELDS}
-                value={searchField}
-                onChange={handleOnSearchFieldChange}
-              />
-              <InputText
-                placeholder="Search text"
-                type="text"
-                value={searchValue}
-                onChange={handleOnSearchValueChange}
-              />
-            </SearchContainer>
-            <NewUploadButtonContainer>
-              <Button color="primary" label="New Upload" onClick={handleOnNewUploadClick} />
-            </NewUploadButtonContainer>
-          </ControlsContainer>
-          <AssetGrid muxAssets={muxAssets?.items} onMuxAssetClick={handleOnMuxAssetClick} />
-          <GlobalPagination
-            count={muxAssets?.totalCount}
-            params={{_page: pageStart + 1, _limit: pageLimit}}
-            onChangeParams={handleOnPaginateChange}
+        <Main>
+          <HeaderLayout
+            title={formatMessage({
+              id: getTrad('HomePage.section-label'),
+              defaultMessage: 'Mux Video Uploader',
+            })}
+            primaryAction={
+              <Button
+                // disabled={!canUpdate}
+                startIcon={<Plus />}
+                size="L"
+                onClick={handleOnNewUploadClick}
+              >
+                {formatMessage({ id: getTrad('HomePage.newUpload'), defaultMessage: 'New Upload' })}
+              </Button>
+            }
           />
-          <ModalDetails 
-            isOpen={selectedAsset !== undefined}
-            muxAsset={selectedAsset}
-            onToggle={handleOnDetailsClose}
-          />
-          <ModalNewUpload
-            isOpen={isNewUploadOpen}
-            onToggle={handleOnNewUploadClose}
-          />
-        </div>
+          <ContentLayout>
+            <Grid gap={4}>
+              <GridItem col={2} xs={12} s={12}>
+                <Select
+                  aria-label="Choose the field to search"
+                  placeholder="Search field"
+                  value={searchField}
+                  onChange={handleOnSearchFieldChange}
+                >
+                  {
+                    SEARCH_FIELDS.map(searchField => <Option value={searchField.value}>{searchField.label}</Option>)
+                  }
+                </Select>
+              </GridItem>
+              <GridItem col={6} xs={12} s={12}>
+                <SearchForm>
+                  <Searchbar
+                    name="searchbar"
+                    onClear={() => setSearchValue('')}
+                    value={searchValue}
+                    onChange={handleOnSearchValueChange}
+                    clearLabel="Clear search"
+                  >
+                    Searching for Mux assets
+                  </Searchbar>
+                </SearchForm>
+              </GridItem>
+            </Grid>
+            <AssetGrid muxAssets={muxAssets?.items} onMuxAssetClick={handleOnMuxAssetClick} />
+          </ContentLayout>
+        </Main>
       </Layout>
-    </CheckPagePermissions>
+      <ModalNewUpload
+        isOpen={isNewUploadOpen}
+        onToggle={handleOnNewUploadClose}
+      />
+      <ModalDetails 
+        isOpen={selectedAsset !== undefined}
+        muxAsset={selectedAsset}
+        onToggle={handleOnDetailsClose}
+      />
+    </>
+    // <CheckPagePermissions permissions={pluginPermissions.main}>
+    //   <Layout>
+    //     <div>
+    //       <ControlsContainer>
+    //         <SearchContainer>
+    //           <Select
+    //             options={SEARCH_FIELDS}
+    //             value={searchField}
+    //             onChange={handleOnSearchFieldChange}
+    //           />
+    //           <InputText
+    //             placeholder="Search text"
+    //             type="text"
+    //             value={searchValue}
+    //             onChange={handleOnSearchValueChange}
+    //           />
+    //         </SearchContainer>
+    //         <NewUploadButtonContainer>
+    //           <Button color="primary" label="New Upload" onClick={handleOnNewUploadClick} />
+    //         </NewUploadButtonContainer>
+    //       </ControlsContainer>
+    //       <AssetGrid muxAssets={muxAssets?.items} onMuxAssetClick={handleOnMuxAssetClick} />
+    //       <GlobalPagination
+    //         count={muxAssets?.totalCount}
+    //         params={{_page: pageStart + 1, _limit: pageLimit}}
+    //         onChangeParams={handleOnPaginateChange}
+    //       />
+    //       <ModalDetails 
+    //         isOpen={selectedAsset !== undefined}
+    //         muxAsset={selectedAsset}
+    //         onToggle={handleOnDetailsClose}
+    //       />
+    //       <ModalNewUpload
+    //         isOpen={isNewUploadOpen}
+    //         onToggle={handleOnNewUploadClose}
+    //       />
+    //     </div>
+    //   </Layout>
+    // </CheckPagePermissions>
   );
 };
 

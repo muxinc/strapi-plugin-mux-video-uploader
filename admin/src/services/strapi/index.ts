@@ -3,6 +3,14 @@ import { auth } from '@strapi/helper-plugin';
 import { MuxAsset, MuxAssetUpdate } from '../../../../types';
 import { SearchVector, SortVector } from './types';
 
+export type UploadOrigin = 'from_computer' | 'from_url';
+
+export interface UploadInfo {
+  title: string,
+  media: File[] | string,
+  origin: UploadOrigin
+};
+
 function getServiceUri() {
   return strapi.backendURL;
 }
@@ -28,27 +36,29 @@ const setMuxSettings = (body: FormData) => {
   });
 }
 
-const submitUpload = (title: string, origin: 'from_computer'|'from_url', media: File | string) => {
+const submitUpload = async (uploadInfo:UploadInfo) => {
   const body = new FormData();
-  body.append("title", title);
+  body.append("title", uploadInfo.title);
 
   let submitUrl;
     
-  if(origin === 'from_url') {
+  if(uploadInfo.origin === 'from_url') {
     submitUrl = `${getServiceUri()}/mux-video-uploader/submitRemoteUpload`;
 
-    body.append("url", media);
-  } else if(origin === 'from_computer') {
+    body.append("url", uploadInfo.media as string);
+  } else if(uploadInfo.origin === 'from_computer') {
     submitUrl = `${getServiceUri()}/mux-video-uploader/submitDirectUpload`;
   } else {
     throw new Error('Unable to determine upload origin');
   }
 
-  return fetch(submitUrl, {
+  const response = await fetch(submitUrl, {
     method: "POST",
     headers: { 'Authorization': `Bearer ${getJwtToken()}` },
     body
-  }).then((response) => response.json());
+  });
+  
+  return await response.json();
 }
 
 const getMuxAssets = (searchVector?:SearchVector, sortVector?:SortVector, start = 0, limit = 10) => {
@@ -56,12 +66,12 @@ const getMuxAssets = (searchVector?:SearchVector, sortVector?:SortVector, start 
 
   switch(searchVector?.field) {
     case 'by_title': {
-      search = `&title_contains=${searchVector.value}`;
+      search = `&filter=title:${searchVector.value}`;
 
       break;
     }
     case 'by_asset_id': {
-      search = `&asset_id_contains=${searchVector.value}`;
+      search = `&filter=asset_id:${searchVector.value}`;
 
       break;
     }
@@ -70,9 +80,9 @@ const getMuxAssets = (searchVector?:SearchVector, sortVector?:SortVector, start 
     }
   }
 
-  const sort = sortVector ? `&_sort=${sortVector.field}:${sortVector.desc ? 'desc' : 'asc'}` : '';
+  const sort = sortVector ? `&sort=${sortVector.field}&order=${sortVector.desc ? 'desc' : 'asc'}` : '';
 
-  const url = `${getServiceUri()}/mux-video-uploader/mux-asset?_start=${start}${sort}&_limit=${limit}${search}`;
+  const url = `${getServiceUri()}/mux-video-uploader/mux-asset?start=${start}${sort}&limit=${limit}${search}`;
 
   return fetch(url, {
     method: "GET",
@@ -95,7 +105,7 @@ const setMuxAsset = async (muxAsset:MuxAssetUpdate): Promise<MuxAsset> => {
   return await response.json();
 };
 
-const deleteMuxAsset = async (muxAsset:MuxAsset): Promise<any> => {
+const deleteMuxAsset = async (muxAsset: MuxAsset): Promise<any> => {
   const body = new FormData();
   body.append("id", muxAsset.id.toString());
   body.append("asset_id", muxAsset.asset_id || '');

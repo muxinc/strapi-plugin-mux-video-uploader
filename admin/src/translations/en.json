@@ -1,4 +1,18 @@
 {
   "SettingsNav.section-label": "Mux Video Uploader",
-  "SettingsNav.link.settings": "Settings"
+  "SettingsNav.link.settings": "Settings",
+
+  "SetupNeeded.settings": "Settings",
+  "SetupNeeded.setupNeeded": "Setup Needed",
+  "SetupNeeded.setupInstructions": "In order for uploads to function, an administrator will need to complete the setup of this plugin by visiting the settings page.  Click the button below to be taken there now.",
+
+  "HomePage.section-label": "Mux Video Uploader",
+  "HomePage.section-description": "",
+  "HomePage.newUpload": "New Upload",
+
+  "Form.save": "Save",
+
+  "notification.changesSaved": "Changes saved",
+  "notification.noChanges": "No changes made",
+  "notification.errorSaving": "Error while saving changes"
 }

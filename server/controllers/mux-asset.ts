@@ -1,16 +1,24 @@
-import { sanitizeEntity, parseMultipartData } from '@strapi/utils';
+import { parseMultipartData } from '@strapi/utils';
 import { Context } from 'koa';
 
 import pluginId from './../../admin/src/pluginId';
 
 const model = `plugin::${pluginId}.mux-asset`;
 
-const search = (ctx:Context) => {
-  if (ctx.query._q) {
-    return strapi.entityService.search({params: ctx.query}, { model });
+const search = (ctx: Context) => {
+  const params:any = {
+    start: ctx.query?.start,
+    limit: ctx.query?.limit,
+    orderBy: ctx.sort ? { [ctx.sort]: ctx.order || 'asc' } : undefined
+  };
+
+  if (ctx.query.filter) {
+    const [filter, ...rest] = (ctx.query.filter as string).split(':');
+
+    params.filters = { [filter]: { '$containsi': rest.join(':') } };
   }
 
-  return strapi.entityService.find({params: ctx.query}, { model });
+  return strapi.entityService.findMany(model, params);
 }
 
 const index = async (ctx:Context) => {
@@ -19,11 +27,11 @@ const index = async (ctx:Context) => {
   });
 };
 
-const find = async (ctx:Context) => {
+const find = async (ctx: Context) => {
   const entities = await search(ctx);
   const totalCount = await count(ctx);
 
-  const items = entities.map((entity:any) => sanitizeEntity(entity, {model: { options: {}, attributes:[]}}));
+  const items = entities.map((entity:any) => entity);
 
   return {
     items,
@@ -33,23 +41,25 @@ const find = async (ctx:Context) => {
 
 const findOne = async (ctx:Context) => {
   const { id } = ctx.params;
-
-  const entity = await strapi.entityService.findOne({ id }, { model });
-
-  return sanitizeEntity(entity, {model: { options: {}, attributes:[]}});
+  
+  return await strapi.entityService.findOne({ id }, { model });
 };
 
-const count = (ctx:Context) => {
-  if (ctx.query._q) {
-    return strapi.entityService.countSearch({params: ctx.query}, { model });
+const count = (ctx: Context) => {
+  const params:any = {};
+
+  if (ctx.query.filter) {
+    const [filter, ...rest] = (ctx.query.filter as string).split(':');
+
+    params.filters = { [filter]: rest.join(':') };
   }
   
-  return strapi.entityService.count({params: ctx.query}, { model });
+  return strapi.entityService.count(model, params);
 };
 
-const create = async (ctx:Context) => {
+const create = async (ctx: Context) => {
   let entity;
-  
+
   if (ctx.is('multipart')) {
     const { data, files } = parseMultipartData(ctx);
 
@@ -58,31 +68,44 @@ const create = async (ctx:Context) => {
     entity = await strapi.entityService.create({ data: ctx.request.body }, { model });
   }
 
-  return sanitizeEntity(entity, {model: { options: {}, attributes:[]}});
+  return entity;
 };
 
 const update = async (ctx:Context) => {
   const { id } = ctx.params;
 
-  let entity;
+  const { data } = parseMultipartData(ctx);
 
-  if (ctx.is('multipart')) {
-    const { data, files } = parseMultipartData(ctx);
-
-    entity = await strapi.entityService.update({ params: { id }, data, files }, { model });
-  } else {
-    entity = await strapi.entityService.update({ params: { id }, data: ctx.request.body }, { model });
+  const payload: { title?: string, isReady?: boolean } = {};
+  
+  if (data.title !== undefined) {
+    payload.title = data.title;
+  }
+  if (data.isReady !== undefined) {
+    payload.isReady = data.isReady;
   }
 
-  return sanitizeEntity(entity, {model: { options: {}, attributes:[]}});
+  console.log(model, id, payload)
+
+  return await strapi.entityService.update(model, id, payload);
+
+//   let entity;
+// 
+//   if (ctx.is('multipart')) {
+//     const { data, files } = parseMultipartData(ctx);
+// 
+//     entity = await strapi.entityService.update({ params: { id }, data, files }, { model });
+//   } else {
+//     entity = await strapi.entityService.update({ params: { id }, data: ctx.request.body }, { model });
+//   }
+
+  // return entity;
 };
 
 const del = async (ctx:Context) => {
   const { id } = ctx.params;
 
-  const entity = await strapi.entityService.delete({ params: { id } }, { model });
-
-  return sanitizeEntity(entity, {model: { options: {}, attributes:[]}});
+  return await strapi.entityService.delete({ params: { id } }, { model });
 };
 
 export = {

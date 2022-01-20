@@ -9,7 +9,7 @@ import getTrad from './utils/getTrad';
 const name = pluginPkg.strapi.name;
 
 export default {
-  register(app: any) {
+  register(app:any) {
     app.addMenuLink({
       to: `/plugins/${pluginId}`,
       icon: PluginIcon,
@@ -39,11 +39,11 @@ export default {
         {
           intlLabel: {
             id: getTrad('SettingsNav.link.settings'),
-            defaultMessage: 'Configuration',
+            defaultMessage: 'Settings',
           },
           id: 'mux-video-uploader-settings',
           to: `/settings/${pluginId}`,
-          permissions: pluginPermissions.accessRoles,
+          // permissions: pluginPermissions.settingsRoles,
           Component: async () => {
             const component = await import(
               /* webpackChunkName: "mux-video-uploader-settings-page" */ './containers/Settings'
@@ -61,9 +61,9 @@ export default {
     });
   },
   bootstrap() {},
-  async registerTrads({ locales }: { locales:any }) {
+  async registerTrads({ locales }: { locales:string[]}) {
     const importedTrads = await Promise.all(
-      locales.map((locale:any) => {
+      locales.map((locale:string) => {
         return import(
           /* webpackChunkName: "users-permissions-translation-[request]" */ `./translations/${locale}.json`
         )

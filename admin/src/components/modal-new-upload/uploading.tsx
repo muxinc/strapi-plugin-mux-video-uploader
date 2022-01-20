@@ -1,21 +1,17 @@
 import React from 'react';
 import styled from 'styled-components';
-
-import ProgressBar from './progress-bar';
-
-const ContainerStyled = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-bottom: 3rem;
-`;
-
-const RowStyled = styled.div`
-  margin-bottom: 3rem;
-`;
+import { Box } from '@strapi/design-system/Box'
+import { Flex } from '@strapi/design-system/Flex'
+import { ProgressBar } from '@strapi/design-system/ProgressBar'
+import { Stack } from '@strapi/design-system/Stack'
+import { Typography } from '@strapi/design-system/Typography'
 
 const ProgressBarWrapper = styled.div`
   width: 60%;
+`;
+
+const ProgessBarUnleased = styled(ProgressBar)`
+  width: 100%;
 `;
 
 interface Props {
@@ -23,14 +19,22 @@ interface Props {
 }
 
 const Uploading = (props:Props) => {
-  return (<ContainerStyled>
-    <RowStyled>
-      <h1>Uploading to Mux</h1>
-    </RowStyled>
-    <ProgressBarWrapper>
-      <ProgressBar percent={props.percent} />
-    </ProgressBarWrapper>
-  </ContainerStyled>)
+  return (
+    <Stack>
+      <Box paddingBottom={5}>
+        <Flex justifyContent="center">
+          <Typography variant="alpha">Uploading to Mux</Typography>
+        </Flex>
+      </Box>
+      <Box paddingBottom={5}>
+        <Flex justifyContent="center">
+          <ProgressBarWrapper>
+            <ProgessBarUnleased value={props.percent} />
+          </ProgressBarWrapper>
+        </Flex>
+      </Box>
+    </Stack>
+  );
 };
 
 export default Uploading;
