@@ -38,4 +38,4 @@ Uploaded.defaultProps = {
   onReset: () => {}
 };
 
-export default Uploaded;
+module.exports = Uploaded;

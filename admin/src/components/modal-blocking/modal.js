@@ -47,4 +47,4 @@ const ModalBlocking = ({ children, onClose, isOpen }) => {
   );
 };
 
-export default ModalBlocking;
+module.exports = ModalBlocking;

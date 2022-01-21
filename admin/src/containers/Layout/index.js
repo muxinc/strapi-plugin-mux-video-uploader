@@ -17,4 +17,4 @@ const Layout = (props) => {
   );
 };
 
-export default Layout;
+module.exports = Layout;

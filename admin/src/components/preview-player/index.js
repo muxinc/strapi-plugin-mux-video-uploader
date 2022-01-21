@@ -1,7 +1,7 @@
 const React = require('react');
 const videojs = require('@mux/videojs-kit');
 
-const { MuxAsset } = require('../../../../types');
+// const { MuxAsset } = require('../../../../types');
 
 require('@mux/videojs-kit/dist/index.css');
 
@@ -43,4 +43,4 @@ const PreviewPlayer = (props) => {
   );
 };
 
-export default PreviewPlayer;
+module.exports = PreviewPlayer;

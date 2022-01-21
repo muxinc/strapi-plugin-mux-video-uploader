@@ -66,4 +66,4 @@ const Logo = () => (<svg width="215px" height="70px" viewBox="0 0 215 70" versio
     </g>
 </svg>);
 
-export default Logo;
+module.exports = Logo;

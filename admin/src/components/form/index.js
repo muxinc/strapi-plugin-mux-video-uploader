@@ -3,8 +3,8 @@ const styled = require('styled-components');
 const { Label, InputErrors } = require('@strapi/helper-plugin');
 const { Enumeration, InputText } = require('@buffetjs/core');
 
-const { UploadMethod } = require('./types');
-const { InputTextOnChange } = require('../../../../types');
+// const { UploadMethod } = require('./types');
+// const { InputTextOnChange } = require('../../../../types');
 
 const FirstRowStyled = styled.div`
   display: grid;
@@ -131,4 +131,4 @@ const Form = (props, ref) => {
   )
 };
 
-export default React.forwardRef(Form);
+module.exports = React.forwardRef(Form);

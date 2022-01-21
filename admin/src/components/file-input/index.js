@@ -1,10 +1,10 @@
-const React, { ChangeEvent } = require('react');
+const React = require('react');
 const { Field, FieldLabel, FieldError, FieldInput } = require('@strapi/design-system/Field');
 const { Stack } = require('@strapi/design-system/Stack');
 const { Flex } = require('@strapi/design-system/Flex');
-const { InputFileOnChange } = require('../../../../types');
+// const { InputFileOnChange } = require('../../../../types');
 
-export const FileInput = ({ name, error, label, required, onFiles }) => {
+const FileInput = ({ name, error, label, required, onFiles }) => {
   const handleOnChange = (e) => onFiles(e.target.files);
 
   return (
@@ -32,3 +32,5 @@ FileInput.defaultProps = {
   required: false,
   onFiles: () => {}
 };
+
+module.exports = FileInput;

@@ -54,4 +54,4 @@ const SetupNeeded = () => {
   );
 };
 
-export default SetupNeeded;
+module.exports = SetupNeeded;

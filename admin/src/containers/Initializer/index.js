@@ -19,4 +19,4 @@ Initializer.propTypes = {
   updatePlugin: PropTypes.func.isRequired,
 };
 
-export default Initializer;
+module.exports = Initializer;

@@ -4,7 +4,7 @@ const { Box } = require('@strapi/design-system/Box');
 const { Loader } = require('@strapi/design-system/Loader');
 const { Typography } = require('@strapi/design-system/Typography');
 
-const { MuxAsset } = require('../../../../types');
+// const { MuxAsset } = require('../../../../types');
 const { generateImageUrl } = require('../../utils/mux');
 const errorIcon = require('./../../static/error-icon.svg');
 
@@ -79,4 +79,4 @@ AssetCard.defaultProps = {
   onClick: () => {}
 };
 
-export default AssetCard;
+module.exports = AssetCard;

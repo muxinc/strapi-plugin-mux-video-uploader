@@ -8,7 +8,7 @@ const getTrad = require('./utils/getTrad');
 
 const name = pluginPkg.strapi.name;
 
-module.export = {
+module.exports = {
   register(app) {
     app.addMenuLink({
       to: `/plugins/${pluginId}`,

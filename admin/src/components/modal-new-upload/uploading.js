@@ -33,4 +33,4 @@ const Uploading = (props) => {
   );
 };
 
-export default Uploading;
+module.exports = Uploading;

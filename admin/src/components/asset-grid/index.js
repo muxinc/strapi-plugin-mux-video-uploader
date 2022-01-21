@@ -28,4 +28,4 @@ AssetGrid.defaultProps = {
   onMuxAssetClick: () => {}
 };
 
-export default AssetGrid;
+module.exports = AssetGrid;

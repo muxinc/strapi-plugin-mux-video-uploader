@@ -23,4 +23,4 @@ const Header = () => {
   );
 };
 
-export default Header;
+module.exports = Header;

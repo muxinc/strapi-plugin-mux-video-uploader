@@ -3,4 +3,4 @@ const { Layout } = require('@strapi/icons');
 
 const PluginIcon = () => <Layout />;
 
-export default PluginIcon;
+module.exports = PluginIcon;

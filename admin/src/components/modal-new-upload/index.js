@@ -301,4 +301,4 @@ ModalNewUpload.defaultProps = {
   onToggle: () => { }
 };
 
-export default ModalNewUpload;
+module.exports = ModalNewUpload;

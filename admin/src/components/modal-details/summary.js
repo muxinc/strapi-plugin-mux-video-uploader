@@ -5,7 +5,7 @@ const { Grid, GridItem } = require('@strapi/design-system/Grid');
 const { Stack } = require('@strapi/design-system/Stack');
 const { Typography } = require('@strapi/design-system/Typography');
 
-const { MuxAsset } = require('../../../../types');
+// const { MuxAsset } = require('../../../../types');
 
 const Summary = (props) => {
   const { muxAsset } = props;
@@ -61,4 +61,4 @@ const Summary = (props) => {
   );
 };
 
-export default Summary;
+module.exports = Summary;

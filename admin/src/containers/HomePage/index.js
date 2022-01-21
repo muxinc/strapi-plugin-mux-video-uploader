@@ -11,11 +11,11 @@ const { Main } = require('@strapi/design-system/Main');
 const { Searchbar, SearchForm } = require('@strapi/design-system/Searchbar');
 const { Select, Option } = require('@strapi/design-system/Select');
 
-const { GetMuxAssetsResponse, MuxAsset } = require('../../../../types');
+// const { GetMuxAssetsResponse, MuxAsset } = require('../../../../types');
 const SetupNeeded = require('../../components/setup-needed');
 const { getIsConfigured, getMuxAssets } = require('../../services/strapi');
 const AssetGrid = require('../../components/asset-grid');
-const { SearchField, SearchVector, SortVector } = require('../../services/strapi/types');
+// const { SearchField, SearchVector, SortVector } = require('../../services/strapi/types');
 const ModalDetails = require('../../components/modal-details');
 const usePrevious = require('../../utils/use-previous');
 const ModalNewUpload = require('../../components/modal-new-upload');
@@ -24,10 +24,10 @@ const getTrad = require('../../utils/getTrad');
 
 const SEARCH_FIELDS = [{ 
   label: 'By Title',
-  value: SearchField.BY_TITLE,
+  value: 'by_title',
 }, {
   label: 'By Asset Id',
-  value: SearchField.BY_ASSET_ID
+  value: 'by_asset_id'
 }];
 
 const HomePage = () => {
@@ -241,4 +241,4 @@ const HomePage = () => {
   );
 };
 
-export default React.memo(HomePage);
+module.exports = React.memo(HomePage);

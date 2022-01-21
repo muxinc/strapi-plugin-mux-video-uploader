@@ -14,7 +14,7 @@ const { TextInput } = require('@strapi/design-system/TextInput');
 const { ToggleInput } = require('@strapi/design-system/ToggleInput');
 const { Typography } = require('@strapi/design-system/Typography');
 
-const { MuxAsset } = require('../../../../types');
+// const { MuxAsset } = require('../../../../types');
 const PreviewPlayer = require('../preview-player');
 const Summary = require('./summary');
 const { deleteMuxAsset, setMuxAsset } = require('../../services/strapi');
@@ -273,4 +273,4 @@ ModalDetails.defaultProps = {
   onToggle: () => { }
 };
 
-export default ModalDetails;
+module.exports = ModalDetails;

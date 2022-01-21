@@ -1,4 +1,4 @@
-const React, { PropsWithChildren } = require('react');
+const React = require('react');
 const styled = require('styled-components');
 const { Flex } = require('@strapi/design-system/Flex');
 const { Box } = require('@strapi/design-system/Box');
@@ -18,4 +18,4 @@ const ModalHeader = ({ children }) => {
   );
 };
 
-export default ModalHeader;
+module.exports = ModalHeader;
