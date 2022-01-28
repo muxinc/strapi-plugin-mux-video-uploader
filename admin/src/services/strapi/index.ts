@@ -1,6 +1,7 @@
 import { auth } from '@strapi/helper-plugin';
 
 import { MuxAsset, MuxAssetUpdate } from '../../../../types';
+import pluginId from '../../pluginId';
 import { SearchVector, SortVector } from './types';
 
 export type UploadOrigin = 'from_computer' | 'from_url';
@@ -21,7 +22,7 @@ function getJwtToken() {
 
 const getIsConfigured = () => {
   return fetch(
-    `${getServiceUri()}/mux-video-uploader/mux-settings`,
+    `${getServiceUri()}/${pluginId}/mux-settings`,
     {
       method: "GET",
       headers: { 'Authorization': `Bearer ${getJwtToken()}` }
@@ -29,7 +30,7 @@ const getIsConfigured = () => {
 }
 
 const setMuxSettings = (body: FormData) => {
-  return fetch(`${getServiceUri()}/mux-video-uploader/mux-settings`, {
+  return fetch(`${getServiceUri()}/${pluginId}/mux-settings`, {
     method: "POST",
     headers: { 'Authorization': `Bearer ${getJwtToken()}` },
     body
@@ -43,11 +44,11 @@ const submitUpload = async (uploadInfo:UploadInfo) => {
   let submitUrl;
     
   if(uploadInfo.origin === 'from_url') {
-    submitUrl = `${getServiceUri()}/mux-video-uploader/submitRemoteUpload`;
+    submitUrl = `${getServiceUri()}/${pluginId}/submitRemoteUpload`;
 
     body.append("url", uploadInfo.media as string);
   } else if(uploadInfo.origin === 'from_computer') {
-    submitUrl = `${getServiceUri()}/mux-video-uploader/submitDirectUpload`;
+    submitUrl = `${getServiceUri()}/${pluginId}/submitDirectUpload`;
   } else {
     throw new Error('Unable to determine upload origin');
   }
@@ -82,7 +83,7 @@ const getMuxAssets = (searchVector?:SearchVector, sortVector?:SortVector, start 
 
   const sort = sortVector ? `&sort=${sortVector.field}&order=${sortVector.desc ? 'desc' : 'asc'}` : '';
 
-  const url = `${getServiceUri()}/mux-video-uploader/mux-asset?start=${start}${sort}&limit=${limit}${search}`;
+  const url = `${getServiceUri()}/${pluginId}/mux-asset?start=${start}${sort}&limit=${limit}${search}`;
 
   return fetch(url, {
     method: "GET",
@@ -91,7 +92,7 @@ const getMuxAssets = (searchVector?:SearchVector, sortVector?:SortVector, start 
 };
 
 const setMuxAsset = async (muxAsset:MuxAssetUpdate): Promise<MuxAsset> => {
-  const url = `${getServiceUri()}/mux-video-uploader/mux-asset/${muxAsset.id}`;
+  const url = `${getServiceUri()}/${pluginId}/mux-asset/${muxAsset.id}`;
 
   const response = await fetch(url, {
     method: "PUT",
@@ -112,7 +113,7 @@ const deleteMuxAsset = async (muxAsset: MuxAsset): Promise<any> => {
   body.append("upload_id", muxAsset.upload_id);
   body.append("delete_on_mux", "true");
 
-  const url = `${getServiceUri()}/mux-video-uploader/deleteMuxAsset`;
+  const url = `${getServiceUri()}/${pluginId}/deleteMuxAsset`;
 
   const response = await fetch(url, {
     method: "POST",
@@ -123,11 +124,17 @@ const deleteMuxAsset = async (muxAsset: MuxAsset): Promise<any> => {
   return await response.json();
 };
 
+const getThumbnail = (playbackId: string | null) => {
+  if (!playbackId) return undefined;
+  return `${getServiceUri()}/${pluginId}/thumbnail/${playbackId}?width=512`;
+};
+
 export {
   getIsConfigured,
   setMuxSettings,
   submitUpload,
   getMuxAssets,
   setMuxAsset,
-  deleteMuxAsset
+  deleteMuxAsset,
+  getThumbnail
 };

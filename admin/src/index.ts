@@ -17,7 +17,7 @@ export default {
         id: `${pluginId}.plugin.name`,
         defaultMessage: name,
       },
-      permissions: pluginPermissions.main,
+      permissions: pluginPermissions.mainRead,
       Component: async () => { 
         const component = await import(
           /* webpackChunkName: "mux-video-uploader" */ './containers/HomePage'
@@ -43,7 +43,7 @@ export default {
           },
           id: 'mux-video-uploader-settings',
           to: `/settings/${pluginId}`,
-          // permissions: pluginPermissions.settingsRoles,
+          permissions: pluginPermissions.settingsRoles,
           Component: async () => {
             const component = await import(
               /* webpackChunkName: "mux-video-uploader-settings-page" */ './containers/Settings'

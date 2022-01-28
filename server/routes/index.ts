@@ -40,11 +40,19 @@ const routes = [
     "path": "/mux-video-uploader/webhook-handler",
     "handler": "mux.muxWebhookHandler",
     "config": {
-      "policies": [],
+      "auth": false,
       "prefix": false
     }
   },
-    
+  {
+    "method": "GET",
+    "path": "/mux-video-uploader/thumbnail/:playbackId",
+    "handler": "mux.thumbnail",
+    "config": {
+      "auth": false,
+      "prefix": false
+    }
+  },
   {
     "method": "GET",
     "path": "/mux-video-uploader/mux-asset",

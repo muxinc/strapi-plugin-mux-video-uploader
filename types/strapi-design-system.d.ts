@@ -11,6 +11,7 @@ declare module '@strapi/design-system/Layout';
 declare module '@strapi/design-system/Loader';
 declare module '@strapi/design-system/Main';
 declare module '@strapi/design-system/ModalLayout';
+declare module '@strapi/design-system/Pagination';
 declare module '@strapi/design-system/Portal';
 declare module '@strapi/design-system/ProgressBar';
 declare module '@strapi/design-system/Searchbar';

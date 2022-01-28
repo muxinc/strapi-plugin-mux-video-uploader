@@ -1,12 +1,90 @@
 import Mux from '@mux/mux-node';
+import axios from 'axios';
 import { Context } from 'koa';
 
 import { getService, Config } from '../utils';
 import pluginId from './../../admin/src/pluginId';
 
+interface MuxAssetFilter {
+  upload_id?: string;
+  asset_id?: string;
+}
+
 const { Webhooks } = Mux;
 
 const model = `plugin::${pluginId}.mux-asset`;
+
+const resolveMuxAssets = async (filters:MuxAssetFilter) => {
+  const params = { filters };
+  
+  const muxAssets = await strapi.entityService.findMany(model, params);
+
+  if (muxAssets.length === 1) {
+    return muxAssets[0];
+  }
+  else {
+    throw new Error('Unable to resolve mux-asset');
+  }
+};
+
+const processWebhookEvent = async (webhookEvent:any) => {
+  const { type, data } = webhookEvent;
+
+  switch (type) {
+    case 'video.upload.asset_created': {
+      const muxAsset = await resolveMuxAssets({ upload_id: data.id });
+      return [
+        muxAsset.id,
+        {
+          data: { asset_id: data.asset_id }
+        }
+      ];
+    }
+    case 'video.asset.ready': {
+      const muxAsset = await resolveMuxAssets({ asset_id: data.id });
+      return [
+        muxAsset.id,
+        {
+          data: {
+            playback_id: data.playback_ids[0].id,
+            isReady: true
+          }
+        }
+      ];
+    }
+    case 'video.asset.errored': {
+      const muxAsset = await resolveMuxAssets({ upload_id: data.id });
+      return [
+        muxAsset.id,
+        {
+          data: {
+            asset_id: data.id,
+            error_message: `${data.errors.type}: ${data.errors.messages[0] || ''}`
+          }
+        }
+      ];
+    }
+    default: return undefined;
+  }
+}
+
+// Do not go gentle into that good night,
+// Old age should burn and rave at close of day;
+// Rage, rage against the dying of the light.
+const thumbnail = async (ctx: Context) => {
+  const { playbackId } = ctx.params;
+
+  const response = await axios.get(
+    `https://image.mux.com/${playbackId}/thumbnail.png`,
+    {
+      params: ctx.query,
+      responseType: 'stream'
+    }
+  );
+
+  ctx.response.set('content-type', response.headers['content-type']);
+  ctx.body = response.data;
+};
 
 const index = async (ctx:Context) => ctx.send({ message: 'ok' });
 
@@ -23,19 +101,23 @@ const submitDirectUpload = async (ctx:Context) => {
 };
 
 const submitRemoteUpload = async (ctx:Context) => {
-  const data = ctx.request.body;
+  const { body } = ctx.request;
 
-  if(!data.url) {
+  if(!body.url) {
     ctx.badRequest("ValidationError", { errors: { "url": ["url cannot be empty"]}});
     
     return;
   }
 
-  const result = await getService('mux').createAsset(data.url);
+  const result = await getService('mux').createAsset(body.url);
 
-  data.asset_id = result.id;
+  const data = {
+    asset_id: result.id,
+    title: body.title,
+    url: body.url
+  };
 
-  const response = await strapi.entityService.create({ data }, { model });
+  const response = await strapi.entityService.create(model, { data });
 
   ctx.send(response);
 };
@@ -101,41 +183,16 @@ const muxWebhookHandler = async (ctx:Context) => {
   //   return;
   // }
 
-  const { type, data } = body;
+  const outcome = await processWebhookEvent(body);
 
-  let payload;
-
-  if(type === 'video.upload.asset_created') {
-    payload = {
-      params: { upload_id: data.id },
-      data: { asset_id: data.asset_id }
-    };
-  } else if(type === 'video.asset.ready') {
-    payload = {
-      params: { asset_id: body.data.id },
-      data: {
-        playback_id: data.playback_ids[0].id,
-        isReady: true
-      }
-    };
-  } else if(type === 'video.asset.errored') {
-    payload = {
-      params: { upload_id: data.upload_id },
-      data: {
-        asset_id: data.id,
-        error_message: `${data.errors.type}: ${data.errors.messages[0] || ''}`
-      }
-    };
-  } else {
+  if (outcome === undefined) {
     ctx.send('ignored');
+  } else {
+    const [id, params] = outcome;
+    const result = await strapi.entityService.update(model, id, params);
 
-    return;
+    ctx.send(result);
   }
-
-  // const result = await strapi.entityService.update(payload, { model });
-  const result = await strapi.entityService.update(model, data.id);
-
-  ctx.send(result);
 };
 
 export = {
@@ -143,5 +200,6 @@ export = {
   submitDirectUpload,
   submitRemoteUpload,
   deleteMuxAsset,
-  muxWebhookHandler
+  muxWebhookHandler,
+  thumbnail
 };

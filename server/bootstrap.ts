@@ -9,6 +9,24 @@ export = async ({ strapi }: { strapi: any }) => {
       uid: 'read',
       pluginName: pluginId
     },
+    {
+      section: 'plugins',
+      displayName: 'Create',
+      uid: 'create',
+      pluginName: pluginId
+    },
+    {
+      section: 'plugins',
+      displayName: 'Update',
+      uid: 'update',
+      pluginName: pluginId
+    },
+    {
+      section: 'plugins',
+      displayName: 'Delete',
+      uid: 'delete',
+      pluginName: pluginId
+    },
     // Settings
     {
       section: "plugins",
