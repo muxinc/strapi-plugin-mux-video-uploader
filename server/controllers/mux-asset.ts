@@ -6,10 +6,12 @@ import pluginId from './../../admin/src/pluginId';
 const model = `plugin::${pluginId}.mux-asset`;
 
 const search = (ctx: Context) => {
+  const { start, limit, sort = 'createdAt', order = 'desc' } = ctx.query;
+
   const params:any = {
-    start: ctx.query?.start,
-    limit: ctx.query?.limit,
-    orderBy: ctx.sort ? { [ctx.sort]: ctx.order || 'asc' } : undefined
+    start,
+    limit,
+    sort: [{ [sort as string]: order }]
   };
 
   if (ctx.query.filter) {
@@ -74,32 +76,18 @@ const create = async (ctx: Context) => {
 const update = async (ctx:Context) => {
   const { id } = ctx.params;
 
-  const { data } = parseMultipartData(ctx);
+  const { data: body } = parseMultipartData(ctx);
 
-  const payload: { title?: string, isReady?: boolean } = {};
+  const data: { title?: string, isReady?: boolean } = {};
   
-  if (data.title !== undefined) {
-    payload.title = data.title;
+  if (body.title !== undefined) {
+    data.title = body.title;
   }
-  if (data.isReady !== undefined) {
-    payload.isReady = data.isReady;
+  if (body.isReady !== undefined) {
+    data.isReady = body.isReady;
   }
-
-  console.log(model, id, payload)
-
-  return await strapi.entityService.update(model, id, payload);
-
-//   let entity;
-// 
-//   if (ctx.is('multipart')) {
-//     const { data, files } = parseMultipartData(ctx);
-// 
-//     entity = await strapi.entityService.update({ params: { id }, data, files }, { model });
-//   } else {
-//     entity = await strapi.entityService.update({ params: { id }, data: ctx.request.body }, { model });
-//   }
-
-  // return entity;
+  
+  return await strapi.entityService.update(model, id, { data });
 };
 
 const del = async (ctx:Context) => {

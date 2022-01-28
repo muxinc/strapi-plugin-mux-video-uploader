@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { isEqual, set } from 'lodash';
 
 import { CONFIG_KEY, CONFIG_NAME } from './../constants';
 import { getCoreStore } from './';
@@ -17,11 +17,11 @@ const setConfig = async (key:string, value:any) => {
   
   Object.keys(value).forEach((key:string) => {
     if (value[key] !== null && value[key] !== undefined) {
-      _.set(currentConfig, key, value[key]);
+      set(currentConfig, key, value[key]);
     }
   });
 
-  if (!_.isEqual(currentConfig, storedConfig)) { 
+  if (!isEqual(currentConfig, storedConfig)) { 
     getCoreStore().set({
       key: configKey(key),
       value: currentConfig,

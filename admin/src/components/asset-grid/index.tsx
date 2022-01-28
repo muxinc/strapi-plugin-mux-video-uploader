@@ -19,13 +19,13 @@ const AssetGrid = (props:Props) => {
   if(muxAssets === undefined) return null;
 
   const assets = muxAssets.map((muxAsset) =>
-    <GridItem col={3} xs={12}>
+    <GridItem col={3} xs={12} s={4}>
       <AssetCard muxAsset={muxAsset} onClick={onMuxAssetClick} />
     </GridItem>
   );
 
   return (
-    <Box paddingTop={5}>
+    <Box paddingTop={6} paddingBottom={8}>
       <Grid gap={4}>
         {assets}
       </Grid>

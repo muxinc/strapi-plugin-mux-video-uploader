@@ -1,8 +1,7 @@
-import React, { ChangeEvent } from 'react';
+import React from 'react';
 import { Field, FieldLabel, FieldError, FieldInput } from '@strapi/design-system/Field';
 import { Stack } from '@strapi/design-system/Stack';
 import { Flex } from '@strapi/design-system/Flex';
-import { InputFileOnChange } from '../../../../types';
 
 interface Props {
   error?: string;

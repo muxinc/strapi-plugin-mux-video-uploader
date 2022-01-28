@@ -1,7 +1,6 @@
 import React from 'react';
 import { createUpload, UpChunk } from '@mux/upchunk';
-import { Formik, FormikErrors, FormikHelpers } from 'formik';
-import { Form } from '@strapi/helper-plugin';
+import { FormikErrors, FormikHelpers, useFormik } from 'formik';
 import { Box } from '@strapi/design-system/Box';
 import { Button } from '@strapi/design-system/Button';
 import { Grid, GridItem } from '@strapi/design-system/Grid';
@@ -94,7 +93,7 @@ const ModalNewUpload = (props:Props) => {
         errors.from_url_title = 'No title specified';
       }
 
-      if (body.url !== undefined) {
+      if (body.url) {
         return {
           origin: 'from_url',
           title: body.from_url_title,
@@ -152,15 +151,11 @@ const ModalNewUpload = (props:Props) => {
     } else {
       console.log('Unable to resolve upload state');
     }
+
+    resetForm();
   };
 
   const handleOnTabChange = (tabId: number) => setActiveTab(tabId);
-
-  // const handleOnTitleChange = (e: InputTextOnChange) => setState({ ...state, title: e.target.value });
-  // const handleOnFileChange = (e: InputFileOnChange) => {
-  //   console.log(e); setState({ ...state, file: e.target.files });
-  // }
-  // const handleOnUrlChange = (e: InputTextOnChange) => setState({ ...state, url: e.target.value });
 
   const handleOnModalClose = (forceRefresh: boolean = false) => {
     onToggle(forceRefresh);
@@ -201,9 +196,9 @@ const ModalNewUpload = (props:Props) => {
                         <TextInput
                           label="Title"
                           name="from_computer_title"
-                          // error={content.length > 5 ? 'Content is too long' : undefined}
                           value={values.from_computer_title}
                           error={errors.from_computer_title}
+                          required
                           onChange={handleChange}
                         />
                       </Box>
@@ -230,9 +225,9 @@ const ModalNewUpload = (props:Props) => {
                         <TextInput
                           label="Title"
                           name="from_url_title"
-                          // error={content.length > 5 ? 'Content is too long' : undefined}
                           value={values.from_url_title}
                           error={errors.from_url_title}
+                          required
                           onChange={handleChange}
                         />
                       </Box>
@@ -241,10 +236,10 @@ const ModalNewUpload = (props:Props) => {
                       <Box paddingTop={2} paddingBottom={2}>
                         <TextInput
                           label="Url"
-                          name="from_url_url"
-                          // error={content.length > 5 ? 'Content is too long' : undefined}
+                          name="url"
                           value={values.url}
                           error={errors.url}
+                          required
                           onChange={handleChange}
                         />
                       </Box>
@@ -262,25 +257,14 @@ const ModalNewUpload = (props:Props) => {
   const renderFooter = () => {
     if(isComplete) {
       return (
-        // <section>
-        //   <div />
-        //   <Button onClick={handleOnModalFinish} color="primary">Finish</Button>
-        // </section>
         <ModalFooter endActions={<Button onClick={handleOnModalFinish}>Finish</Button>} />
       );
     } else if(uploadPercent !== undefined) {
       return (
-        // <section>
-        //   <Button onClick={handleOnAbort} color="cancel">Cancel</Button>
-        // </section>
         <ModalFooter startActions={<Button onClick={handleOnAbort} variant="tertiary">Cancel</Button>} />
       );
     } else {
       return (
-        // <section>
-        //   <Button onClick={handleOnModalClose} color="cancel">Cancel</Button>
-        //   <Button type="submit" color="success">Submit</Button>
-        // </section>
         <ModalFooter
           startActions={<Button onClick={handleOnModalClose} variant="tertiary">Cancel</Button>}
           endActions={<Button type="submit">Submit</Button>}
@@ -288,6 +272,13 @@ const ModalNewUpload = (props:Props) => {
       );
     }
   };
+
+  const { values, errors, setFieldValue, handleChange, handleSubmit } = useFormik({
+    initialValues: INITIAL_VALUES,
+    enableReinitialize: true,
+    validateOnChange: false,
+    onSubmit: handleOnSubmit
+  });
 
   return (
     <>
@@ -297,23 +288,12 @@ const ModalNewUpload = (props:Props) => {
             New upload
           </Typography>
         </ModalHeader>
-          <Formik
-            onSubmit={handleOnSubmit}
-            initialValues={INITIAL_VALUES}
-            validateOnChange={false}
-            enableReinitialize
-          >
-            {({ errors, values, setFieldValue, handleChange }) => {
-              return (
-                <Form>
-                  <ModalBody>
-                    {renderBody(errors, values, setFieldValue, handleChange)}
-                  </ModalBody>
-                  {renderFooter()}
-                </Form>
-              );
-            }}
-          </Formik>
+        <form onSubmit={handleSubmit}>
+          <ModalBody>
+            {renderBody(errors, values, setFieldValue, handleChange)}
+          </ModalBody>
+          {renderFooter()}
+        </form>
       </ModalBlocking>
     </>
   )

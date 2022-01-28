@@ -4,6 +4,7 @@ import videojs from '@mux/videojs-kit';
 import { MuxAsset } from '../../../../types';
 
 import '@mux/videojs-kit/dist/index.css';  
+import { getThumbnail } from '../../services/strapi';
 
 interface Props {
   muxAsset?: MuxAsset;
@@ -33,7 +34,7 @@ const PreviewPlayer = (props:Props) => {
 
   if(muxAsset === undefined) return null;
 
-  const posterUrl = `https://image.mux.com/${muxAsset.playback_id}/thumbnail.jpg`;
+  const posterUrl = getThumbnail(muxAsset.playback_id);
   
   return (
     <video

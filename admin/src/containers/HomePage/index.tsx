@@ -1,14 +1,13 @@
 import React from 'react';
 import { useIntl } from 'react-intl';
-import { DebouncedFunc } from 'lodash';
-import debounce from 'lodash.debounce';
-import { CheckPagePermissions, GlobalPagination } from '@strapi/helper-plugin';
+import { useHistory, useLocation } from 'react-router-dom';
+import { CheckPagePermissions, useRBAC } from '@strapi/helper-plugin';
 import Plus from '@strapi/icons/Plus';
 import { Button } from '@strapi/design-system/Button';
 import { Grid, GridItem } from '@strapi/design-system/Grid';
 import { HeaderLayout, Layout, ContentLayout } from '@strapi/design-system/Layout';
 import { Main } from '@strapi/design-system/Main';
-import { Searchbar, SearchForm } from '@strapi/design-system/Searchbar';
+import { Searchbar } from '@strapi/design-system/Searchbar';
 import { Select, Option } from '@strapi/design-system/Select';
 
 import { GetMuxAssetsResponse, MuxAsset } from '../../../../types';
@@ -17,10 +16,11 @@ import { getIsConfigured, getMuxAssets } from '../../services/strapi';
 import AssetGrid from '../../components/asset-grid';
 import { SearchField, SearchVector, SortVector } from '../../services/strapi/types';
 import ModalDetails from '../../components/modal-details';
-import usePrevious from '../../utils/use-previous';
 import ModalNewUpload from '../../components/modal-new-upload';
 import pluginPermissions from '../../permissions';
 import getTrad from '../../utils/getTrad';
+import ListPagination from '../../components/list-pagination';
+import { appendQueryParameter } from '../../utils/url';
 
 const SEARCH_FIELDS = [{ 
   label: 'By Title',
@@ -30,26 +30,32 @@ const SEARCH_FIELDS = [{
   value: SearchField.BY_ASSET_ID
 }] as const;
 
+const ProtectedHomePage = () => (
+  <CheckPagePermissions permissions={pluginPermissions.mainRead}>
+    <HomePage />
+  </CheckPagePermissions>
+);
+
 const HomePage = () => {
+  const location = useLocation();
+  const history = useHistory();
+  
   const [isReady, setIsReady] = React.useState<boolean>(false);
-  const [hasLoaded, setHasLoaded] = React.useState<boolean>(false);
   const [muxAssets, setMuxAssets] = React.useState<GetMuxAssetsResponse|undefined>();
   const [selectedAsset, setSelectedAsset] = React.useState<MuxAsset|undefined>();
   const [isNewUploadOpen, setIsNewUploadOpen] = React.useState<boolean>(false);
 
   const [searchField, setSearchField] = React.useState<SearchField>(SEARCH_FIELDS[0].value);
-  const [searchValue, setSearchValue] = React.useState<string|undefined>(undefined);
-  const [pageLimit] = React.useState<number>(20);
-  const [pageStart, setPageStart] = React.useState<number>(0);
+  const [searchValue, setSearchValue] = React.useState<string|undefined>('');
+  const [pageLimit] = React.useState<number>(12);
+  const [pages, setPages] = React.useState(1);
+  const [page, setPage] = React.useState<number>();
 
   const { formatMessage } = useIntl();
 
-  const prevSearchField = usePrevious(searchField);
-  const prevSearchValue = usePrevious(searchValue);
-  const prevPageLimit = usePrevious(pageLimit);
-  const prevPageStart = usePrevious(pageStart);
-
   const loadMuxAssets = async () => {
+    if (page === undefined) return;
+
     let searchVector:SearchVector|undefined = undefined;
 
     if(searchValue !== undefined && searchValue) {
@@ -59,59 +65,59 @@ const HomePage = () => {
       };
     }
 
-    const sortVector:SortVector = { field: 'created_at', desc: true };
+    const sortVector:SortVector = { field: 'createdAt', desc: true };
 
-    const start = pageStart * pageLimit;
+    const start = (page - 1) * pageLimit;
 
     const data = await getMuxAssets(searchVector, sortVector, start, pageLimit);
+
+    const pages = Math.ceil(data.totalCount / pageLimit);
     
     setMuxAssets(data);
+    setPages(pages);
   }
-
-  const loadMuxAssetsDebounced:DebouncedFunc<any> = debounce(loadMuxAssets, 300);
 
   React.useEffect(() => {
     getIsConfigured().then(data => {
       setIsReady(data === true);
     });
-
-    () => loadMuxAssetsDebounced.cancel();
   }, []);
 
   React.useEffect(() => {
-    if(!isReady) return;
+    const { page, field, value} = Object.fromEntries(new URLSearchParams(location.search));
+    setSearchField(field as SearchField || SearchField.BY_TITLE);
+    setSearchValue(value);
 
-    if(
-      !hasLoaded ||
-      (prevSearchField !== searchField && searchValue !== undefined) ||
-      prevSearchValue !== searchValue ||
-      prevPageStart !== pageStart ||
-      prevPageLimit !== pageLimit
-    ) {
-      loadMuxAssetsDebounced();
-
-      setHasLoaded(true);
+    if((value && value !== searchValue) || (field && field !== searchField)) {
+      setPage(1);
+    } else {
+      setPage(parseInt(page) || 1);
     }
-  }, [isReady, searchField, searchValue, pageStart, pageLimit]);
+  }, [location]);
+
+  React.useEffect(() => {
+    loadMuxAssets();
+  }, [page, searchField, searchValue, pageLimit]);
+
+  const permissions = React.useMemo(() => {
+    return {
+      create: pluginPermissions.mainCreate,
+      update: pluginPermissions.mainUpdate,
+      delete: pluginPermissions.mainDelete,
+    };
+  }, []);
+
+  const {
+    isLoading: isLoadingForPermissions,
+    allowedActions: { canCreate, canUpdate, canDelete },
+  } = useRBAC(permissions);
 
   const handleOnSearchFieldChange = (field: SearchField) => {
-    // const field = event?.target.value === '' ? undefined : event?.target.value;
-
-    if(field !== undefined && field !== searchField) {
-      setPageStart(0);
-    }
-
-    setSearchField(field);
+    history.replace(appendQueryParameter(location, { field }));
   };
 
   const handleOnSearchValueChange = (event:any) => {
-    const value = event?.target.value === '' ? undefined : event?.target.value;
-    
-    setSearchValue(value);
-    
-    if(value !== undefined && value !== searchValue) {
-      setPageStart(0);
-    }
+    history.replace(appendQueryParameter(location, { value: event?.target.value || '' }));
   };
   
   const handleOnMuxAssetClick = (muxAsset:MuxAsset) => setSelectedAsset(muxAsset);
@@ -130,12 +136,9 @@ const HomePage = () => {
 
   const handleOnNewUploadClick = () => setIsNewUploadOpen(true);
 
-  const handleOnPaginateChange = ({ target }: { target: { value: number }}) => {
-    setPageStart(target.value - 1);
-    loadMuxAssets();
-  };
+  if (!isReady) return <SetupNeeded />;
 
-  if(!isReady) return <SetupNeeded />;
+  if (isLoadingForPermissions) return null;
 
   return (
     <>
@@ -148,7 +151,7 @@ const HomePage = () => {
             })}
             primaryAction={
               <Button
-                // disabled={!canUpdate}
+                disabled={!canCreate}
                 startIcon={<Plus />}
                 size="L"
                 onClick={handleOnNewUploadClick}
@@ -172,20 +175,18 @@ const HomePage = () => {
                 </Select>
               </GridItem>
               <GridItem col={6} xs={12} s={12}>
-                <SearchForm>
-                  <Searchbar
-                    name="searchbar"
-                    onClear={() => setSearchValue('')}
-                    value={searchValue}
-                    onChange={handleOnSearchValueChange}
-                    clearLabel="Clear search"
-                  >
-                    Searching for Mux assets
-                  </Searchbar>
-                </SearchForm>
+                <Searchbar
+                  onClear={() => setSearchValue('')}
+                  value={searchValue}
+                  onChange={handleOnSearchValueChange}
+                  clearLabel="Clear search"
+                >
+                  Searching for Mux assets
+                </Searchbar>
               </GridItem>
             </Grid>
             <AssetGrid muxAssets={muxAssets?.items} onMuxAssetClick={handleOnMuxAssetClick} />
+            <ListPagination page={page} pages={pages} />
           </ContentLayout>
         </Main>
       </Layout>
@@ -196,49 +197,12 @@ const HomePage = () => {
       <ModalDetails 
         isOpen={selectedAsset !== undefined}
         muxAsset={selectedAsset}
+        enableUpdate={canUpdate}
+        enableDelete={canDelete}
         onToggle={handleOnDetailsClose}
       />
     </>
-    // <CheckPagePermissions permissions={pluginPermissions.main}>
-    //   <Layout>
-    //     <div>
-    //       <ControlsContainer>
-    //         <SearchContainer>
-    //           <Select
-    //             options={SEARCH_FIELDS}
-    //             value={searchField}
-    //             onChange={handleOnSearchFieldChange}
-    //           />
-    //           <InputText
-    //             placeholder="Search text"
-    //             type="text"
-    //             value={searchValue}
-    //             onChange={handleOnSearchValueChange}
-    //           />
-    //         </SearchContainer>
-    //         <NewUploadButtonContainer>
-    //           <Button color="primary" label="New Upload" onClick={handleOnNewUploadClick} />
-    //         </NewUploadButtonContainer>
-    //       </ControlsContainer>
-    //       <AssetGrid muxAssets={muxAssets?.items} onMuxAssetClick={handleOnMuxAssetClick} />
-    //       <GlobalPagination
-    //         count={muxAssets?.totalCount}
-    //         params={{_page: pageStart + 1, _limit: pageLimit}}
-    //         onChangeParams={handleOnPaginateChange}
-    //       />
-    //       <ModalDetails 
-    //         isOpen={selectedAsset !== undefined}
-    //         muxAsset={selectedAsset}
-    //         onToggle={handleOnDetailsClose}
-    //       />
-    //       <ModalNewUpload
-    //         isOpen={isNewUploadOpen}
-    //         onToggle={handleOnNewUploadClose}
-    //       />
-    //     </div>
-    //   </Layout>
-    // </CheckPagePermissions>
   );
 };
 
-export default React.memo(HomePage);
+export default ProtectedHomePage;

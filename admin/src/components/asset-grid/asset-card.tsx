@@ -5,8 +5,8 @@ import { Loader } from '@strapi/design-system/Loader';
 import { Typography } from '@strapi/design-system/Typography';
 
 import { MuxAsset } from '../../../../types';
-import { generateImageUrl } from '../../utils/mux';
 import errorIcon from './../../static/error-icon.svg';
+import { getThumbnail } from '../../services/strapi';
 
 const BoxStyled = styled(Box)`
   cursor: pointer;
@@ -61,12 +61,12 @@ const AssetCard = (props:Props) => {
   }, [muxAsset]);
 
   const thumbnailImageUrl = muxAsset.playback_id !== null ? 
-    // If we have a playback_id, construct a thumnail url
-    generateImageUrl(muxAsset.playback_id) :
+    // If we have a playback_id, construct a thumbnail url
+    getThumbnail(muxAsset.playback_id) :
     // Else, we use a transparent single-pixel png data uri
     'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
 
-  const handleOnClick = () => { console.log('hi')
+  const handleOnClick = () => {
     onClick(muxAsset);
   }
 

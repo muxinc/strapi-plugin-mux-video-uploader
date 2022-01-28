@@ -2,6 +2,10 @@ import pluginId from './pluginId';
 
 const settingsRead = [{ action: `plugin::${pluginId}.settings.read`, subject: null }];
 const settingsUpdate = [{ action: `plugin::${pluginId}.settings.update`, subject: null }];
+const mainRead = [{ action: `plugin::${pluginId}.read`, subject: null }];
+const mainCreate = [{ action: `plugin::${pluginId}.create`, subject: null }];
+const mainUpdate = [{ action: `plugin::${pluginId}.update`, subject: null }];
+const mainDelete = [{ action: `plugin::${pluginId}.delete`, subject: null }];
 
 const pluginPermissions = {
   // This permission regards the main component (App) and is used to tell
@@ -11,7 +15,10 @@ const pluginPermissions = {
   settingsRoles: new Array().concat(settingsRead, settingsUpdate),
   settingsRead,
   settingsUpdate,
-  main: [{ action: `plugin::${pluginId}.read`, subject: null }]
+  mainRead,
+  mainCreate,
+  mainUpdate,
+  mainDelete
 };
 
 export default pluginPermissions;
