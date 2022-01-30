@@ -1,6 +1,5 @@
 import React from 'react';
 import { useIntl } from 'react-intl';
-import { DateTime } from 'luxon';
 import { Box } from '@strapi/design-system/Box';
 import { Grid, GridItem } from '@strapi/design-system/Grid';
 import { Stack } from '@strapi/design-system/Stack';
@@ -8,6 +7,11 @@ import { Typography } from '@strapi/design-system/Typography';
 
 import { MuxAsset } from '../../../../types';
 import getTrad from '../../utils/getTrad';
+import styled from 'styled-components';
+
+const TypographyWrapped = styled(Typography)`
+  overflow-wrap: break-word;
+`;
 
 interface Props {
   muxAsset?: MuxAsset;
@@ -16,13 +20,15 @@ interface Props {
 const Summary = (props:Props) => {
   const { muxAsset } = props;
 
-  const { formatMessage } = useIntl();
+  const { formatMessage, formatDate, formatTime } = useIntl();
 
   if(muxAsset === undefined) return null;
 
-  const created = DateTime.fromISO(muxAsset.created_at).toFormat('yyyy-MM-dd HH:mm:ss');
-  const updated = DateTime.fromISO(muxAsset.updated_at).toFormat('yyyy-MM-dd HH:mm:ss');
-
+  const created_date = formatDate(Date.parse(muxAsset.createdAt));
+  const created_time = formatTime(Date.parse(muxAsset.createdAt));
+  const updated_date = formatDate(Date.parse(muxAsset.updatedAt));
+  const updated_time = formatTime(Date.parse(muxAsset.updatedAt));
+  
   return (
     <Box padding={3} background="neutral150">
       <Stack>
@@ -36,7 +42,7 @@ const Summary = (props:Props) => {
                 })
               }
             </Typography>
-            <Typography variant="pi">{muxAsset.asset_id}</Typography>
+            <TypographyWrapped variant="pi">{muxAsset.asset_id}</TypographyWrapped>
           </Stack>
         </Box>
         <Box paddingBottom={4}>
@@ -49,7 +55,7 @@ const Summary = (props:Props) => {
                 })
               }
             </Typography>
-            <Typography variant="pi">{muxAsset.upload_id}</Typography>
+            <TypographyWrapped variant="pi">{muxAsset.upload_id}</TypographyWrapped>
           </Stack>
         </Box>
         <Box paddingBottom={4}>
@@ -62,7 +68,7 @@ const Summary = (props:Props) => {
                 })
               }
             </Typography>
-            <Typography variant="pi">{muxAsset.playback_id}</Typography>
+            <TypographyWrapped variant="pi">{muxAsset.playback_id}</TypographyWrapped>
           </Stack>
         </Box>
         <Box>
@@ -78,7 +84,7 @@ const Summary = (props:Props) => {
                       })
                     }
                   </Typography>
-                  <Typography variant="pi">{created}</Typography>
+                  <Typography variant="pi">{created_date} {created_time}</Typography>
                 </Stack>
               </Box>
             </GridItem>
@@ -93,7 +99,7 @@ const Summary = (props:Props) => {
                       })
                     }
                   </Typography>
-                  <Typography variant="pi">{updated}</Typography>
+                  <Typography variant="pi">{updated_date} {updated_time}</Typography>
                 </Stack>
               </Box>
             </GridItem>
