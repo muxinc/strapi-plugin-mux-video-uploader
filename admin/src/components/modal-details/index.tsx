@@ -1,4 +1,5 @@
 import React from 'react';
+import { useIntl } from 'react-intl';
 import { FormikHelpers, FormikTouched, useFormik } from 'formik';
 import ExclamationMarkCircle from '@strapi/icons/ExclamationMarkCircle';
 import Trash from '@strapi/icons/Trash';
@@ -17,6 +18,7 @@ import { MuxAsset } from '../../../../types';
 import PreviewPlayer from '../preview-player';
 import Summary from './summary';
 import { deleteMuxAsset, setMuxAsset } from '../../services/strapi';
+import getTrad from '../../utils/getTrad';
 
 interface FormProps {
   title: string;
@@ -36,6 +38,8 @@ interface Props extends DefaultProps{
 
 const ModalDetails = (props:Props) => {
   const { isOpen, muxAsset, enableUpdate, enableDelete, onToggle } = props;
+
+  const { formatMessage } = useIntl();
 
   if(muxAsset === undefined) return null;
 
@@ -62,8 +66,13 @@ const ModalDetails = (props:Props) => {
   };
 
   const handleOnSubmit = async (values: FormProps, { setErrors, setSubmitting }: FormikHelpers<FormProps>) => {
+    const title = formatMessage({
+      id: getTrad('Common.title-required'),
+      defaultMessage: 'No title specified'
+    });
+
     if (!values.title) {
-      setErrors({ title: 'No title specified' });  
+      setErrors({ title });  
 
       return;
     }
@@ -101,7 +110,12 @@ const ModalDetails = (props:Props) => {
       <ModalLayout onClose={onToggle} labelledBy="title">
         <ModalHeader>
           <Typography fontWeight="bold" textColor="neutral800" as="h2" id="title">
-            Details
+            {
+              formatMessage({
+                id: getTrad('ModalDetails.header'),
+                defaultMessage: 'Details'
+              })
+            }
           </Typography>
         </ModalHeader>
         <form onSubmit={handleSubmit}>
@@ -114,7 +128,12 @@ const ModalDetails = (props:Props) => {
                 <Stack>
                   <Box paddingBottom={4}>
                     <TextInput
-                      label="Title"
+                      label={
+                        formatMessage({
+                          id: getTrad('Common.title-label'),
+                          defaultMessage: 'Title'
+                        })
+                      }
                       name="title"
                       value={values.title}
                       error={errors.title}
@@ -128,7 +147,12 @@ const ModalDetails = (props:Props) => {
                   </Box>
                   <Box paddingBottom={4}>
                     <ToggleInput
-                      label="Is ready"
+                      label={
+                        formatMessage({
+                          id: getTrad('Common.isReady-label'),
+                          defaultMessage: 'Is ready'
+                        })
+                      }
                       name="isReady"
                       onLabel="on"
                       offLabel="off"
@@ -151,32 +175,90 @@ const ModalDetails = (props:Props) => {
           <ModalFooter
             startActions={
               <>
-                <Button variant="tertiary" onClick={onToggle}>Cancel</Button>
-                <Button variant="danger" disabled={!enableDelete} onClick={toggleDeleteWarning}>Delete</Button>
+                <Button variant="tertiary" onClick={onToggle}>
+                  {
+                    formatMessage({
+                      id: getTrad('Common.cancel-button'),
+                      defaultMessage: 'Cancel'
+                    })
+                  }
+                </Button>
+                <Button variant="danger" disabled={!enableDelete} onClick={toggleDeleteWarning}>
+                  {
+                    formatMessage({
+                      id: getTrad('Common.delete-button'),
+                      defaultMessage: 'Delete'
+                    })
+                  }
+                </Button>
               </>
             }
             endActions={
-              <Button type="submit" variant="success" disabled={isProcessing || isSubmitting}>Finish</Button>
+              <Button type="submit" variant="success" disabled={isProcessing || isSubmitting}>
+                {
+                  formatMessage({
+                    id: getTrad('Common.finish-button'),
+                    defaultMessage: 'Finish'
+                  })
+                }
+              </Button>
             }
           />
         </form>
       </ModalLayout>
-      <Dialog onClose={toggleDeleteWarning} title="Delete confirmation" isOpen={showDeleteWarning}>
+      <Dialog
+        onClose={toggleDeleteWarning}
+        title={
+          formatMessage({
+            id: getTrad('ModalDetails.delete-confirmation-header'),
+            defaultMessage: 'Delete confirmation'
+          })
+        }
+        isOpen={showDeleteWarning}
+      >
         <DialogBody icon={<ExclamationMarkCircle />}>
           <Stack>
             <Flex justifyContent="center">
-              <Typography>Are you sure you want to delete this item?</Typography>
+              <Typography>
+                {
+                  formatMessage({
+                    id: getTrad('ModalDetails.delete-confirmation-prompt'),
+                    defaultMessage: 'Are you sure you want to delete this item?'
+                  })
+                }
+              </Typography>
             </Flex>
             <Flex justifyContent="center">
-              <Typography>This will also delete the Asset from Mux.</Typography>
+              <Typography>
+                {
+                  formatMessage({
+                    id: getTrad('ModalDetails.delete-confirmation-callout'),
+                    defaultMessage: 'This will also delete the Asset from Mux.'
+                  })
+                }
+              </Typography>
             </Flex>
           </Stack>
         </DialogBody>
         <DialogFooter
-          startAction={<Button onClick={toggleDeleteWarning} variant="tertiary">Cancel</Button>}
+          startAction={
+            <Button onClick={toggleDeleteWarning} variant="tertiary">
+              {
+                formatMessage({
+                  id: getTrad('Common.cancel-button'),
+                  defaultMessage: 'Cancel'
+                })
+              }
+            </Button>
+          }
           endAction={
             <Button variant="danger-light" startIcon={<Trash />} onClick={handleOnDeleteConfirm}>
-              Confirm
+              {
+                formatMessage({
+                  id: getTrad('Common.confirm-button'),
+                  defaultMessage: 'Confirm'
+                })
+              }
             </Button>
           }
         />

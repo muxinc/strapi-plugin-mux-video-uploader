@@ -76,7 +76,10 @@ const Settings = () => {
     if (formData.entries().next().done) {
       notification({
         type: 'info',
-        message: { id: getTrad('notification.noChanges'), defaultMessage: 'No changes made' },
+        message: {
+          id: getTrad('notification.no-changes'),
+          defaultMessage: 'No changes made'
+        },
       });
 
       unlockApp();
@@ -88,14 +91,20 @@ const Settings = () => {
     if (response.status === 200) {
       notification({
         type: 'success',
-        message: { id: getTrad('notification.changesSaved'), defaultMessage: 'Changes saved' },
+        message: {
+          id: getTrad('notification.changes-saved'),
+          defaultMessage: 'Changes saved'
+        },
       });
 
       resetForm();
     } else {
       notification({
         type: 'warning',
-        message: { id: getTrad('notification.errorSaving'), defaultMessage: 'Error while saving changes' },
+        message: {
+          id: getTrad('notification.error-saving'),
+          defaultMessage: 'Error while saving changes'
+        },
       });
     }
 
@@ -113,15 +122,15 @@ const Settings = () => {
     <Main>
       <SettingsPageTitle
         name={formatMessage({
-          id: getTrad('SettingsNav.section-label'),
-          defaultMessage: 'Mux Video Uploader',
+          id: getTrad('Settings.page-title'),
+          defaultMessage: 'Mux Video Uploader'
         })}
       />
       <form onSubmit={handleSubmit}>
         <HeaderLayout
           title={formatMessage({
-            id: getTrad('SettingsNav.section-label'),
-            defaultMessage: 'Mux Video Uploader',
+            id: getTrad('Settings.header'),
+            defaultMessage: 'Mux Video Uploader'
           })}
           primaryAction={
             <Button
@@ -131,7 +140,12 @@ const Settings = () => {
               startIcon={<Check />}
               size="L"
             >
-              {formatMessage({ id: getTrad('Form.save'), defaultMessage: 'Save' })}
+              {
+                formatMessage({
+                  id: getTrad('Common.save-button'),
+                  defaultMessage: 'Save'
+                })
+              }
             </Button>
           }
         />
@@ -147,17 +161,29 @@ const Settings = () => {
           >
             <Stack size={4}>
               <Typography variant="delta" as="h2">
-                {formatMessage({
-                  id: getTrad('SettingsNav.link.settings'),
-                  defaultMessage: 'Settings',
-                })}
+                {
+                  formatMessage({
+                    id: getTrad('Settings.section-header'),
+                    defaultMessage: 'Settings'
+                  })
+                }
               </Typography>
               <Grid gap={6}>
                 <GridItem col={6} s={12}>
                   <TextInput
-                    label="Access Token"
+                    label={
+                      formatMessage({
+                        id: getTrad('Settings.access-token-label'),
+                        defaultMessage: 'Access Token'
+                      })
+                    }
                     name="access_token"
-                    placeholder="Mux access token"
+                    placeholder={
+                      formatMessage({
+                        id: getTrad('Settings.access-token-placeholder'),
+                        defaultMessage: 'Mux access token'
+                      })
+                    }
                     value={values.access_token}
                     error={errors && errors.access_token}
                     onChange={handleChange}
@@ -167,10 +193,20 @@ const Settings = () => {
               <Grid gap={6}>
                 <GridItem col={6} s={12}>
                   <TextInput
-                    label="Secret Key"
+                    label={
+                      formatMessage({
+                        id: getTrad('Settings.secret-key-label'),
+                        defaultMessage: 'Secret Key'
+                      })
+                    }
                     name="secret_key"
                     type="password"
-                    placeholder="Mux secret key"
+                    placeholder={
+                      formatMessage({
+                        id: getTrad('Settings.secret-key-placeholder'),
+                        defaultMessage: 'Mux secret key'
+                      })
+                    }
                     value={values.secret_key}
                     error={errors && errors.secret_key}
                     onChange={handleChange}
@@ -180,10 +216,20 @@ const Settings = () => {
               <Grid gap={6}>
                 <GridItem col={6} s={12}>
                   <TextInput
-                    label="Webhook Signing Secret"
+                    label={
+                      formatMessage({
+                        id: getTrad('Settings.webhook-signing-secret-label'),
+                        defaultMessage: 'Webhook Signing Secret'
+                      })
+                    }
                     name="webhook_signing_secret"
                     type="password"
-                    placeholder="Mux webhook signing secret"
+                    placeholder={
+                      formatMessage({
+                        id: getTrad('Settings.webhook-signing-secret-placeholder'),
+                        defaultMessage: 'Mux webhook signing secret'
+                      }) 
+                    }
                     value={values.webhook_signing_secret}
                     error={errors && errors.webhook_signing_secret}
                     onChange={handleChange}
