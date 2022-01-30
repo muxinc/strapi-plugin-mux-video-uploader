@@ -20,7 +20,7 @@ export default {
       permissions: pluginPermissions.mainRead,
       Component: async () => { 
         const component = await import(
-          /* webpackChunkName: "mux-video-uploader" */ './containers/HomePage'
+          /* webpackChunkName: "mux-video-uploader" */ './containers/App'
         );
 
         return component;
