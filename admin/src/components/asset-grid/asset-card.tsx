@@ -18,6 +18,14 @@ const BackdropContainerStyled = styled.div`
   position: relative;
 `;
 
+const TypographyEllipsis = styled(Typography)`
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+`;
+
 interface BackdropProps {
   imageUrl?: string;
 }
@@ -92,7 +100,9 @@ const AssetCard = (props:Props) => {
           {renderStatus()}
         </LoadingIndicatorContainerStyled>
       </BackdropContainerStyled>
-      <Typography variant="omega" fontWeight="bold">{muxAsset.title}</Typography>
+      <TypographyEllipsis variant="omega" fontWeight="bold" title={muxAsset.title}>
+        {muxAsset.title}
+      </TypographyEllipsis>
     </BoxStyled>
   );
 };
