@@ -22,14 +22,6 @@ import getTrad from '../../utils/getTrad';
 import ListPagination from '../../components/list-pagination';
 import { appendQueryParameter } from '../../utils/url';
 
-const SEARCH_FIELDS = [{ 
-  label: 'By Title',
-  value: SearchField.BY_TITLE,
-}, {
-  label: 'By Asset Id',
-  value: SearchField.BY_ASSET_ID
-}] as const;
-
 const ProtectedHomePage = () => (
   <CheckPagePermissions permissions={pluginPermissions.mainRead}>
     <HomePage />
@@ -39,6 +31,22 @@ const ProtectedHomePage = () => (
 const HomePage = () => {
   const location = useLocation();
   const history = useHistory();
+
+  const { formatMessage } = useIntl();
+
+  const SEARCH_FIELDS = [{ 
+    label: formatMessage({
+      id: getTrad('Common.title-search-field'),
+      defaultMessage: 'By Title',
+    }),
+    value: SearchField.BY_TITLE,
+  }, {
+    label: formatMessage({
+      id: getTrad('Common.assetId-search-field'),
+      defaultMessage: 'By Asset Id',
+    }),
+    value: SearchField.BY_ASSET_ID
+  }];
   
   const [isReady, setIsReady] = React.useState<boolean>(false);
   const [muxAssets, setMuxAssets] = React.useState<GetMuxAssetsResponse|undefined>();
@@ -50,8 +58,6 @@ const HomePage = () => {
   const [pageLimit] = React.useState<number>(12);
   const [pages, setPages] = React.useState(1);
   const [page, setPage] = React.useState<number>();
-
-  const { formatMessage } = useIntl();
 
   const loadMuxAssets = async () => {
     if (page === undefined) return;
@@ -145,10 +151,12 @@ const HomePage = () => {
       <Layout>
         <Main>
           <HeaderLayout
-            title={formatMessage({
-              id: getTrad('HomePage.section-label'),
-              defaultMessage: 'Mux Video Uploader',
-            })}
+            title={
+              formatMessage({
+                id: getTrad('HomePage.section-label'),
+                defaultMessage: 'Mux Video Uploader',
+              })
+            }
             primaryAction={
               <Button
                 disabled={!canCreate}
@@ -156,7 +164,12 @@ const HomePage = () => {
                 size="L"
                 onClick={handleOnNewUploadClick}
               >
-                {formatMessage({ id: getTrad('HomePage.newUpload'), defaultMessage: 'New Upload' })}
+                {
+                  formatMessage({
+                    id: getTrad('HomePage.new-upload-button'),
+                    defaultMessage: 'New Upload'
+                  })
+                }
               </Button>
             }
           />
@@ -164,8 +177,18 @@ const HomePage = () => {
             <Grid gap={4}>
               <GridItem col={2} xs={12} s={12}>
                 <Select
-                  aria-label="Choose the field to search"
-                  placeholder="Search field"
+                  aria-label={
+                    formatMessage({
+                      id: getTrad('HomePage.search-label'),
+                      defaultMessage: 'Choose the field to search'
+                    })
+                  }
+                  placeholder={
+                    formatMessage({
+                      id: getTrad('HomePage.search-placeholder'),
+                      defaultMessage: 'Search field'
+                    })
+                  }
                   value={searchField}
                   onChange={handleOnSearchFieldChange}
                 >
@@ -179,9 +202,19 @@ const HomePage = () => {
                   onClear={() => setSearchValue('')}
                   value={searchValue}
                   onChange={handleOnSearchValueChange}
-                  clearLabel="Clear search"
+                  clearLabel={
+                    formatMessage({
+                      id: getTrad('HomePage.clear-label'),
+                      defaultMessage: 'Clear search'
+                    })
+                  }
                 >
-                  Searching for Mux assets
+                  {
+                    formatMessage({
+                      id: getTrad('HomePage.searching'),
+                      defaultMessage: 'Searching for Mux assets'
+                    })
+                  }
                 </Searchbar>
               </GridItem>
             </Grid>

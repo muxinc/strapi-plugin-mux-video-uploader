@@ -2,9 +2,9 @@ import React from 'react';
 import videojs from '@mux/videojs-kit';
 
 import { MuxAsset } from '../../../../types';
+import { getThumbnail } from '../../services/strapi';
 
 import '@mux/videojs-kit/dist/index.css';  
-import { getThumbnail } from '../../services/strapi';
 
 interface Props {
   muxAsset?: MuxAsset;

@@ -35,11 +35,11 @@ const SetupNeeded = () => {
             >
               <Flex direction="column" alignItems="center">
                 <Typography variant="alpha">
-                  {formatMessage({ id: getTrad('SetupNeeded.setupNeeded'), defaultMessage: 'Setup Needed' })}
+                  {formatMessage({ id: getTrad('SetupNeeded.setup-needed'), defaultMessage: 'Setup Needed' })}
                 </Typography>
                 <Box paddingTop={5} paddingBottom={5}>
                   <Typography variant="omega">
-                    {formatMessage({ id: getTrad('SetupNeeded.setupInstructions'), defaultMessage: 'In order for uploads to function, an administrator will need to complete the setup of this plugin by visiting the settings page.  Click the button below to be taken there now.' })}
+                    {formatMessage({ id: getTrad('SetupNeeded.setup-instructions'), defaultMessage: 'In order for uploads to function, an administrator will need to complete the setup of this plugin by visiting the settings page.  Click the button below to be taken there now.' })}
                   </Typography>
                 </Box>
                 <Button size="L" onClick={onSettingsClick}>

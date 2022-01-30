@@ -1,18 +1,76 @@
 {
+  "Common.title-search-field": "By Title",
+  "Common.assetId-search-field": "By Asset Id",
+  "Common.title-label": "Title",
+  "Common.title-required": "No title specified",
+  "Common.isReady-label": "Is ready",
+  "Common.file-label": "File",
+  "Common.file-required": "File needs to be selected",
+  "Common.url-label": "Url",
+  "Common.url-required": "No url specified",
+  "Common.save-button": "Save",
+  "Common.cancel-button": "Cancel",
+  "Common.delete-button": "Delete",
+  "Common.finish-button": "Finish",
+  "Common.confirm-button": "Confirm",
+
   "SettingsNav.section-label": "Mux Video Uploader",
   "SettingsNav.link.settings": "Settings",
 
+  "Settings.page-title": "Mux Video Uploader",
+  "Settings.header": "Mux Video Uploader",
+  "Settings.section-header": "Settings",
+  "Settings.access-token-label": "Access Token",
+  "Settings.access-token-placeholder": "Mux access token",
+  "Settings.secret-key-label": "Secret Key",
+  "Settings.secret-key-placeholder": "Mux secret key",
+  "Settings.webhook-signing-secret-label": "Webhook Signing Secret",
+  "Settings.webhook-signing-secret-placeholder": "Mux webhook signing secret",
+
   "SetupNeeded.settings": "Settings",
-  "SetupNeeded.setupNeeded": "Setup Needed",
-  "SetupNeeded.setupInstructions": "In order for uploads to function, an administrator will need to complete the setup of this plugin by visiting the settings page.  Click the button below to be taken there now.",
+  "SetupNeeded.setup-needed": "Setup Needed",
+  "SetupNeeded.setup-instructions": "In order for uploads to function, an administrator will need to complete the setup of this plugin by visiting the settings page.  Click the button below to be taken there now.",
 
   "HomePage.section-label": "Mux Video Uploader",
   "HomePage.section-description": "",
-  "HomePage.newUpload": "New Upload",
+  "HomePage.new-upload-button": "New Upload",
+  "HomePage.search-label": "Choose the field to search",
+  "HomePage.search-placeholder": "Search field",
+  "HomePage.clear-label": "Clear search",
+  "HomePage.searching": "Searching for Mux assets",
 
-  "Form.save": "Save",
+  "AssetCard.is-loading": "Asset is being processed",
+  "AssetCard.is-error": "Asset encountered an error",
 
-  "notification.changesSaved": "Changes saved",
-  "notification.noChanges": "No changes made",
-  "notification.errorSaving": "Error while saving changes"
+  "ListPagination.previous-page": "Previous page",
+  "ListPagination.next-page": "Next page",
+  "ListPagination.goto-page-n": "Go to page {pageNumber}",
+  "ListPagination.dots": "And {more} other links",
+
+  "ModalDetails.header": "Details",
+  "ModalDetails.delete-confirmation-header": "Delete confirmation",
+  "ModalDetails.delete-confirmation-prompt": "Are you sure you want to delete this item?",
+  "ModalDetails.delete-confirmation-callout": "This will also delete the Asset from Mux.",
+
+  "Summary.assetId": "Asset Id",
+  "Summary.uploadId": "Upload Id",
+  "Summary.playbackId": "Playback Id",
+  "Summary.created": "Created",
+  "Summary.updated": "Updated",
+
+  "ModalNewUpload.header": "New upload",
+  "ModalNewUpload.from-computer-tab-label": "From computer",
+  "ModalNewUpload.from-url-tab-label": "From url",
+  "ModalNewUpload.unknown-error": "Unknown error encountered",
+  "ModalNewUpload.unresolvable-upload-state": "Unable to resolve upload state",
+
+  "Uploading.uploading": "Uploading to Mux",
+
+  "Uploaded.upload-complete": "Upload Complete",
+  "Uploaded.message": "The file has been successfully uploaded to Mux and is now able to be referenced by other Content Types within Strapi.",
+  "Uploaded.upload-another-button": "Upload Another",
+
+  "notification.changes-saved": "Changes saved",
+  "notification.no-changes": "No changes made",
+  "notification.error-saving": "Error while saving changes"
 }

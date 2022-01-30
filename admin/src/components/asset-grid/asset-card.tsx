@@ -1,4 +1,5 @@
 import React from 'react';
+import { useIntl } from 'react-intl';
 import styled from 'styled-components';
 import { Box } from '@strapi/design-system/Box';
 import { Loader } from '@strapi/design-system/Loader';
@@ -7,6 +8,7 @@ import { Typography } from '@strapi/design-system/Typography';
 import { MuxAsset } from '../../../../types';
 import errorIcon from './../../static/error-icon.svg';
 import { getThumbnail } from '../../services/strapi';
+import getTrad from '../../utils/getTrad';
 
 const BoxStyled = styled(Box)`
   cursor: pointer;
@@ -50,6 +52,8 @@ interface Props extends DefaultProps {
 const AssetCard = (props:Props) => {
   const { muxAsset, onClick } = props;
 
+  const { formatMessage } = useIntl();
+
   const isLoading = muxAsset.asset_id === null;
 
   const renderStatus = React.useCallback(() => {
@@ -70,8 +74,15 @@ const AssetCard = (props:Props) => {
     onClick(muxAsset);
   }
 
-  const loadingTitle = isLoading && "Asset is being processed";
-  const errorTitle = isLoading && "Asset encountered an error";
+  const loadingTitle = isLoading && formatMessage({
+    id: getTrad('AssetCard.is-loading'),
+    defaultMessage: 'Asset is being processed'
+  });
+
+  const errorTitle = isLoading && formatMessage({
+    id: getTrad('AssetCard.is-error'),
+    defaultMessage: 'Asset encountered an error'
+  });
 
   return (
     <BoxStyled onClick={handleOnClick} title={errorTitle || loadingTitle || undefined}>
