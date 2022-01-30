@@ -6,8 +6,8 @@ export interface MuxAsset extends MuxAssetUpdate {
   error_message: string | null;
   created_by: string | null;
   updated_by: string | null;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface MuxAssetUpdate {
