@@ -25,11 +25,11 @@ yarn add strapi-plugin-mux-video-uploader
 - A [Mux](https://mux.com) account
 - You will need both the **Access Token** and **Secret Key** scoped with "Full Access" permissions which can be created in the [Mux Dashboard](https://dashboard.mux.com/settings/access-tokens)
 - The **Webhook Signing Secret** which can be created in the [Mux Dashboard](https://dashboard.mux.com/settings/webhooks) (See the [Webhooks](#Webhooks) section for more info)
-- Tested with [Strapi](https://strapi.io/) v3.6.2 Community Edition
+- Tested with [Strapi](https://strapi.io/) v4.0.5 Community Edition
 
 ### Webhooks
 
-**Please note**: We've currently disabled webhook signature verification as there is not a way to access the raw request body from the Koa.js middleware (which Strapi is using for parsing requests).  This is needed to ensure that we are verifying the signature and that the request JSON payload has properties in the same order that was used for generating the signature.
+**Please note**: We've currently disabled webhook signature verification as there is not a way to access the raw request body from the Koa.js middleware (which [Strapi](https://strapi.io/) is using for parsing requests). This is needed to ensure that we are verifying the signature and that the request JSON payload has properties in the same order that was used for generating the signature.
 
 When setting up your Webhook configuration in the [Mux Dashboard](https://dashboard.mux.com/settings/webhooks), the "URL to notify" field should be in the format of—
 
@@ -49,34 +49,39 @@ On this view, set the appropriate values to their fields and click the Save butt
 
 ### Permissions
 
-Currently, anyone with "Super Admin" access to your Strapi instance will be able to utilize the plugin for uploading and managing content.
-
-Aside from admin permissions, a **public** user role needs to be configured to allow access to the `muxwebhookhandler` method. This is needed so that Mux can send Webhook events to your Strapi instance for updating `MuxAsset` content types.
-
-To enable this permission, do the following steps—
-
-- Log into the Strapi admin UI and navigate to "Roles & Permissions"
-- Click on the edit button aside the "Public" role
-- Drop down the "MUX-VIDEO-UPLOADER" section and check the box nexzt to `muxwebhookhandler`
-- Save changes
+Currently, anyone with "Super Admin" access to your [Strapi](https://strapi.io/) instance will be able to utilize the plugin for uploading and managing content.
 
 ## Features
 
 - Upload videos using a url or a file to [Mux](https://mux.com) from inside of [Strapi](https://strapi.io/)
-- [Mux](https://mux.com) updates [Strapi](https://strapi.io/) when the asset is ready
-- A `MuxAsset` content-type is provided to track asset readiness and that can be referenced by other [Strapi](https://strapi.io/) content-types
+- Manage assets with the plugin's asset grid and pagination capabilities
+- Search for assets using title or [Mux](https://mux.com) Asset ID values
+- Preview content using a player (powered by the [videojs-mux-kit](https://github.com/muxinc/videojs-mux-kit) project)
+- Delete assets which result in the [Mux](https://mux.com) Asset also being deleted
+- Support uploading audio files
+- [Mux](https://mux.com) updates [Strapi](https://strapi.io/) automatically when the asset is ready using Webhooks
 
 ## Contributing
 
 Contributions, issues and feature requests are welcome!
 
-Feel free to check issues page.
+If you encounter an error or have questions, please feel free to file inquiries on the [Issues](https://github.com/muxinc/strapi-plugin-mux-video-uploader/issues) page for `strapi-plugin-mux-video-uploader`.
 
 ## FAQ
 
-#### My Strapi instance is not publicly available, can I still use Webhooks?
+### My Strapi instance is not publicly available, can I still use Webhooks?
 
 Yes! However, in order to make it work, you'll need a "Webhook Relay" that runs from within your network. You can use a Webhook Relay service like Smee (https://smee.io/) or ngrok (https://ngrok.com/) to forward Webhook events to an instance of [Strapi](https://strapi.io/) behind a firewall.
+
+### I've installed the plugin, but the Strapi Admin UI doesn't show it
+
+This happens when you need to rebuild your [Strapi](https://strapi.io/) instance. To do this, you need delete the `.cache` and `build` folders (while [Strapi](https://strapi.io/) is off) and restart to rebuild the instance.
+
+Here is an example of how to do this on a unix-based operating system from within the [Strapi](https://strapi.io/) application root—
+
+```
+% rm -rf ./.cache ./build
+```
 
 ## Thanks
 
