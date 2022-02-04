@@ -13,7 +13,7 @@ export = {
       "visible": false,
     },
     "content-type-builder": {
-      "visible": false,
+      "visible": true,
     },
   },
   "options": {
