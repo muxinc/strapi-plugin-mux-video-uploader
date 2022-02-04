@@ -17,6 +17,7 @@ declare module '@strapi/design-system/ProgressBar';
 declare module '@strapi/design-system/Searchbar';
 declare module '@strapi/design-system/Select';
 declare module '@strapi/design-system/Stack';
+declare module '@strapi/design-system/Status';
 declare module '@strapi/design-system/Tabs';
 declare module '@strapi/design-system/TextInput';
 declare module '@strapi/design-system/ToggleInput';

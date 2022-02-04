@@ -10,6 +10,7 @@ import { Flex } from '@strapi/design-system/Flex';
 import { Grid, GridItem } from '@strapi/design-system/Grid';
 import { ModalLayout, ModalBody, ModalHeader, ModalFooter } from '@strapi/design-system/ModalLayout';
 import { Stack } from '@strapi/design-system/Stack';
+import { Status } from '@strapi/design-system/Status';
 import { TextInput } from '@strapi/design-system/TextInput';
 import { ToggleInput } from '@strapi/design-system/ToggleInput';
 import { Typography } from '@strapi/design-system/Typography';
@@ -165,6 +166,15 @@ const ModalDetails = (props:Props) => {
                       }}
                     />
                   </Box>
+                  {muxAsset.error_message ?
+                    (
+                      <Box paddingBottom={4}>
+                        <Status variant="danger">
+                          <Typography>{muxAsset.error_message}</Typography>
+                        </Status>
+                      </Box>
+                    ) : null
+                  }
                   <Box>
                     <Summary muxAsset={muxAsset} />
                   </Box>

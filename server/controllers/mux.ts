@@ -53,12 +53,11 @@ const processWebhookEvent = async (webhookEvent:any) => {
       ];
     }
     case 'video.asset.errored': {
-      const muxAsset = await resolveMuxAssets({ upload_id: data.id });
+      const muxAsset = await resolveMuxAssets({ asset_id: data.id });
       return [
         muxAsset.id,
         {
           data: {
-            asset_id: data.id,
             error_message: `${data.errors.type}: ${data.errors.messages[0] || ''}`
           }
         }
