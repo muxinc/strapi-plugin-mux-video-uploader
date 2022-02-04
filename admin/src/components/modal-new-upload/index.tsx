@@ -76,16 +76,23 @@ const ModalNewUpload = (props:Props) => {
   const generateUploadInfo = (body: FormValues): UploadInfo => {
     const errors: FormikErrors<FormValues> = {};
 
+    let uploadInfo: UploadInfo | undefined;
+
     if (activeTab === 0) {
       if (!body.from_computer_title) {
         errors.from_computer_title = formatMessage({
           id: getTrad('Common.title-required'),
           defaultMessage: 'No title specified'
         });
+      } else if (body.from_computer_title.length < 3) {
+        errors.from_computer_title = formatMessage({
+          id: getTrad('Common.title-length'),
+          defaultMessage: 'Needs to be at least 3 letters'
+        });
       }
 
       if (body.file !== undefined) {
-        return {
+        uploadInfo = {
           origin: 'from_computer',
           title: body.from_computer_title,
           media: body.file
@@ -104,10 +111,15 @@ const ModalNewUpload = (props:Props) => {
           id: getTrad('Common.title-required'),
           defaultMessage: 'No title specified'
         });
+      } else if (body.from_url_title.length < 3) {
+        errors.from_url_title = formatMessage({
+          id: getTrad('Common.title-length'),
+          defaultMessage: 'Needs to be at least 3 letters'
+        });
       }
 
       if (body.url) {
-        return {
+        uploadInfo = {
           origin: 'from_url',
           title: body.from_url_title,
           media: body.url
@@ -120,7 +132,11 @@ const ModalNewUpload = (props:Props) => {
       }
     }
 
-    throw errors;
+    if (Object.entries(errors).length > 0) {
+      throw errors;
+    }
+
+    return uploadInfo!;
   };
   
   const handleOnSubmit = async (body: FormValues, { resetForm, setErrors }: FormikHelpers<FormValues>) => {

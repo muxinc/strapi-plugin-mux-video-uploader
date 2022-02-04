@@ -3,6 +3,7 @@
   "Common.assetId-search-field": "By Asset Id",
   "Common.title-label": "Title",
   "Common.title-required": "No title specified",
+  "Common.title-length": "Needs to be at least 3 letters",
   "Common.isReady-label": "Is ready",
   "Common.file-label": "File",
   "Common.file-required": "File needs to be selected",
