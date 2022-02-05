@@ -16,6 +16,7 @@ import Uploading from './uploading';
 import { FileInput } from '../file-input';
 import { ModalBlocking, ModalHeader } from '../modal-blocking';
 import getTrad from '../../utils/getTrad';
+import UploadError from './upload-error';
 
 interface FormValues {
   from_computer_title: string;
@@ -214,7 +215,9 @@ const ModalNewUpload = (props:Props) => {
     setFieldValue: (field: string, value: any, shouldValidate?: boolean | undefined) => void,
     handleChange: (e: React.ChangeEvent<any>) => void
   ) => {
-    if (isComplete) {
+    if (uploadError) {
+      return (<UploadError message={uploadError} />)
+    } else if (isComplete) {
       return (<Uploaded onReset={handleOnReset} />);
     } else if (uploadPercent !== undefined) {
       return (<Uploading percent={uploadPercent} />);
@@ -328,7 +331,7 @@ const ModalNewUpload = (props:Props) => {
   };
 
   const renderFooter = () => {
-    if(isComplete) {
+    if(uploadError || isComplete) {
       return (
         <ModalFooter endActions={<Button onClick={handleOnModalFinish}>
           {

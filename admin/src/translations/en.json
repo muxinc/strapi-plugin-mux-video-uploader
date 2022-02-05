@@ -71,6 +71,10 @@
   "Uploaded.message": "The file has been successfully uploaded to Mux and is now able to be referenced by other Content Types within Strapi.",
   "Uploaded.upload-another-button": "Upload Another",
 
+  "UploadError.title": "Upload Error",
+  "UploadError.message": "An error occurred while uploading the file.  Submit an issue with the following error message",
+  "UploadError.issues": "File issue",
+
   "notification.changes-saved": "Changes saved",
   "notification.no-changes": "No changes made",
   "notification.error-saving": "Error while saving changes"
