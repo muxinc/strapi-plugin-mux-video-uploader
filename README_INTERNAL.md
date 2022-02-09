@@ -6,4 +6,5 @@
 1. Push the version commit and the tag `git push && git push --tags origin`
 1. Open Pull Request, "Rebase and merge" after approved
 1. Create a new release in the Github UI, give the release a name and add release notes (creating the release will kick off npm publish)
+1. Checkout the `master` branch and pull the latest by running `git checkout master && git pull`
 1. Publish the new version to npmjs.com using the `npm publish` command
