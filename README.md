@@ -75,6 +75,20 @@ If you encounter an error or have questions, please feel free to file inquiries 
 
 Yes! However, in order to make it work, you'll need a "Webhook Relay" that runs from within your network. You can use a Webhook Relay service like Smee (https://smee.io/) or ngrok (https://ngrok.com/) to forward Webhook events to an instance of [Strapi](https://strapi.io/) behind a firewall.
 
+Setup using `smee`:
+
+- After installing `smee` globally run the following command:
+
+  ```
+  smee -u https://smee.io/{CUSTOM_UNIQUE_NAME} -t http://localhost:1337/mux-video-uploader/webhook-handler
+  ```
+
+- Go to Mux **dashboard** -> **settings** -> **webhooks**
+- Click "Create new webhook" and paste `https://smee.io/{CUSTOM_UNIQUE_NAME}`
+- Back in Strapi go to **Plugins** -> **Mux Video Uploader** , click "New Upload", and select a video to upload.
+- After saving and uploading the video you shuld see `POST` requests in your teminal where you are running `smee`.
+- Refresh the Strapi page to see the video thumbnail
+
 ### I've installed the plugin, but the Strapi Admin UI doesn't show it
 
 This happens when you need to rebuild your [Strapi](https://strapi.io/) instance. To do this, you need delete the `.cache` and `build` folders (while [Strapi](https://strapi.io/) is off) and restart to rebuild the instance.
