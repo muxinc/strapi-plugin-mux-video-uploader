@@ -16,11 +16,14 @@ import { getIsConfigured, getMuxAssets } from '../../services/strapi';
 import AssetGrid from '../../components/asset-grid';
 import { SearchField, SearchVector, SortVector } from '../../services/strapi/types';
 import ModalDetails from '../../components/modal-details';
-import ModalNewUpload from '../../components/modal-new-upload';
+// import ModalNewUpload from '../../components/modal-new-upload';
 import pluginPermissions from '../../permissions';
 import getTrad from '../../utils/getTrad';
 import ListPagination from '../../components/list-pagination';
 import { appendQueryParameter } from '../../utils/url';
+
+// import { UploadAssetDialog } from '../../components/multi-uploader/UploadAssetDialog/UploadAssetDialog'
+const MultiUpload = require("../../components/multi-uploader/UploadAssetDialog/UploadAssetDialog");
 
 const ProtectedHomePage = () => (
   <CheckPagePermissions permissions={pluginPermissions.mainRead}>
@@ -223,10 +226,9 @@ const HomePage = () => {
           </ContentLayout>
         </Main>
       </Layout>
-      <ModalNewUpload
-        isOpen={isNewUploadOpen}
-        onToggle={handleOnNewUploadClose}
-      />
+      {isNewUploadOpen && (<MultiUpload.UploadAssetDialog
+        onClose={() => setIsNewUploadOpen(false)}
+      />)}
       <ModalDetails 
         isOpen={selectedAsset !== undefined}
         muxAsset={selectedAsset}
