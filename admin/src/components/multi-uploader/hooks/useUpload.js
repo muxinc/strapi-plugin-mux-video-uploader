@@ -1,29 +1,43 @@
 // import axios from "axios";
 import { useRef, useState } from "react";
-import { useMutation, useQueryClient } from "react-query";
+import { useMutation } from "react-query";
 import { useIntl } from "react-intl";
 import { createUpload } from "@mux/upchunk";
 import getTrad from "../../../utils/getTrad";
-import { submitUpload } from "../../../services/strapi";
+import { submitUpload, deleteMuxAsset } from "../../../services/strapi";
 
-const uploadAsset = async (asset, abortSignal, onProgress) => {
-  console.log(asset);
-
+const createUploadUrl = async (asset) => {
   const result = await submitUpload({
     title: asset.name,
     media: [asset.rawFile],
     origin: "from_computer",
   });
 
-  const { statusCode, data } = result;
+  const { status, statusText, data } = result;
 
-  if (statusCode && statusCode !== 200) {
-    throw data?.errors;
+  if (status !== 201) {
+    if (data && data.muxAsset) {
+      deleteMuxAsset(result.data.muxAsset, false);
+    }
+
+    if (data && data.error) {
+      throw data.error;
+    } else {
+      throw new Error(`${status} - ${statusText}`);
+    }
   }
 
-  console.log(result, result.data, result.url);
+  return result.data;
+};
 
-  const upload = createUpload({ endpoint: result.url, file: asset.rawFile });
+const uploadAsset = async (asset, abortSignal, onProgress) => {
+  const result = await createUploadUrl(asset);
+  const muxAsset = result.muxAsset;
+
+  const upload = createUpload({
+    endpoint: result.url,
+    file: asset.rawFile,
+  });
 
   upload.on("progress", (progressEvt) => {
     onProgress(Math.floor(progressEvt.detail));
@@ -35,54 +49,30 @@ const uploadAsset = async (asset, abortSignal, onProgress) => {
       resolve(upload);
     });
 
-    upload.on("error", (err) => reject(err.detail));
+    upload.on("error", (err) => {
+      deleteMuxAsset(muxAsset, false);
+      reject(err.detail);
+    });
 
-    abortSignal.addEventListener("abort", (reason) => {
+    abortSignal.addEventListener("abort", (event) => {
       upload.abort();
-      reject(reason);
+
+      deleteMuxAsset(muxAsset, false);
+
+      reject(event.currentTarget.reason);
     });
   });
 
   return uploadPromise;
-
-  // const { rawFile, caption, name, alternativeText } = asset;
-  // const formData = new FormData();
-  // formData.append("files", rawFile);
-  // formData.append(
-  //   "fileInfo",
-  //   JSON.stringify({
-  //     name,
-  //     caption: caption || name,
-  //     alternativeText: alternativeText || name,
-  //   })
-  // );
-  // return axiosInstance({
-  //   method: "post",
-  //   url: endpoint,
-  //   headers: {},
-  //   data: formData,
-  //   cancelToken: cancelToken.token,
-  //   onUploadProgress({ total, loaded }) {
-  //     onProgress((loaded / total) * 100);
-  //   },
-  // }).then((res) => res.data);
 };
 
 export const useUpload = () => {
   const [progress, setProgress] = useState(0);
   const abortControllerRef = useRef(new AbortController());
   const { formatMessage } = useIntl();
-  // const queryClient = useQueryClient();
 
-  const mutation = useMutation(
-    (asset) =>
-      uploadAsset(asset, abortControllerRef.current.signal, setProgress)
-    // {
-    //   onSuccess: () => {
-    //     queryClient.refetchQueries(["assets"], { active: true });
-    //     queryClient.refetchQueries(["asset-count"], { active: true });
-    //   },
-    // }
+  const mutation = useMutation((asset) =>
+    uploadAsset(asset, abortControllerRef.current.signal, setProgress)
   );
 
   const upload = (asset) => mutation.mutateAsync(asset);
@@ -90,7 +80,7 @@ export const useUpload = () => {
     abortControllerRef.current.abort(
       formatMessage({
         id: getTrad("modal.upload.cancelled"),
-        defaultMessage: "",
+        defaultMessage: "User cancelled mux-upload",
       })
     );
 

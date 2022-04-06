@@ -176,12 +176,12 @@ const ModalNewUpload = (props:Props) => {
       return;
     }
 
-    const { statusCode, data } = result;
+    const { status, data } = result;
 
-    if(statusCode && statusCode !== 200) {
-      return data?.errors;
-    } else if(activeTab === 0) {
-      uploadFile(result.url, uploadInfo.media[0] as File);
+    if(status && status !== 200) {
+      return data?.error;
+    } else if(data && activeTab === 0) {
+      uploadFile(data.url, uploadInfo.media[0] as File);
     } else if(activeTab === 1) {
       setUploadPercent(100);
       setIsComplete(true);
