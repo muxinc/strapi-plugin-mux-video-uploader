@@ -227,7 +227,7 @@ const HomePage = () => {
         </Main>
       </Layout>
       {isNewUploadOpen && (<MultiUpload.UploadAssetDialog
-        onClose={() => setIsNewUploadOpen(false)}
+        onClose={() => handleOnNewUploadClose(true)}
       />)}
       <ModalDetails 
         isOpen={selectedAsset !== undefined}
