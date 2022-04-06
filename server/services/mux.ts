@@ -58,7 +58,7 @@ export default ({ strapi }: { strapi: any }) => ({
         headers: { "Content-Type": "application/json" },
         data: {
           cors_origin: corsOrigin,
-          new_asset_settings: { playback_policy: ["public"] },
+          new_asset_settings: { playback_policy: ["signed"] },
         },
       })
     );
