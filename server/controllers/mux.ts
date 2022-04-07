@@ -1,9 +1,9 @@
-import Mux from "@mux/mux-node";
-import axios from "axios";
-import { Context } from "koa";
+import Mux from '@mux/mux-node';
+import axios from 'axios';
+import { Context } from 'koa';
 
-import { getService, Config } from "../utils";
-import pluginId from "./../../admin/src/pluginId";
+import { getService, Config } from '../utils';
+import pluginId from './../../admin/src/pluginId';
 
 interface MuxAssetFilter {
   upload_id?: string;
@@ -22,7 +22,7 @@ const resolveMuxAssets = async (filters: MuxAssetFilter) => {
   if (muxAssets.length === 1) {
     return muxAssets[0];
   } else {
-    throw new Error("Unable to resolve mux-asset");
+    throw new Error('Unable to resolve mux-asset');
   }
 };
 
@@ -30,7 +30,7 @@ const processWebhookEvent = async (webhookEvent: any) => {
   const { type, data } = webhookEvent;
 
   switch (type) {
-    case "video.upload.asset_created": {
+    case 'video.upload.asset_created': {
       const muxAsset = await resolveMuxAssets({ upload_id: data.id });
       return [
         muxAsset.id,
@@ -39,7 +39,7 @@ const processWebhookEvent = async (webhookEvent: any) => {
         },
       ];
     }
-    case "video.asset.ready": {
+    case 'video.asset.ready': {
       const muxAsset = await resolveMuxAssets({ asset_id: data.id });
       return [
         muxAsset.id,
@@ -51,14 +51,14 @@ const processWebhookEvent = async (webhookEvent: any) => {
         },
       ];
     }
-    case "video.asset.errored": {
+    case 'video.asset.errored': {
       const muxAsset = await resolveMuxAssets({ asset_id: data.id });
       return [
         muxAsset.id,
         {
           data: {
             error_message: `${data.errors.type}: ${
-              data.errors.messages[0] || ""
+              data.errors.messages[0] || ''
             }`,
           },
         },
@@ -79,20 +79,20 @@ const thumbnail = async (ctx: Context) => {
     `https://image.mux.com/${playbackId}/thumbnail.png`,
     {
       params: ctx.query,
-      responseType: "stream",
+      responseType: 'stream',
     }
   );
 
-  ctx.response.set("content-type", response.headers["content-type"]);
+  ctx.response.set('content-type', response.headers['content-type']);
   ctx.body = response.data;
 };
 
-const index = async (ctx: Context) => ctx.send({ message: "ok" });
+const index = async (ctx: Context) => ctx.send({ message: 'ok' });
 
 const submitDirectUpload = async (ctx: Context) => {
   const data = ctx.request.body;
 
-  const result = await getService("mux").getDirectUploadUrl(
+  const result = await getService('mux').getDirectUploadUrl(
     ctx.request.header.origin
   );
 
@@ -109,14 +109,14 @@ const submitRemoteUpload = async (ctx: Context) => {
   const { body } = ctx.request;
 
   if (!body.url) {
-    ctx.badRequest("ValidationError", {
-      errors: { url: ["url cannot be empty"] },
+    ctx.badRequest('ValidationError', {
+      errors: { url: ['url cannot be empty'] },
     });
 
     return;
   }
 
-  const result = await getService("mux").createAsset(body.url);
+  const result = await getService('mux').createAsset(body.url);
 
   const data = {
     asset_id: result.id,
@@ -133,8 +133,8 @@ const deleteMuxAsset = async (ctx: Context) => {
   const data = ctx.request.body;
 
   if (!data.upload_id) {
-    ctx.badRequest("ValidationError", {
-      errors: { upload_id: ["upload_id needs to be defined"] },
+    ctx.badRequest('ValidationError', {
+      errors: { upload_id: ['upload_id needs to be defined'] },
     });
 
     return;
@@ -144,13 +144,13 @@ const deleteMuxAsset = async (ctx: Context) => {
 
   const result = { success: true, deletedOnMux: false };
 
-  if (data.delete_on_mux === "true") {
+  if (data.delete_on_mux === 'true') {
     const assetId =
-      data.asset_id !== ""
+      data.asset_id !== ''
         ? data.asset_id
-        : await getService("mux").getAssetIdByUploadId(data.upload_id);
+        : await getService('mux').getAssetIdByUploadId(data.upload_id);
 
-    const deletedOnMux = await getService("mux").deleteAsset(assetId);
+    const deletedOnMux = await getService('mux').deleteAsset(assetId);
 
     result.deletedOnMux = deletedOnMux;
   }
@@ -160,20 +160,20 @@ const deleteMuxAsset = async (ctx: Context) => {
 
 const muxWebhookHandler = async (ctx: Context) => {
   const body = ctx.request.body;
-  const sigHttpHeader = ctx.request.headers["mux-signature"];
+  const sigHttpHeader = ctx.request.headers['mux-signature'];
 
-  const config = await Config.getConfig("general");
+  const config = await Config.getConfig('general');
 
   if (
     sigHttpHeader === undefined ||
-    sigHttpHeader === "" ||
+    sigHttpHeader === '' ||
     (Array.isArray(sigHttpHeader) && sigHttpHeader.length < 0)
   ) {
-    ctx.throw(401, "Webhook signature is missing");
+    ctx.throw(401, 'Webhook signature is missing');
   }
 
   if (Array.isArray(sigHttpHeader) && sigHttpHeader.length > 1) {
-    ctx.throw(401, "we have an unexpected amount of signatures");
+    ctx.throw(401, 'we have an unexpected amount of signatures');
   }
 
   let sig;
@@ -201,7 +201,7 @@ const muxWebhookHandler = async (ctx: Context) => {
   const outcome = await processWebhookEvent(body);
 
   if (outcome === undefined) {
-    ctx.send("ignored");
+    ctx.send('ignored');
   } else {
     const [id, params] = outcome;
     const result = await strapi.entityService.update(model, id, params);

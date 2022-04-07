@@ -1,10 +1,10 @@
-import { AxiosPromise } from "axios";
-import { CONFIG_NAME, PLUGIN_NAME } from "./../constants";
-import * as Config from "./config";
-import { ServiceName, ServiceType } from "./types";
+import { AxiosPromise } from 'axios';
+import { CONFIG_NAME, PLUGIN_NAME } from './../constants';
+import * as Config from './config';
+import { ServiceName, ServiceType } from './types';
 
 const getCoreStore = () => {
-  return strapi.store({ type: "plugin", name: CONFIG_NAME });
+  return strapi.store({ type: 'plugin', name: CONFIG_NAME });
 };
 
 const getService = <T extends ServiceName>(
@@ -27,17 +27,17 @@ const handleAxiosRequest = async (
     } else if (err.request) {
       return {
         status: 500,
-        statusText: "No response received",
+        statusText: 'No response received',
       };
     } else {
-      let errMessage = "";
+      let errMessage = '';
 
-      if (typeof err === "string") {
+      if (typeof err === 'string') {
         errMessage = err;
-      } else if (typeof err === "object" && err.message) {
+      } else if (typeof err === 'object' && err.message) {
         errMessage = err.message;
       } else {
-        errMessage = "Internal server error";
+        errMessage = 'Internal server error';
       }
 
       return {
