@@ -1,5 +1,5 @@
 import { auth } from "@strapi/helper-plugin";
-import { UploadInfoResponse } from "../../../../server/services/mux";
+import { UploadInfoData } from "../../../../server/services/mux";
 
 import { MuxAsset, MuxAssetUpdate } from "../../../../types";
 import pluginId from "../../pluginId";
@@ -11,6 +11,11 @@ export interface UploadInfo {
   title: string;
   media: File[] | string;
   origin: UploadOrigin;
+}
+
+interface UploadInfoResponse {
+  data: UploadInfoData;
+  muxAsset: MuxAsset;
 }
 
 function getServiceUri() {

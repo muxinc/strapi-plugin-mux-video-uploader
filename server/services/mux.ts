@@ -1,26 +1,16 @@
 import axios from "axios";
-import { MuxAsset } from "../../types";
 
 import { Config, handleAxiosRequest } from "./../utils";
 
-export interface UploadInfo {
+export interface UploadInfoData {
   id: string;
   url: string;
-  muxAsset?: MuxAsset;
-  error?: Error;
+  error?: { type: string; message: string };
 }
-
-export interface MuxResponse<T> {
-  status: number;
-  statusText: string;
-  data?: T;
-}
-
-export type UploadInfoResponse = MuxResponse<UploadInfo>;
 
 export interface MuxService {
   getAssetIdByUploadId: (uploadId: string) => Promise<string>;
-  getDirectUploadUrl: (corsOrigin?: string) => Promise<UploadInfoResponse>;
+  getDirectUploadUrl: (corsOrigin?: string) => Promise<UploadInfoData>;
   createAsset: (url: string) => Promise<any>;
   deleteAsset: (assetId: string) => Promise<boolean>;
 }
@@ -42,9 +32,7 @@ export default ({ strapi }: { strapi: any }) => ({
 
     return result.data.data[0].id;
   },
-  async getDirectUploadUrl(
-    corsOrigin: string = "*"
-  ): Promise<UploadInfoResponse> {
+  async getDirectUploadUrl(corsOrigin: string = "*"): Promise<UploadInfoData> {
     const config = await Config.getConfig("general");
 
     const result = await handleAxiosRequest(
@@ -63,11 +51,16 @@ export default ({ strapi }: { strapi: any }) => ({
       })
     );
 
-    return {
-      data: result.data?.data,
-      status: result.status,
-      statusText: result.statusText,
-    };
+    const data = (result.data?.data ?? {}) as UploadInfoData;
+
+    if (result.status !== 201 && !data.error) {
+      data.error = {
+        type: result.status.toString(),
+        message: `${result.status} - ${result.statusText}`,
+      };
+    }
+
+    return data;
   },
   async createAsset(url: string) {
     const config = await Config.getConfig("general");

@@ -6,39 +6,46 @@ import { createUpload } from "@mux/upchunk";
 import getTrad from "../../../utils/getTrad";
 import { submitUpload, deleteMuxAsset } from "../../../services/strapi";
 
+const removeFileExtension = (fileName) => {
+  return fileName.replace(/\.[^/.]+$/, "");
+};
+
 const createUploadUrl = async (asset) => {
   const result = await submitUpload({
-    title: asset.name,
+    title: removeFileExtension(asset.name),
     media: [asset.rawFile],
     origin: "from_computer",
   });
 
-  const { status, statusText, data } = result;
-
-  if (status !== 201) {
-    if (data && data.muxAsset) {
-      deleteMuxAsset(result.data.muxAsset, false);
+  if (result.data.error) {
+    if (result.muxAsset) {
+      deleteMuxAsset(result.muxAsset, false);
     }
 
-    if (data && data.error) {
-      throw data.error;
-    } else {
-      throw new Error(`${status} - ${statusText}`);
-    }
+    throw result.data.error;
   }
 
-  return result.data;
+  return result;
 };
 
-const uploadAsset = async (asset, abortSignal, onProgress) => {
-  const result = await createUploadUrl(asset);
-  const muxAsset = result.muxAsset;
+const createMuxUpload = (asset, uploadInfo) => {
+  const muxAsset = uploadInfo.muxAsset;
 
-  const upload = createUpload({
-    endpoint: result.url,
-    file: asset.rawFile,
-  });
+  try {
+    return createUpload({
+      endpoint: uploadInfo.data.url,
+      file: asset.rawFile,
+    });
+  } catch (err) {
+    if (muxAsset) {
+      deleteMuxAsset(muxAsset, false);
+    }
 
+    throw err;
+  }
+};
+
+const createUploadPromise = (upload, uploadInfo, abortSignal, onProgress) => {
   upload.on("progress", (progressEvt) => {
     onProgress(Math.floor(progressEvt.detail));
   });
@@ -50,20 +57,27 @@ const uploadAsset = async (asset, abortSignal, onProgress) => {
     });
 
     upload.on("error", (err) => {
-      deleteMuxAsset(muxAsset, false);
+      deleteMuxAsset(uploadInfo.muxAsset, false);
       reject(err.detail);
     });
 
     abortSignal.addEventListener("abort", (event) => {
       upload.abort();
 
-      deleteMuxAsset(muxAsset, false);
+      deleteMuxAsset(uploadInfo.muxAsset, false);
 
       reject(event.currentTarget.reason);
     });
   });
 
   return uploadPromise;
+};
+
+const uploadAsset = async (asset, abortSignal, onProgress) => {
+  const uploadInfo = await createUploadUrl(asset);
+  const upload = createMuxUpload(asset, uploadInfo);
+
+  return createUploadPromise(upload, uploadInfo, abortSignal, onProgress);
 };
 
 export const useUpload = () => {

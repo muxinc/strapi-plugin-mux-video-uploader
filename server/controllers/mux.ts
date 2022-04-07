@@ -96,12 +96,13 @@ const submitDirectUpload = async (ctx: Context) => {
     ctx.request.header.origin
   );
 
-  if (result.data) {
-    data.upload_id = result.data.id;
-    result.data.muxAsset = await strapi.entityService.create(model, { data });
-  }
+  data.upload_id = result.id;
+  const muxAsset = await strapi.entityService.create(model, { data });
 
-  ctx.send(result);
+  ctx.send({
+    data: result,
+    muxAsset,
+  });
 };
 
 const submitRemoteUpload = async (ctx: Context) => {
