@@ -11,4 +11,5 @@ npm-debug.log
 .idea
 
 *.js
+!admin/src/components/multi-uploader/**/*.js
 .env
