@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useIntl } from 'react-intl';
 import { FormikHelpers, useFormik } from 'formik';
 import {
@@ -18,21 +18,20 @@ import { Stack } from '@strapi/design-system/Stack';
 import { TextInput } from '@strapi/design-system/TextInput';
 import { Typography } from '@strapi/design-system/Typography';
 
-import { setMuxSettings } from '../../services/strapi';
+import { getMuxSettings, setMuxSettings } from '../../services/strapi';
 import pluginPermissions from './../../permissions';
 import getTrad from '../../utils/getTrad';
+import { useAsync } from '../../hooks/use-async';
+import { useState } from 'react';
 
 interface FormValues {
   access_token: string;
   secret_key: string;
   webhook_signing_secret: string;
+  playback_key_id: string;
+  playback_key_secret: string;
+  playback_expiration: string;
 }
-
-const INITIAL_VALUES: FormValues = {
-  access_token: '',
-  secret_key: '',
-  webhook_signing_secret: ''
-};
 
 const ProtectedSettings = () => (
   <CheckPagePermissions permissions={pluginPermissions.settingsRoles}>
@@ -46,6 +45,15 @@ const Settings = () => {
     []
   );
 
+  const [ initialValues, setInitialValues ] = useState<FormValues>({
+    access_token: '',
+    secret_key: '',
+    webhook_signing_secret: '',
+    playback_key_id: '',
+    playback_key_secret: '',
+    playback_expiration: ''
+  });
+
   const {
     isLoading,
     allowedActions: { canUpdate },
@@ -55,6 +63,12 @@ const Settings = () => {
   const notification = useNotification();
   
   const { formatMessage } = useIntl();
+
+  const loadConfig = async () => {
+    const settings = await getMuxSettings();
+
+    setInitialValues(settings);
+  }
 
   const handleOnSubmit = async (body:FormValues, { resetForm }:FormikHelpers<FormValues>) => {
     lockApp();
@@ -71,6 +85,18 @@ const Settings = () => {
     
     if(body.webhook_signing_secret) {
       formData.append("webhook_signing_secret", body.webhook_signing_secret);
+    }
+    
+    if(body.playback_key_id) {
+      formData.append("playback_key_id", body.playback_key_id);
+    }
+    
+    if(body.playback_key_secret) {
+      formData.append("playback_key_secret", body.playback_key_secret);
+    }
+    
+    if(body.playback_expiration) {
+      formData.append("playback_expiration", body.playback_expiration);
     }
     
     if (formData.entries().next().done) {
@@ -111,12 +137,18 @@ const Settings = () => {
     unlockApp();
   };
 
+  const { execute: executeLoadConfig, status: loadConfigStatus } = useAsync<any>(loadConfig, false);
   const { values, errors, isSubmitting, handleChange, handleSubmit } = useFormik<FormValues>({
-    initialValues: INITIAL_VALUES,
-    onSubmit: handleOnSubmit
+    initialValues: initialValues,
+    enableReinitialize: true,
+    onSubmit: handleOnSubmit,
   });
 
-  if (isLoading) return null;
+  useEffect(() => {
+    executeLoadConfig();
+  }, []);
+
+  if (isLoading || loadConfigStatus === 'idle' || loadConfigStatus === 'pending') return null;
 
   return (
     <Main>
@@ -232,6 +264,73 @@ const Settings = () => {
                     }
                     value={values.webhook_signing_secret}
                     error={errors && errors.webhook_signing_secret}
+                    onChange={handleChange}
+                  />
+                </GridItem>
+              </Grid>
+              <Grid gap={6}>
+                <GridItem col={6} s={12}>
+                  <TextInput
+                    label={
+                      formatMessage({
+                        id: getTrad('Settings.playback-key-id-label'),
+                        defaultMessage: 'Playback Key ID'
+                      })
+                    }
+                    name="playback_key_id"
+                    placeholder={
+                      formatMessage({
+                        id: getTrad('Settings.playback-key-id-placeholder'),
+                        defaultMessage: 'Mux Playback Key ID'
+                      }) 
+                    }
+                    value={values.playback_key_id}
+                    error={errors && errors.playback_key_id}
+                    onChange={handleChange}
+                  />
+                </GridItem>
+              </Grid>
+              <Grid gap={6}>
+                <GridItem col={6} s={12}>
+                  <TextInput
+                    label={
+                      formatMessage({
+                        id: getTrad('Settings.playback-key-secret-label'),
+                        defaultMessage: 'Playback Key Secret'
+                      })
+                    }
+                    name="playback_key_secret"
+                    type="password"
+                    placeholder={
+                      formatMessage({
+                        id: getTrad('Settings.playback-key-secret-placeholder'),
+                        defaultMessage: 'Mux Playback Key Secret'
+                      }) 
+                    }
+                    value={values.playback_key_secret}
+                    error={errors && errors.playback_key_secret}
+                    onChange={handleChange}
+                  />
+                </GridItem>
+              </Grid>
+              <Grid gap={6}>
+                <GridItem col={6} s={12}>
+                  <TextInput
+                    label={
+                      formatMessage({
+                        id: getTrad('Settings.playback-expiration-label'),
+                        defaultMessage: 'Playback Expiration'
+                      })
+                    }
+                    name="playback_expiration"
+                    placeholder={
+                      formatMessage({
+                        id: getTrad('Settings.playback-expiration-placeholder'),
+                        defaultMessage: `e.g. '1d' or '6h'`
+                      }) 
+                    }
+                    value={values.playback_expiration}
+                    error={errors && errors.playback_expiration}
                     onChange={handleChange}
                   />
                 </GridItem>

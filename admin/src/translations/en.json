@@ -27,6 +27,12 @@
   "Settings.secret-key-placeholder": "Mux secret key",
   "Settings.webhook-signing-secret-label": "Webhook Signing Secret",
   "Settings.webhook-signing-secret-placeholder": "Mux webhook signing secret",
+  "Settings.playback-key-id-label": "Playback Key ID",
+  "Settings.playback-key-id-placeholder": "Mux Playback Key ID",
+  "Settings.playback-key-secret-label": "Playback Key Secret",
+  "Settings.playback-key-secret-placeholder": "Mux Playback Key Secret",
+  "Settings.playback-expiration-label": "Playback Expiration",
+  "Settings.playback-expiration-placeholder": "e.g. '1d' or '6h'",
 
   "SetupNeeded.settings": "Settings",
   "SetupNeeded.setup-needed": "Setup Needed",

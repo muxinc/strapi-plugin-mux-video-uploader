@@ -27,6 +27,13 @@ function getJwtToken() {
 }
 
 const getIsConfigured = () => {
+  return fetch(`${getServiceUri()}/${pluginId}/mux-settings/configured`, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${getJwtToken()}` },
+  }).then((response) => response.json());
+};
+
+const getMuxSettings = () => {
   return fetch(`${getServiceUri()}/${pluginId}/mux-settings`, {
     method: 'GET',
     headers: { Authorization: `Bearer ${getJwtToken()}` },
@@ -147,6 +154,7 @@ const getThumbnail = (playbackId: string | null) => {
 
 export {
   getIsConfigured,
+  getMuxSettings,
   setMuxSettings,
   submitUpload,
   getMuxAssets,
