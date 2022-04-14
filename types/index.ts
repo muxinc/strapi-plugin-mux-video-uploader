@@ -1,4 +1,3 @@
-
 export interface MuxAsset extends MuxAssetUpdate {
   upload_id: string;
   asset_id: string | null;
@@ -22,9 +21,11 @@ export interface GetMuxAssetsResponse {
 }
 
 export interface InputTextOnChange {
-  target: { value: string }
-};
+  target: { value: string };
+}
 
 export interface InputFileOnChange {
-  target: { files: File[] }
-};
+  target: { files: File[] };
+}
+
+export type MuxResourceType = 'video' | 'thumbnail' | 'gif' | 'storyboard';

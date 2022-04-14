@@ -1,7 +1,7 @@
 import { auth } from '@strapi/helper-plugin';
 import { UploadInfoData } from '../../../../server/services/mux';
 
-import { MuxAsset, MuxAssetUpdate } from '../../../../types';
+import { MuxAsset, MuxAssetUpdate, MuxResourceType } from '../../../../types';
 import pluginId from '../../pluginId';
 import { SearchVector, SortVector } from './types';
 
@@ -152,6 +152,27 @@ const getThumbnail = (playbackId: string | null) => {
   return `${getServiceUri()}/${pluginId}/thumbnail/${playbackId}?width=512`;
 };
 
+const getPlaybackToken = (
+  playbackId: string,
+  type: MuxResourceType,
+  params?: { [key: string]: unknown }
+) => {
+  let url = `${getServiceUri()}/${pluginId}/playback-token/${playbackId}/${type}`;
+
+  if (params) {
+    const queryString = Object.entries(params)
+      .map((param) => `${param[0]}=${String(param[1])}`)
+      .join('&');
+
+    url = `${url}?${queryString}`;
+  }
+
+  return fetch(url, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${getJwtToken()}` },
+  }).then((response) => response.text());
+};
+
 export {
   getIsConfigured,
   getMuxSettings,
@@ -161,4 +182,5 @@ export {
   setMuxAsset,
   deleteMuxAsset,
   getThumbnail,
+  getPlaybackToken,
 };

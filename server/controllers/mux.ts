@@ -69,16 +69,36 @@ const processWebhookEvent = async (webhookEvent: any) => {
   }
 };
 
+const playbackToken = async (ctx: Context) => {
+  const { type, playbackId } = ctx.params;
+
+  const playbackToken = await getService('mux').getPlaybackToken(
+    playbackId,
+    type,
+    ctx.query
+  );
+
+  ctx.send(playbackToken);
+};
+
 // Do not go gentle into that good night,
 // Old age should burn and rave at close of day;
 // Rage, rage against the dying of the light.
 const thumbnail = async (ctx: Context) => {
   const { playbackId } = ctx.params;
 
+  const playbackToken = await getService('mux').getPlaybackToken(
+    playbackId,
+    'thumbnail',
+    ctx.query
+  );
+
   const response = await axios.get(
     `https://image.mux.com/${playbackId}/thumbnail.png`,
     {
-      params: ctx.query,
+      params: {
+        token: playbackToken,
+      },
       responseType: 'stream',
     }
   );
@@ -216,5 +236,6 @@ export = {
   submitRemoteUpload,
   deleteMuxAsset,
   muxWebhookHandler,
+  playbackToken,
   thumbnail,
 };

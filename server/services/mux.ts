@@ -1,6 +1,8 @@
 import axios from 'axios';
+import Mux, { JWTOptions } from '@mux/mux-node';
 
 import { Config, handleAxiosRequest } from './../utils';
+import { MuxResourceType } from '../../types';
 
 export interface UploadInfoData {
   id: string;
@@ -11,6 +13,11 @@ export interface UploadInfoData {
 export interface MuxService {
   getAssetIdByUploadId: (uploadId: string) => Promise<string>;
   getDirectUploadUrl: (corsOrigin?: string) => Promise<UploadInfoData>;
+  getPlaybackToken: (
+    playbackId: string,
+    type: MuxResourceType,
+    params?: unknown
+  ) => Promise<string>;
   createAsset: (url: string) => Promise<any>;
   deleteAsset: (assetId: string) => Promise<boolean>;
 }
@@ -62,6 +69,33 @@ export default ({ strapi }: { strapi: any }) => ({
 
     return data;
   },
+
+  async getPlaybackToken(
+    playbackId: string,
+    type: MuxResourceType = 'video',
+    params?: { [key: string]: unknown }
+  ) {
+    const config = await Config.getConfig('general');
+
+    const sanitizedSecret = config.playback_key_secret.replace(
+      /(\r\n|\n|\r)/gm,
+      '\n'
+    );
+
+    const options: JWTOptions = {
+      keyId: config.playback_key_id,
+      keySecret: sanitizedSecret,
+      type,
+      expiration: config.playback_expiration,
+    };
+
+    if (params) {
+      options.params = params;
+    }
+
+    return Mux.JWT.sign(playbackId, options);
+  },
+
   async createAsset(url: string) {
     const config = await Config.getConfig('general');
 

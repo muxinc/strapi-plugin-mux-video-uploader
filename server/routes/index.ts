@@ -46,6 +46,15 @@ const routes = [
   },
   {
     method: 'GET',
+    path: '/mux-video-uploader/playback-token/:playbackId/:type',
+    handler: 'mux.playbackToken',
+    config: {
+      policies: [],
+      prefix: false,
+    },
+  },
+  {
+    method: 'GET',
     path: '/mux-video-uploader/thumbnail/:playbackId',
     handler: 'mux.thumbnail',
     config: {
