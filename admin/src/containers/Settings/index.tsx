@@ -16,6 +16,7 @@ import { HeaderLayout, ContentLayout } from '@strapi/design-system/Layout';
 import { Main } from '@strapi/design-system/Main';
 import { Stack } from '@strapi/design-system/Stack';
 import { TextInput } from '@strapi/design-system/TextInput';
+import { Textarea } from '@strapi/design-system/Textarea';
 import { Typography } from '@strapi/design-system/Typography';
 
 import { getMuxSettings, setMuxSettings } from '../../services/strapi';
@@ -292,7 +293,7 @@ const Settings = () => {
               </Grid>
               <Grid gap={6}>
                 <GridItem col={6} s={12}>
-                  <TextInput
+                  <Textarea
                     label={
                       formatMessage({
                         id: getTrad('Settings.playback-key-secret-label'),
@@ -300,17 +301,17 @@ const Settings = () => {
                       })
                     }
                     name="playback_key_secret"
-                    type="password"
                     placeholder={
                       formatMessage({
                         id: getTrad('Settings.playback-key-secret-placeholder'),
                         defaultMessage: 'Mux Playback Key Secret'
                       }) 
                     }
-                    value={values.playback_key_secret}
                     error={errors && errors.playback_key_secret}
                     onChange={handleChange}
-                  />
+                  >
+                    {values.playback_key_secret}
+                  </Textarea>
                 </GridItem>
               </Grid>
               <Grid gap={6}>
