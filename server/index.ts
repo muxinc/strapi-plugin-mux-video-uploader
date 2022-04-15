@@ -3,11 +3,11 @@ import services from './services';
 import routes from './routes';
 import controllers from './controllers';
 import contentTypes from './content-types';
-// import register from './register';
+import register from './register';
 // import config from './config';
 
 export = () => ({
-  // register,
+  register,
   bootstrap,
   // config,
   routes,
