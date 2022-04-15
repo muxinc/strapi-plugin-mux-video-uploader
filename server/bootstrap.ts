@@ -46,11 +46,4 @@ export = async ({ strapi }: { strapi: any }) => {
   ];
 
   await strapi.admin.services.permission.actionProvider.registerMany(actions);
-
-  const graphQlPlugin = strapi.plugin('graphql');
-
-  if (graphQlPlugin) {
-    const graphqlExtensionService = graphQlPlugin.service('extension');
-    graphqlExtensionService.use(addMuxPlaybackUrlFieldsToGraphQlSchema);
-  }
 };
