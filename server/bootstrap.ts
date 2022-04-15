@@ -1,4 +1,5 @@
 import pluginId from './../admin/src/pluginId';
+import { addMuxPlaybackUrlFieldsToGraphQlSchema } from './api/mux-playback-url-graphql-fields';
 
 export = async ({ strapi }: { strapi: any }) => {
   const actions = [
@@ -7,42 +8,49 @@ export = async ({ strapi }: { strapi: any }) => {
       section: 'plugins',
       displayName: 'Read',
       uid: 'read',
-      pluginName: pluginId
+      pluginName: pluginId,
     },
     {
       section: 'plugins',
       displayName: 'Create',
       uid: 'create',
-      pluginName: pluginId
+      pluginName: pluginId,
     },
     {
       section: 'plugins',
       displayName: 'Update',
       uid: 'update',
-      pluginName: pluginId
+      pluginName: pluginId,
     },
     {
       section: 'plugins',
       displayName: 'Delete',
       uid: 'delete',
-      pluginName: pluginId
+      pluginName: pluginId,
     },
     // Settings
     {
-      section: "plugins",
-      displayName: "Read",
-      subCategory: "settings",
-      uid: "settings.read",
-      pluginName: pluginId
+      section: 'plugins',
+      displayName: 'Read',
+      subCategory: 'settings',
+      uid: 'settings.read',
+      pluginName: pluginId,
     },
     {
-      section: "plugins",
-      displayName: "Update",
-      subCategory: "settings",
-      uid: "settings.update",
-      pluginName: pluginId
+      section: 'plugins',
+      displayName: 'Update',
+      subCategory: 'settings',
+      uid: 'settings.update',
+      pluginName: pluginId,
     },
   ];
 
   await strapi.admin.services.permission.actionProvider.registerMany(actions);
+
+  const graphQlPlugin = strapi.plugin('graphql');
+
+  if (graphQlPlugin) {
+    const graphqlExtensionService = graphQlPlugin.service('extension');
+    graphqlExtensionService.use(addMuxPlaybackUrlFieldsToGraphQlSchema);
+  }
 };
