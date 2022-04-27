@@ -95,8 +95,6 @@ const thumbnail = async (ctx: Context) => {
     },
   });
 
-  console.log(playbackId, muxAssets[0]);
-
   let params = ctx.query;
 
   if (muxAssets[0].playback_policy === 'signed') {
