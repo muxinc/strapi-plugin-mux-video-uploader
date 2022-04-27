@@ -25,7 +25,7 @@ const PreviewPlayer = (props:Props) => {
     }
 
     const initPlayer = async () => {
-      const src = muxAsset && muxAsset.playback_id ?
+      const src = muxAsset && muxAsset.playback_id && muxAsset.playback_policy === 'signed' ?
         await generateSignedSrc(muxAsset.playback_id) :
         muxAsset?.playback_id;
 

@@ -87,18 +87,32 @@ const playbackToken = async (ctx: Context) => {
 const thumbnail = async (ctx: Context) => {
   const { playbackId } = ctx.params;
 
-  const playbackToken = await getService('mux').getPlaybackToken(
-    playbackId,
-    'thumbnail',
-    ctx.query
-  );
+  const muxAssets = await strapi.entityService.findMany(model, {
+    filters: {
+      playback_id: {
+        $eq: playbackId,
+      },
+    },
+  });
+
+  console.log(playbackId, muxAssets[0]);
+
+  let params = ctx.query;
+
+  if (muxAssets[0].playback_policy === 'signed') {
+    const playbackToken = await getService('mux').getPlaybackToken(
+      playbackId,
+      'thumbnail',
+      ctx.query
+    );
+
+    params = { token: playbackToken };
+  }
 
   const response = await axios.get(
     `https://image.mux.com/${playbackId}/thumbnail.png`,
     {
-      params: {
-        token: playbackToken,
-      },
+      params,
       responseType: 'stream',
     }
   );
