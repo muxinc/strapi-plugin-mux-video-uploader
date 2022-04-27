@@ -8,6 +8,7 @@ import pluginId from './../../admin/src/pluginId';
 interface MuxAssetFilter {
   upload_id?: string;
   asset_id?: string;
+  playback_id?: string;
 }
 
 const { Webhooks } = Mux;
@@ -87,17 +88,11 @@ const playbackToken = async (ctx: Context) => {
 const thumbnail = async (ctx: Context) => {
   const { playbackId } = ctx.params;
 
-  const muxAssets = await strapi.entityService.findMany(model, {
-    filters: {
-      playback_id: {
-        $eq: playbackId,
-      },
-    },
-  });
+  const muxAsset = await resolveMuxAssets({ playback_id: playbackId });
 
   let params = ctx.query;
 
-  if (muxAssets[0].playback_policy === 'signed') {
+  if (muxAsset.playback_policy === 'signed') {
     const playbackToken = await getService('mux').getPlaybackToken(
       playbackId,
       'thumbnail',
