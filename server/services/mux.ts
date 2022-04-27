@@ -2,12 +2,17 @@ import axios from 'axios';
 import Mux, { JWTOptions } from '@mux/mux-node';
 
 import { Config, handleAxiosRequest } from './../utils';
-import { MuxPlaybackPolicy, MuxResourceType } from '../../types';
+import { MuxAsset, MuxPlaybackPolicy, MuxResourceType } from '../../types';
 
 export interface UploadInfoData {
   id: string;
   url: string;
   error?: { type: string; message: string };
+}
+
+interface UpdatePlaybackPolicyData {
+  playbackId: string;
+  playbackPolicy: MuxPlaybackPolicy;
 }
 
 export interface MuxService {
@@ -22,6 +27,10 @@ export interface MuxService {
     params?: unknown
   ) => Promise<string>;
   createAsset: (url: string) => Promise<any>;
+  updatePlaybackPolicy: (
+    assetId: MuxAsset,
+    playbackPolicy: MuxPlaybackPolicy
+  ) => Promise<UpdatePlaybackPolicyData>;
   deleteAsset: (assetId: string) => Promise<boolean>;
 }
 
@@ -120,6 +129,84 @@ export default ({ strapi }: { strapi: any }) => ({
 
     return result.data.data;
   },
+
+  async updatePlaybackPolicy(
+    asset: MuxAsset,
+    playbackPolicy: MuxPlaybackPolicy
+  ) {
+    if (asset.playback_policy === playbackPolicy) {
+      return {
+        playbackId: asset.playback_id,
+        playbackPolicy: asset.playback_policy,
+      };
+    }
+
+    if (!asset.asset_id || !asset.playback_id) {
+      throw new Error("Can't update playback policy");
+    }
+
+    const createData = await this.createPlaybackId(
+      asset.asset_id,
+      playbackPolicy
+    );
+
+    try {
+      await this.deletePlaybackId(asset.asset_id, asset.playback_id);
+    } catch (_) {
+      // Skip delete error
+    }
+
+    return createData;
+  },
+
+  async createPlaybackId(assetId: string, policy: MuxPlaybackPolicy) {
+    const config = await Config.getConfig('general');
+
+    const createResponse = await axios(
+      `https://api.mux.com/video/v1/assets/${assetId}/playback-ids`,
+      {
+        method: 'post',
+        auth: {
+          username: config.access_token,
+          password: config.secret_key,
+        },
+        headers: { 'Content-Type': 'application/json' },
+        data: { policy },
+      }
+    );
+
+    if (createResponse.status !== 201) {
+      throw new Error('Unable to create new playback id');
+    }
+
+    const data = createResponse.data.data;
+
+    return {
+      playbackId: data.id,
+      playbackPolicy: data.policy,
+    };
+  },
+
+  async deletePlaybackId(assetId: string, playbackId: string) {
+    const config = await Config.getConfig('general');
+
+    const response = await axios(
+      `https://api.mux.com/video/v1/assets/${assetId}/playback-ids/${playbackId}`,
+      {
+        method: 'delete',
+        auth: {
+          username: config.access_token,
+          password: config.secret_key,
+        },
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+
+    if (response.status !== 204) {
+      throw new Error('Unable to delete playback id');
+    }
+  },
+
   async deleteAsset(assetId: string) {
     const config = await Config.getConfig('general');
 

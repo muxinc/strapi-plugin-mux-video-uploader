@@ -24,6 +24,7 @@ import getTrad from '../../utils/getTrad';
 interface FormProps {
   title: string;
   isReady: boolean;
+  playbackPolicy: boolean;
 }
 
 interface DefaultProps {
@@ -50,7 +51,8 @@ const ModalDetails = (props:Props) => {
 
   const INITIAL_VALUES = {
     title: muxAsset.title,
-    isReady: muxAsset.isReady 
+    isReady: muxAsset.isReady,
+    playbackPolicy: muxAsset.playback_policy === 'signed'
   };
 
   const toggleDeleteWarning = () => setShowDeleteWarning(prevState => !prevState);
@@ -87,6 +89,10 @@ const ModalDetails = (props:Props) => {
 
       if(touchedFields.isReady) {
         data.isReady = values.isReady;
+      }
+
+      if(touchedFields.playbackPolicy) {
+        data.playbackPolicy = values.playbackPolicy ? 'signed' : 'public';
       }
       
       await setMuxAsset(data);
@@ -162,6 +168,26 @@ const ModalDetails = (props:Props) => {
                       disabled={!enableUpdate}
                       onChange={(e: any) => {
                         setTouchedFields({ ...touchedFields, isReady: true });
+                        handleChange(e);
+                      }}
+                    />
+                  </Box>
+                  <Box paddingBottom={4}>
+                    <ToggleInput
+                      label={
+                        formatMessage({
+                          id: getTrad('Common.playbackPolicy-label'),
+                          defaultMessage: 'Playback policy'
+                        })
+                      }
+                      name="playbackPolicy"
+                      onLabel="signed"
+                      offLabel="public"
+                      checked={values.playbackPolicy}
+                      error={errors.playbackPolicy}
+                      disabled={!enableUpdate || !muxAsset.playback_id}
+                      onChange={(e: any) => {
+                        setTouchedFields({ ...touchedFields, playbackPolicy: true });
                         handleChange(e);
                       }}
                     />
