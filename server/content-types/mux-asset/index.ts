@@ -57,8 +57,12 @@ export = {
     playback_policy: {
       type: 'enumeration',
       enum: ['public', 'signed'],
-      default: 'public',
+      default: 'signed',
       required: true,
+      column: {
+        defaultTo: 'public', // set database level default
+        notNullable: true, // enforce required at database level, even for drafts
+      },
     },
   },
 };
