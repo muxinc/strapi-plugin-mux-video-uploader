@@ -29,3 +29,5 @@ export interface InputFileOnChange {
 }
 
 export type MuxResourceType = 'video' | 'thumbnail' | 'gif' | 'storyboard';
+
+export type MuxPlaybackPolicy = 'public' | 'signed';

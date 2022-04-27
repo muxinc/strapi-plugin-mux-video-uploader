@@ -11,6 +11,8 @@ import { AudioAssetCard } from "./AudioAssetCard";
 import { AssetType, AssetDefinition } from "../constants";
 import { createAssetUrl } from "../utils/createAssetUrl";
 import toSingularTypes from "../utils/toSingularTypes";
+import { useState } from "react";
+import { useEffect } from "react";
 
 export const AssetCard = ({
   allowedTypes,
@@ -30,6 +32,15 @@ export const AssetCard = ({
     (singularTypes.includes("file") &&
       !["video", "image", "audio"].includes(fileType));
 
+  const [playbackPolicy, setPlaybackPolicy] = useState(asset.signed || false);
+
+  const handlePlaybackPolicyChange = (signed) => {
+    asset.signed = signed;
+    setPlaybackPolicy(signed);
+  };
+
+  useEffect(() => handlePlaybackPolicyChange(true), []);
+
   const commonAssetCardProps = {
     id: asset.id,
     extension: getFileExtension(asset.ext),
@@ -45,7 +56,13 @@ export const AssetCard = ({
   };
 
   if (asset.mime.includes(AssetType.Video)) {
-    return <VideoAssetCard {...commonAssetCardProps} />;
+    return (
+      <VideoAssetCard
+        {...commonAssetCardProps}
+        playbackPolicy={playbackPolicy}
+        onPlaybackPolicyChange={handlePlaybackPolicyChange}
+      />
+    );
   }
 
   if (asset.mime.includes(AssetType.Image)) {

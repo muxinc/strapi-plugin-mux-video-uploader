@@ -113,10 +113,12 @@ const submitDirectUpload = async (ctx: Context) => {
   const data = ctx.request.body;
 
   const result = await getService('mux').getDirectUploadUrl(
+    ctx.request.body?.playback_policy ?? 'signed',
     ctx.request.header.origin
   );
 
   data.upload_id = result.id;
+
   const muxAsset = await strapi.entityService.create(model, { data });
 
   ctx.send({

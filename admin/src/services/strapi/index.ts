@@ -1,7 +1,12 @@
 import { auth } from '@strapi/helper-plugin';
 import { UploadInfoData } from '../../../../server/services/mux';
 
-import { MuxAsset, MuxAssetUpdate, MuxResourceType } from '../../../../types';
+import {
+  MuxAsset,
+  MuxAssetUpdate,
+  MuxPlaybackPolicy,
+  MuxResourceType,
+} from '../../../../types';
 import pluginId from '../../pluginId';
 import { SearchVector, SortVector } from './types';
 
@@ -11,6 +16,7 @@ export interface UploadInfo {
   title: string;
   media: File[] | string;
   origin: UploadOrigin;
+  playbackPolicy: MuxPlaybackPolicy;
 }
 
 interface UploadInfoResponse {
@@ -53,6 +59,7 @@ const submitUpload = async (
 ): Promise<UploadInfoResponse> => {
   const body = new FormData();
   body.append('title', uploadInfo.title);
+  body.append('playback_policy', uploadInfo.playbackPolicy);
 
   let submitUrl;
 

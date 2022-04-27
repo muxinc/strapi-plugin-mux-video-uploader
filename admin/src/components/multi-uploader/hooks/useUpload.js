@@ -15,6 +15,7 @@ const createUploadUrl = async (asset) => {
     title: removeFileExtension(asset.name),
     media: [asset.rawFile],
     origin: "from_computer",
+    playbackPolicy: asset.signed ? "signed" : "public",
   });
 
   if (result.data.error) {
