@@ -36,10 +36,11 @@ interface Props extends DefaultProps{
   muxAsset?: MuxAsset;
   enableUpdate: boolean;
   enableDelete: boolean;
+  enablePublicUpload: boolean;
 }
 
 const ModalDetails = (props:Props) => {
-  const { isOpen, muxAsset, enableUpdate, enableDelete, onToggle } = props;
+  const { isOpen, muxAsset, enableUpdate, enableDelete, enablePublicUpload, onToggle } = props;
 
   const { formatMessage } = useIntl();
 
@@ -185,7 +186,7 @@ const ModalDetails = (props:Props) => {
                       offLabel="public"
                       checked={values.playbackPolicy}
                       error={errors.playbackPolicy}
-                      disabled={!enableUpdate || !muxAsset.playback_id}
+                      disabled={!enablePublicUpload || !muxAsset.playback_id}
                       onChange={(e: any) => {
                         setTouchedFields({ ...touchedFields, playbackPolicy: true });
                         handleChange(e);
