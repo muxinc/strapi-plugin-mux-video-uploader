@@ -48,6 +48,7 @@ export const VideoAssetCard = ({
   size,
   playbackPolicy,
   onPlaybackPolicyChange,
+  enablePublicUpload,
 }) => {
   const { formatMessage } = useIntl();
   const [duration, setDuration] = useState();
@@ -100,17 +101,16 @@ export const VideoAssetCard = ({
           <Box paddingTop={1}>
             <CardTitle as="h2">{name}</CardTitle>
           </Box>
-          <Box paddingTop={4}>
-            <Checkbox
-              value={playbackPolicy}
-              onValueChange={onPlaybackPolicyChange}
-            >
-              Signed
-            </Checkbox>
-          </Box>
-          {/* <CardSubtitle>
-            <Extension>{extension}</Extension>
-          </CardSubtitle> */}
+          {enablePublicUpload && (
+            <Box paddingTop={4}>
+              <Checkbox
+                value={playbackPolicy}
+                onValueChange={onPlaybackPolicyChange}
+              >
+                Signed
+              </Checkbox>
+            </Box>
+          )}
         </CardContent>
         <CardBadge>
           {formatMessage({

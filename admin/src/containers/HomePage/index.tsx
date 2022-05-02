@@ -113,12 +113,13 @@ const HomePage = () => {
       create: pluginPermissions.mainCreate,
       update: pluginPermissions.mainUpdate,
       delete: pluginPermissions.mainDelete,
+      publicUpload: pluginPermissions.mainPublicUpload,
     };
   }, []);
-
+  
   const {
     isLoading: isLoadingForPermissions,
-    allowedActions: { canCreate, canUpdate, canDelete },
+    allowedActions: { canCreate, canUpdate, canDelete, canPublicUpload },
   } = useRBAC(permissions);
 
   const handleOnSearchFieldChange = (field: SearchField) => {
@@ -228,6 +229,7 @@ const HomePage = () => {
       </Layout>
       {isNewUploadOpen && (<MultiUpload.UploadAssetDialog
         onClose={() => handleOnNewUploadClose(true)}
+        enablePublicUpload={canPublicUpload}
       />)}
       <ModalDetails 
         isOpen={selectedAsset !== undefined}

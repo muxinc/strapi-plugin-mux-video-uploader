@@ -28,6 +28,12 @@ export = async ({ strapi }: { strapi: any }) => {
       uid: 'delete',
       pluginName: pluginId,
     },
+    {
+      section: 'plugins',
+      displayName: 'Public Upload',
+      uid: 'public-upload',
+      pluginName: pluginId,
+    },
     // Settings
     {
       section: 'plugins',
