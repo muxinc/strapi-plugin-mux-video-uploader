@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import PropTypes from "prop-types";
-import styled from "styled-components";
+import React, { useState } from 'react';
+import PropTypes from 'prop-types';
+import styled from 'styled-components';
 import {
   Card,
   CardAction,
@@ -11,17 +11,17 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardSubtitle,
   CardTimer,
-} from "@strapi/design-system/Card";
-import { IconButton } from "@strapi/design-system/IconButton";
-import Pencil from "@strapi/icons/Pencil";
-import Trash from "@strapi/icons/Trash";
-import { useIntl } from "react-intl";
-import { Box } from "@strapi/design-system/Box";
-import { VideoPreview } from "./VideoPreview";
-import getTrad from "../../../utils/getTrad";
-import { formatDuration } from "../utils/formatDuration";
+} from '@strapi/design-system/Card';
+import { Checkbox } from '@strapi/design-system/Checkbox';
+import { IconButton } from '@strapi/design-system/IconButton';
+import Pencil from '@strapi/icons/Pencil';
+import Trash from '@strapi/icons/Trash';
+import { useIntl } from 'react-intl';
+import { Box } from '@strapi/design-system/Box';
+import { VideoPreview } from './VideoPreview';
+import getTrad from '../../../utils/getTrad';
+import { formatDuration } from '../utils/formatDuration';
 
 const Extension = styled.span`
   text-transform: uppercase;
@@ -32,7 +32,7 @@ const VideoPreviewWrapper = styled(Box)`
   video {
     display: block;
     max-width: 100%;
-    max-height: ${({ size }) => (size === "M" ? 164 / 16 : 88 / 16)}rem;
+    max-height: ${({ size }) => (size === 'M' ? 164 / 16 : 88 / 16)}rem;
   }
 `;
 
@@ -46,6 +46,9 @@ export const VideoAssetCard = ({
   onEdit,
   onRemove,
   size,
+  playbackPolicy,
+  onPlaybackPolicyChange,
+  enablePublicUpload,
 }) => {
   const { formatMessage } = useIntl();
   const [duration, setDuration] = useState();
@@ -61,8 +64,8 @@ export const VideoAssetCard = ({
             {onRemove && (
               <IconButton
                 label={formatMessage({
-                  id: getTrad("control-card.remove-selection"),
-                  defaultMessage: "Remove from selection",
+                  id: getTrad('control-card.remove-selection'),
+                  defaultMessage: 'Remove from selection',
                 })}
                 icon={<Trash />}
                 onClick={onRemove}
@@ -72,8 +75,8 @@ export const VideoAssetCard = ({
             {onEdit && (
               <IconButton
                 label={formatMessage({
-                  id: getTrad("control-card.edit"),
-                  defaultMessage: "Edit",
+                  id: getTrad('control-card.edit'),
+                  defaultMessage: 'Edit',
                 })}
                 icon={<Pencil />}
                 onClick={onEdit}
@@ -91,21 +94,28 @@ export const VideoAssetCard = ({
             />
           </VideoPreviewWrapper>
         </CardAsset>
-        <CardTimer>{formattedDuration || "..."}</CardTimer>
+        <CardTimer>{formattedDuration || '...'}</CardTimer>
       </CardHeader>
       <CardBody>
         <CardContent>
           <Box paddingTop={1}>
             <CardTitle as="h2">{name}</CardTitle>
           </Box>
-          <CardSubtitle>
-            <Extension>{extension}</Extension>
-          </CardSubtitle>
+          {enablePublicUpload && (
+            <Box paddingTop={4}>
+              <Checkbox
+                value={playbackPolicy}
+                onValueChange={onPlaybackPolicyChange}
+              >
+                Signed
+              </Checkbox>
+            </Box>
+          )}
         </CardContent>
         <CardBadge>
           {formatMessage({
-            id: getTrad("settings.section.video.label"),
-            defaultMessage: "Video",
+            id: getTrad('settings.section.video.label'),
+            defaultMessage: 'Video',
           })}
         </CardBadge>
       </CardBody>
@@ -118,7 +128,7 @@ VideoAssetCard.defaultProps = {
   onEdit: undefined,
   onRemove: undefined,
   selected: false,
-  size: "M",
+  size: 'M',
 };
 
 VideoAssetCard.propTypes = {
@@ -130,5 +140,5 @@ VideoAssetCard.propTypes = {
   onRemove: PropTypes.func,
   url: PropTypes.string.isRequired,
   selected: PropTypes.bool,
-  size: PropTypes.oneOf(["S", "M"]),
+  size: PropTypes.oneOf(['S', 'M']),
 };

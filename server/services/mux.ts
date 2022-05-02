@@ -2,7 +2,7 @@ import axios from 'axios';
 import Mux, { JWTOptions } from '@mux/mux-node';
 
 import { Config, handleAxiosRequest } from './../utils';
-import { MuxResourceType } from '../../types';
+import { MuxPlaybackPolicy, MuxResourceType } from '../../types';
 
 export interface UploadInfoData {
   id: string;
@@ -12,7 +12,10 @@ export interface UploadInfoData {
 
 export interface MuxService {
   getAssetIdByUploadId: (uploadId: string) => Promise<string>;
-  getDirectUploadUrl: (corsOrigin?: string) => Promise<UploadInfoData>;
+  getDirectUploadUrl: (
+    playbackPolicy: MuxPlaybackPolicy,
+    corsOrigin?: string
+  ) => Promise<UploadInfoData>;
   getPlaybackToken: (
     playbackId: string,
     type: MuxResourceType,
@@ -39,7 +42,10 @@ export default ({ strapi }: { strapi: any }) => ({
 
     return result.data.data[0].id;
   },
-  async getDirectUploadUrl(corsOrigin: string = '*'): Promise<UploadInfoData> {
+  async getDirectUploadUrl(
+    playbackPolicy: MuxPlaybackPolicy,
+    corsOrigin: string = '*'
+  ): Promise<UploadInfoData> {
     const config = await Config.getConfig('general');
 
     const result = await handleAxiosRequest(
@@ -53,7 +59,7 @@ export default ({ strapi }: { strapi: any }) => ({
         headers: { 'Content-Type': 'application/json' },
         data: {
           cors_origin: corsOrigin,
-          new_asset_settings: { playback_policy: ['signed'] },
+          new_asset_settings: { playback_policy: [playbackPolicy] },
         },
       })
     );

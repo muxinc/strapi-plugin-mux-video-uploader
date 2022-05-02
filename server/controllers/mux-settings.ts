@@ -9,6 +9,8 @@ const isConfiged = async (ctx: Context) => {
   if (!config.access_token) ctx.send(false);
   else if (!config.secret_key) ctx.send(false);
   else if (!config.webhook_signing_secret) ctx.send(false);
+  else if (!config.playback_key_id) ctx.send(false);
+  else if (!config.playback_key_secret) ctx.send(false);
   else ctx.send(true);
 };
 

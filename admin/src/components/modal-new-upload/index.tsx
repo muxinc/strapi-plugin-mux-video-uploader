@@ -96,7 +96,8 @@ const ModalNewUpload = (props:Props) => {
         uploadInfo = {
           origin: 'from_computer',
           title: body.from_computer_title,
-          media: body.file
+          media: body.file,
+          playbackPolicy: 'signed'
         };
       } else {
         errors.file = formatMessage({
@@ -123,7 +124,8 @@ const ModalNewUpload = (props:Props) => {
         uploadInfo = {
           origin: 'from_url',
           title: body.from_url_title,
-          media: body.url
+          media: body.url,
+          playbackPolicy: 'signed'
         };
       } else {
         errors.url = formatMessage({

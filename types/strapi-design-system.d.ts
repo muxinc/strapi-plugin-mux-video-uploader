@@ -2,6 +2,7 @@ declare module '@strapi/design-system';
 
 declare module '@strapi/design-system/Box';
 declare module '@strapi/design-system/Button';
+declare module '@strapi/design-system/Checkbox';
 declare module '@strapi/design-system/Dialog';
 declare module '@strapi/design-system/Flex';
 declare module '@strapi/design-system/FocusTrap';

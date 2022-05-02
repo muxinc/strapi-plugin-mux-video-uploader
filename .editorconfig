@@ -1,5 +1,8 @@
 root = true
 
+[*.js]
+quote_type = double
+
 [*]
 end_of_line = lf
 insert_final_newline = false

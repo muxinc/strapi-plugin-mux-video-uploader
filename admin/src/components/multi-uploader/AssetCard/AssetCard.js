@@ -1,16 +1,18 @@
-import React from "react";
-import PropTypes from "prop-types";
+import React from 'react';
+import PropTypes from 'prop-types';
 import {
   prefixFileUrlWithBackendUrl,
   getFileExtension,
-} from "@strapi/helper-plugin";
-import { ImageAssetCard } from "./ImageAssetCard";
-import { VideoAssetCard } from "./VideoAssetCard";
-import { DocAssetCard } from "./DocAssetCard";
-import { AudioAssetCard } from "./AudioAssetCard";
-import { AssetType, AssetDefinition } from "../constants";
-import { createAssetUrl } from "../utils/createAssetUrl";
-import toSingularTypes from "../utils/toSingularTypes";
+} from '@strapi/helper-plugin';
+import { ImageAssetCard } from './ImageAssetCard';
+import { VideoAssetCard } from './VideoAssetCard';
+import { DocAssetCard } from './DocAssetCard';
+import { AudioAssetCard } from './AudioAssetCard';
+import { AssetType, AssetDefinition } from '../constants';
+import { createAssetUrl } from '../utils/createAssetUrl';
+import toSingularTypes from '../utils/toSingularTypes';
+import { useState } from 'react';
+import { useEffect } from 'react';
 
 export const AssetCard = ({
   allowedTypes,
@@ -21,14 +23,24 @@ export const AssetCard = ({
   onRemove,
   size,
   local,
+  enablePublicUpload,
 }) => {
   const singularTypes = toSingularTypes(allowedTypes);
-  const fileType = asset.mime.split("/")[0];
+  const fileType = asset.mime.split('/')[0];
   const handleSelect = onSelect ? () => onSelect(asset) : undefined;
   const canSelectAsset =
     singularTypes.includes(fileType) ||
-    (singularTypes.includes("file") &&
-      !["video", "image", "audio"].includes(fileType));
+    (singularTypes.includes('file') &&
+      !['video', 'image', 'audio'].includes(fileType));
+
+  const [playbackPolicy, setPlaybackPolicy] = useState(asset.signed || false);
+
+  const handlePlaybackPolicyChange = (signed) => {
+    asset.signed = signed;
+    setPlaybackPolicy(signed);
+  };
+
+  useEffect(() => handlePlaybackPolicyChange(true), []);
 
   const commonAssetCardProps = {
     id: asset.id,
@@ -45,7 +57,14 @@ export const AssetCard = ({
   };
 
   if (asset.mime.includes(AssetType.Video)) {
-    return <VideoAssetCard {...commonAssetCardProps} />;
+    return (
+      <VideoAssetCard
+        {...commonAssetCardProps}
+        playbackPolicy={playbackPolicy}
+        onPlaybackPolicyChange={handlePlaybackPolicyChange}
+        enablePublicUpload={enablePublicUpload}
+      />
+    );
   }
 
   if (asset.mime.includes(AssetType.Image)) {
@@ -70,14 +89,14 @@ export const AssetCard = ({
 };
 
 AssetCard.defaultProps = {
-  allowedTypes: ["images", "files", "videos", "audios"],
+  allowedTypes: ['images', 'files', 'videos', 'audios'],
   isSelected: false,
   // Determine if the asset is loaded locally or from a remote resource
   local: false,
   onSelect: undefined,
   onEdit: undefined,
   onRemove: undefined,
-  size: "M",
+  size: 'M',
 };
 
 AssetCard.propTypes = {
@@ -88,5 +107,5 @@ AssetCard.propTypes = {
   onEdit: PropTypes.func,
   onRemove: PropTypes.func,
   isSelected: PropTypes.bool,
-  size: PropTypes.oneOf(["S", "M"]),
+  size: PropTypes.oneOf(['S', 'M']),
 };

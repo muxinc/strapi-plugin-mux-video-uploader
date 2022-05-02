@@ -1,14 +1,14 @@
-import React, { useState } from "react";
-import PropTypes from "prop-types";
-import { ModalLayout } from "@strapi/design-system/ModalLayout";
-import { useIntl } from "react-intl";
-import { AddAssetStep } from "./AddAssetStep/AddAssetStep";
-import { PendingAssetStep } from "./PendingAssetStep/PendingAssetStep";
-import { AssetDefinition } from "../constants";
+import React, { useState } from 'react';
+import PropTypes from 'prop-types';
+import { ModalLayout } from '@strapi/design-system/ModalLayout';
+import { useIntl } from 'react-intl';
+import { AddAssetStep } from './AddAssetStep/AddAssetStep';
+import { PendingAssetStep } from './PendingAssetStep/PendingAssetStep';
+import { AssetDefinition } from '../constants';
 
 const Steps = {
-  AddAsset: "AddAsset",
-  PendingAsset: "PendingAsset",
+  AddAsset: 'AddAsset',
+  PendingAsset: 'PendingAsset',
 };
 
 export const UploadAssetDialog = ({
@@ -16,6 +16,7 @@ export const UploadAssetDialog = ({
   onClose,
   addUploadedFiles,
   trackedLocation,
+  enablePublicUpload,
 }) => {
   const { formatMessage } = useIntl();
   const [step, setStep] = useState(
@@ -56,9 +57,9 @@ export const UploadAssetDialog = ({
       // eslint-disable-next-line no-alert
       const confirm = window.confirm(
         formatMessage({
-          id: "window.confirm.close-modal.files",
+          id: 'window.confirm.close-modal.files',
           defaultMessage:
-            "Are you sure? You have some files that have not been uploaded yet.",
+            'Are you sure? You have some files that have not been uploaded yet.',
         })
       );
 
@@ -95,6 +96,7 @@ export const UploadAssetDialog = ({
           onUploadSucceed={handleUploadSuccess}
           initialAssetsToAdd={initialAssetsToAdd}
           addUploadedFiles={addUploadedFiles}
+          enablePublicUpload={enablePublicUpload}
         />
       )}
     </ModalLayout>

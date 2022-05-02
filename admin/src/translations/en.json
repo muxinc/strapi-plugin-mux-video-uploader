@@ -62,6 +62,7 @@
   "Summary.assetId": "Asset Id",
   "Summary.uploadId": "Upload Id",
   "Summary.playbackId": "Playback Id",
+  "Summary.playbackPolicy": "Playback Policy",
   "Summary.created": "Created",
   "Summary.updated": "Updated",
 

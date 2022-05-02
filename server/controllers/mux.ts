@@ -8,6 +8,7 @@ import pluginId from './../../admin/src/pluginId';
 interface MuxAssetFilter {
   upload_id?: string;
   asset_id?: string;
+  playback_id?: string;
 }
 
 const { Webhooks } = Mux;
@@ -87,18 +88,24 @@ const playbackToken = async (ctx: Context) => {
 const thumbnail = async (ctx: Context) => {
   const { playbackId } = ctx.params;
 
-  const playbackToken = await getService('mux').getPlaybackToken(
-    playbackId,
-    'thumbnail',
-    ctx.query
-  );
+  const muxAsset = await resolveMuxAssets({ playback_id: playbackId });
+
+  let params = ctx.query;
+
+  if (muxAsset.playback_policy === 'signed') {
+    const playbackToken = await getService('mux').getPlaybackToken(
+      playbackId,
+      'thumbnail',
+      ctx.query
+    );
+
+    params = { token: playbackToken };
+  }
 
   const response = await axios.get(
     `https://image.mux.com/${playbackId}/thumbnail.png`,
     {
-      params: {
-        token: playbackToken,
-      },
+      params,
       responseType: 'stream',
     }
   );
@@ -113,10 +120,12 @@ const submitDirectUpload = async (ctx: Context) => {
   const data = ctx.request.body;
 
   const result = await getService('mux').getDirectUploadUrl(
+    ctx.request.body?.playback_policy ?? 'signed',
     ctx.request.header.origin
   );
 
   data.upload_id = result.id;
+
   const muxAsset = await strapi.entityService.create(model, { data });
 
   ctx.send({

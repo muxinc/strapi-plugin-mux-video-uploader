@@ -1,11 +1,25 @@
-import { MuxResourceType } from '../../types';
+import { MuxPlaybackPolicy, MuxResourceType } from '../../types';
 import { getService } from '../utils';
+
+type UrlParams = { [key: string]: unknown };
+
+const appendParamsToUrl = (baseUrl: string, params?: UrlParams) => {
+  const url = new URL(baseUrl);
+
+  if (params) {
+    for (const entry of Object.entries(params)) {
+      url.searchParams.append(entry[0], String(entry[1]));
+    }
+  }
+
+  return url.href;
+};
 
 const signPlaybackUrl = async (
   baseUrl: string,
   playbackId: string,
   type: MuxResourceType,
-  params?: { [key: string]: unknown }
+  params?: UrlParams
 ) => {
   const token = await getService('mux').getPlaybackToken(
     playbackId,
@@ -13,10 +27,21 @@ const signPlaybackUrl = async (
     params
   );
 
-  const url = new URL(baseUrl);
-  url.searchParams.append('token', token);
+  return appendParamsToUrl(baseUrl, { token });
+};
 
-  return url.href;
+const generatePlaybackUrl = async (
+  baseUrl: string,
+  playbackId: string,
+  type: MuxResourceType,
+  playbackPolicy: MuxPlaybackPolicy,
+  params?: UrlParams
+) => {
+  if (playbackPolicy === 'signed') {
+    return signPlaybackUrl(baseUrl, playbackId, type, params);
+  } else {
+    return appendParamsToUrl(baseUrl, params);
+  }
 };
 
 export const addMuxPlaybackUrlFieldsToGraphQlSchema = ({ nexus }: any) => ({
@@ -28,11 +53,14 @@ export const addMuxPlaybackUrlFieldsToGraphQlSchema = ({ nexus }: any) => ({
           type: 'String',
           resolve: async (root: any) => {
             const playbackId = root.playback_id;
+            const playbackPolicy = root.playback_policy;
+
             if (playbackId) {
-              return signPlaybackUrl(
+              return generatePlaybackUrl(
                 `https://stream.mux.com/${playbackId}.m3u8`,
                 playbackId,
-                'video'
+                'video',
+                playbackPolicy
               );
             } else {
               return undefined;
@@ -51,11 +79,14 @@ export const addMuxPlaybackUrlFieldsToGraphQlSchema = ({ nexus }: any) => ({
             },
             resolve: async (root: any, args: any) => {
               const playbackId = root.playback_id;
+              const playbackPolicy = root.playback_policy;
+
               if (playbackId) {
-                return signPlaybackUrl(
+                return generatePlaybackUrl(
                   `https://image.mux.com/${playbackId}/thumbnail.jpg`,
                   playbackId,
                   'thumbnail',
+                  playbackPolicy,
                   args
                 );
               } else {

@@ -71,6 +71,19 @@ const Summary = (props:Props) => {
             <TypographyWrapped variant="pi">{muxAsset.playback_id}</TypographyWrapped>
           </Stack>
         </Box>
+        <Box paddingBottom={4}>
+          <Stack>
+            <Typography variant="pi" fontWeight="bold">
+              {
+                formatMessage({
+                  id: getTrad('Summary.playbackPolicy'),
+                  defaultMessage: 'Playback Policy'
+                })
+              }
+            </Typography>
+            <TypographyWrapped variant="pi">{muxAsset.playback_policy}</TypographyWrapped>
+          </Stack>
+        </Box>
         <Box>
           <Grid gap={4}>
             <GridItem col={6} s={12}>

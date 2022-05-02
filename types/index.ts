@@ -2,6 +2,7 @@ export interface MuxAsset extends MuxAssetUpdate {
   upload_id: string;
   asset_id: string | null;
   playback_id: string | null;
+  playback_policy: MuxPlaybackPolicy;
   error_message: string | null;
   created_by: string | null;
   updated_by: string | null;
@@ -29,3 +30,5 @@ export interface InputFileOnChange {
 }
 
 export type MuxResourceType = 'video' | 'thumbnail' | 'gif' | 'storyboard';
+
+export type MuxPlaybackPolicy = 'public' | 'signed';

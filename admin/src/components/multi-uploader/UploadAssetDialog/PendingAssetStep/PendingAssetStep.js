@@ -1,26 +1,26 @@
-import React, { useState, useRef } from "react";
-import PropTypes from "prop-types";
+import React, { useState, useRef } from 'react';
+import PropTypes from 'prop-types';
 import {
   ModalHeader,
   ModalBody,
   ModalFooter,
-} from "@strapi/design-system/ModalLayout";
-import { Typography } from "@strapi/design-system/Typography";
-import { Button } from "@strapi/design-system/Button";
-import { useIntl } from "react-intl";
-import { Flex } from "@strapi/design-system/Flex";
-import { Stack } from "@strapi/design-system/Stack";
-import { Grid, GridItem } from "@strapi/design-system/Grid";
-import { KeyboardNavigable } from "@strapi/design-system/KeyboardNavigable";
-import { AssetCard } from "../../AssetCard/AssetCard";
-import { UploadingAssetCard } from "../../AssetCard/UploadingAssetCard";
-import getTrad from "../../../../utils/getTrad";
-import { AssetDefinition } from "../../constants";
+} from '@strapi/design-system/ModalLayout';
+import { Typography } from '@strapi/design-system/Typography';
+import { Button } from '@strapi/design-system/Button';
+import { useIntl } from 'react-intl';
+import { Flex } from '@strapi/design-system/Flex';
+import { Stack } from '@strapi/design-system/Stack';
+import { Grid, GridItem } from '@strapi/design-system/Grid';
+import { KeyboardNavigable } from '@strapi/design-system/KeyboardNavigable';
+import { AssetCard } from '../../AssetCard/AssetCard';
+import { UploadingAssetCard } from '../../AssetCard/UploadingAssetCard';
+import getTrad from '../../../../utils/getTrad';
+import { AssetDefinition } from '../../constants';
 
 const Status = {
-  Idle: "IDLE",
-  Uploading: "UPLOADING",
-  Intermediate: "INTERMEDIATE",
+  Idle: 'IDLE',
+  Uploading: 'UPLOADING',
+  Intermediate: 'INTERMEDIATE',
 };
 
 export const PendingAssetStep = ({
@@ -31,6 +31,7 @@ export const PendingAssetStep = ({
   onClickAddAsset,
   onCancelUpload,
   onUploadSucceed,
+  enablePublicUpload,
 }) => {
   const assetCountRef = useRef(0);
   const { formatMessage } = useIntl();
@@ -44,7 +45,7 @@ export const PendingAssetStep = ({
   };
 
   const handleStatusChange = (status, file) => {
-    if (status === "success" || status === "error") {
+    if (status === 'success' || status === 'error') {
       assetCountRef.current++;
 
       // There's no "terminated" status. When all the files have called their
@@ -56,7 +57,7 @@ export const PendingAssetStep = ({
       }
     }
 
-    if (status === "success") {
+    if (status === 'success') {
       onUploadSucceed(file);
     }
   };
@@ -66,8 +67,8 @@ export const PendingAssetStep = ({
       <ModalHeader>
         <Typography fontWeight="bold" textColor="neutral800" as="h2" id="title">
           {formatMessage({
-            id: getTrad("header.actions.add-assets"),
-            defaultMessage: "Add new assets",
+            id: getTrad('header.actions.add-assets'),
+            defaultMessage: 'Add new assets',
           })}
         </Typography>
       </ModalHeader>
@@ -79,25 +80,25 @@ export const PendingAssetStep = ({
               <Typography variant="pi" fontWeight="bold" textColor="neutral800">
                 {formatMessage(
                   {
-                    id: getTrad("list.assets.selected"),
+                    id: getTrad('list.assets.selected'),
                     defaultMessage:
-                      "{number, plural, =0 {No asset} one {1 asset} other {# assets}} ready to upload",
+                      '{number, plural, =0 {No asset} one {1 asset} other {# assets}} ready to upload',
                   },
                   { number: assets.length }
                 )}
               </Typography>
               <Typography variant="pi" textColor="neutral600">
                 {formatMessage({
-                  id: getTrad("modal.upload-list.sub-header-subtitle"),
+                  id: getTrad('modal.upload-list.sub-header-subtitle'),
                   defaultMessage:
-                    "Manage the assets before adding them to the Media Library",
+                    'Manage the assets before adding them to the Media Library',
                 })}
               </Typography>
             </Stack>
             <Button size="S" onClick={onClickAddAsset}>
               {formatMessage({
-                id: getTrad("header.actions.add-assets"),
-                defaultMessage: "Add new assets",
+                id: getTrad('header.actions.add-assets'),
+                defaultMessage: 'Add new assets',
               })}
             </Button>
           </Flex>
@@ -136,6 +137,7 @@ export const PendingAssetStep = ({
                       local
                       alt={asset.name}
                       onRemove={onRemoveAsset}
+                      enablePublicUpload={enablePublicUpload}
                     />
                   </GridItem>
                 );
@@ -149,8 +151,8 @@ export const PendingAssetStep = ({
         startActions={
           <Button onClick={onClose} variant="tertiary">
             {formatMessage({
-              id: "app.components.Button.cancel",
-              defaultMessage: "cancel",
+              id: 'app.components.Button.cancel',
+              defaultMessage: 'cancel',
             })}
           </Button>
         }
@@ -158,9 +160,9 @@ export const PendingAssetStep = ({
           <Button type="submit" loading={uploadStatus === Status.Uploading}>
             {formatMessage(
               {
-                id: getTrad("modal.upload-list.footer.button"),
+                id: getTrad('modal.upload-list.footer.button'),
                 defaultMessage:
-                  "Upload {number, plural, one {# asset} other {# assets}} to the library",
+                  'Upload {number, plural, one {# asset} other {# assets}} to the library',
               },
               { number: assets.length }
             )}
