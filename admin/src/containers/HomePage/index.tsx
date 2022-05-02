@@ -236,6 +236,7 @@ const HomePage = () => {
         muxAsset={selectedAsset}
         enableUpdate={canUpdate}
         enableDelete={canDelete}
+        enablePublicUpload={canPublicUpload}
         onToggle={handleOnDetailsClose}
       />
     </>

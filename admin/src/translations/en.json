@@ -5,6 +5,7 @@
   "Common.title-required": "No title specified",
   "Common.title-length": "Needs to be at least 3 letters",
   "Common.isReady-label": "Is ready",
+  "Common.playbackPolicy-label": "Playback policy",
   "Common.file-label": "File",
   "Common.file-required": "File needs to be selected",
   "Common.url-label": "Url",
@@ -62,7 +63,6 @@
   "Summary.assetId": "Asset Id",
   "Summary.uploadId": "Upload Id",
   "Summary.playbackId": "Playback Id",
-  "Summary.playbackPolicy": "Playback Policy",
   "Summary.created": "Created",
   "Summary.updated": "Updated",
 
