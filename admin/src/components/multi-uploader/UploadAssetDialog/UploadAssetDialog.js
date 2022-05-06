@@ -5,6 +5,7 @@ import { useIntl } from 'react-intl';
 import { AddAssetStep } from './AddAssetStep/AddAssetStep';
 import { PendingAssetStep } from './PendingAssetStep/PendingAssetStep';
 import { AssetDefinition } from '../constants';
+import { getMuxAssets } from '../../../services/strapi';
 
 const Steps = {
   AddAsset: 'AddAsset',
@@ -24,7 +25,49 @@ export const UploadAssetDialog = ({
   );
   const [assets, setAssets] = useState(initialAssetsToAdd || []);
 
-  const handleAddToPendingAssets = (nextAssets) => {
+  const handleDuplicates = async (nextAssets) => {
+    for (const asset of nextAssets) {
+      const potentialDuplicates = await getMuxAssets(
+        { field: 'by_title', value: asset.nameWithoutExtension },
+        undefined,
+        0,
+        0
+      );
+
+      const hasDuplicates = potentialDuplicates?.items?.some(
+        (muxAsset) => asset.nameWithoutExtension === muxAsset.title
+      );
+
+      const alreadyInPrevAssets = assets.some(
+        (prevAsset) =>
+          asset.nameWithoutExtension === prevAsset.nameWithoutExtension
+      );
+
+      if (alreadyInPrevAssets) {
+        asset.duplicate.push({
+          type: 'already_in_list',
+          error: formatMessage({
+            id: 'ModalNewUpload.already-in-list-error',
+            defaultMessage: 'Already in list',
+          }),
+        });
+      }
+
+      if (hasDuplicates) {
+        asset.duplicate.push({
+          type: 'already_uploaded',
+          error: formatMessage({
+            id: 'ModalNewUpload.already-uploaded-error',
+            defaultMessage: 'Already uploaded',
+          }),
+        });
+      }
+    }
+  };
+
+  const handleAddToPendingAssets = async (nextAssets) => {
+    await handleDuplicates(nextAssets);
+
     setAssets((prevAssets) => prevAssets.concat(nextAssets));
     setStep(Steps.PendingAsset);
   };
@@ -71,8 +114,24 @@ export const UploadAssetDialog = ({
     }
   };
 
+  const cleanUpDuplicate = (assetToRemove, remainingAssets) => {
+    const firstDuplicate = remainingAssets.find(
+      (asset) =>
+        asset.nameWithoutExtension === assetToRemove.nameWithoutExtension
+    );
+
+    if (firstDuplicate) {
+      firstDuplicate.duplicate = firstDuplicate.duplicate.filter(
+        (duplicate) => duplicate.type !== 'already_in_list'
+      );
+    }
+  };
+
   const handleRemoveAsset = (assetToRemove) => {
     const nextAssets = assets.filter((asset) => asset !== assetToRemove);
+
+    cleanUpDuplicate(assetToRemove, nextAssets);
+
     setAssets(nextAssets);
   };
 

@@ -1,21 +1,16 @@
-// import axios from "axios";
-import { useRef, useState } from "react";
-import { useMutation } from "react-query";
-import { useIntl } from "react-intl";
-import { createUpload } from "@mux/upchunk";
-import getTrad from "../../../utils/getTrad";
-import { submitUpload, deleteMuxAsset } from "../../../services/strapi";
-
-const removeFileExtension = (fileName) => {
-  return fileName.replace(/\.[^/.]+$/, "");
-};
+import { useRef, useState } from 'react';
+import { useMutation } from 'react-query';
+import { useIntl } from 'react-intl';
+import { createUpload } from '@mux/upchunk';
+import getTrad from '../../../utils/getTrad';
+import { submitUpload, deleteMuxAsset } from '../../../services/strapi';
 
 const createUploadUrl = async (asset) => {
   const result = await submitUpload({
-    title: removeFileExtension(asset.name),
+    title: asset.nameWithoutExtension,
     media: [asset.rawFile],
-    origin: "from_computer",
-    playbackPolicy: asset.signed ? "signed" : "public",
+    origin: 'from_computer',
+    playbackPolicy: asset.signed ? 'signed' : 'public',
   });
 
   if (result.data.error) {
@@ -47,22 +42,22 @@ const createMuxUpload = (asset, uploadInfo) => {
 };
 
 const createUploadPromise = (upload, uploadInfo, abortSignal, onProgress) => {
-  upload.on("progress", (progressEvt) => {
+  upload.on('progress', (progressEvt) => {
     onProgress(Math.floor(progressEvt.detail));
   });
 
   const uploadPromise = new Promise((resolve, reject) => {
-    upload.on("success", () => {
+    upload.on('success', () => {
       onProgress(100);
       resolve(upload);
     });
 
-    upload.on("error", (err) => {
+    upload.on('error', (err) => {
       deleteMuxAsset(uploadInfo.muxAsset, false);
       reject(err.detail);
     });
 
-    abortSignal.addEventListener("abort", (event) => {
+    abortSignal.addEventListener('abort', (event) => {
       upload.abort();
 
       deleteMuxAsset(uploadInfo.muxAsset, false);
@@ -94,8 +89,8 @@ export const useUpload = () => {
   const cancel = () =>
     abortControllerRef.current.abort(
       formatMessage({
-        id: getTrad("modal.upload.cancelled"),
-        defaultMessage: "User cancelled mux-upload",
+        id: getTrad('modal.upload.cancelled'),
+        defaultMessage: 'User cancelled mux-upload',
       })
     );
 

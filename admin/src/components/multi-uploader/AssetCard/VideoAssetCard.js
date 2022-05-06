@@ -5,7 +5,6 @@ import {
   Card,
   CardAction,
   CardAsset,
-  CardBadge,
   CardBody,
   CardCheckbox,
   CardContent,
@@ -14,7 +13,9 @@ import {
   CardTimer,
 } from '@strapi/design-system/Card';
 import { Checkbox } from '@strapi/design-system/Checkbox';
+import { Stack } from '@strapi/design-system/Stack';
 import { IconButton } from '@strapi/design-system/IconButton';
+import { Typography } from '@strapi/design-system/Typography';
 import Pencil from '@strapi/icons/Pencil';
 import Trash from '@strapi/icons/Trash';
 import { useIntl } from 'react-intl';
@@ -22,10 +23,6 @@ import { Box } from '@strapi/design-system/Box';
 import { VideoPreview } from './VideoPreview';
 import getTrad from '../../../utils/getTrad';
 import { formatDuration } from '../utils/formatDuration';
-
-const Extension = styled.span`
-  text-transform: uppercase;
-`;
 
 const VideoPreviewWrapper = styled(Box)`
   canvas,
@@ -41,6 +38,7 @@ export const VideoAssetCard = ({
   extension,
   url,
   mime,
+  duplicate,
   selected,
   onSelect,
   onEdit,
@@ -98,26 +96,29 @@ export const VideoAssetCard = ({
       </CardHeader>
       <CardBody>
         <CardContent>
-          <Box paddingTop={1}>
-            <CardTitle as="h2">{name}</CardTitle>
-          </Box>
-          {enablePublicUpload && (
-            <Box paddingTop={4}>
-              <Checkbox
-                value={playbackPolicy}
-                onValueChange={onPlaybackPolicyChange}
-              >
-                Signed
-              </Checkbox>
+          <Stack padding={3} spacing={2}>
+            <Box>
+              <CardTitle as="h2">{name}</CardTitle>
             </Box>
-          )}
+            {enablePublicUpload && (
+              <Box>
+                <Checkbox
+                  value={playbackPolicy}
+                  onValueChange={onPlaybackPolicyChange}
+                >
+                  Signed
+                </Checkbox>
+              </Box>
+            )}
+            {duplicate && duplicate.length > 0 && (
+              <Box>
+                <Typography variant="pi" textColor="danger600">
+                  {duplicate[0].error}
+                </Typography>
+              </Box>
+            )}
+          </Stack>
         </CardContent>
-        <CardBadge>
-          {formatMessage({
-            id: getTrad('settings.section.video.label'),
-            defaultMessage: 'Video',
-          })}
-        </CardBadge>
       </CardBody>
     </Card>
   );

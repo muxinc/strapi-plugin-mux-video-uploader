@@ -71,6 +71,8 @@
   "ModalNewUpload.from-url-tab-label": "From url",
   "ModalNewUpload.unknown-error": "Unknown error encountered",
   "ModalNewUpload.unresolvable-upload-state": "Unable to resolve upload state",
+  "ModalNewUpload.already-uploaded-error": "Already uploaded",
+  "ModalNewUpload.already-in-list-error": "Already in list",
 
   "Uploading.uploading": "Uploading to Mux",
 

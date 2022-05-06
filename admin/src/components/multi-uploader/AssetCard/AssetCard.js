@@ -49,6 +49,7 @@ export const AssetCard = ({
     name: asset.name,
     url: local ? asset.url : createAssetUrl(asset, true),
     mime: asset.mime,
+    duplicate: asset.duplicate,
     onEdit: onEdit ? () => onEdit(asset) : undefined,
     onSelect: !canSelectAsset && !isSelected ? undefined : handleSelect,
     onRemove: onRemove ? () => onRemove(asset) : undefined,
