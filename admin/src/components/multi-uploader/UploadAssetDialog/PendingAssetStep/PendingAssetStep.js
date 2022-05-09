@@ -84,8 +84,7 @@ export const PendingAssetStep = ({
     } else if (!force && duplicateAssets.length > 0) {
       setDuplicateAssetsDialogVisible(true);
     } else {
-      // setUploadStatus(Status.Uploading);
-      console.log('UPLOAD');
+      setUploadStatus(Status.Uploading);
     }
   };
 

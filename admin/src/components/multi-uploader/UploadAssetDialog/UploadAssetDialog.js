@@ -68,7 +68,13 @@ export const UploadAssetDialog = ({
   const handleAddToPendingAssets = async (nextAssets) => {
     await handleDuplicates(nextAssets);
 
-    setAssets((prevAssets) => prevAssets.concat(nextAssets));
+    setAssets((prevAssets) =>
+      prevAssets
+        .concat(nextAssets)
+        .sort((a, b) =>
+          a.nameWithoutExtension.localeCompare(b.nameWithoutExtension)
+        )
+    );
     setStep(Steps.PendingAsset);
   };
 
