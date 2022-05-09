@@ -73,6 +73,13 @@
   "ModalNewUpload.unresolvable-upload-state": "Unable to resolve upload state",
   "ModalNewUpload.already-uploaded-error": "Already uploaded",
   "ModalNewUpload.already-in-list-error": "Already in list",
+  "ModalNewUpload.redundant-assets-title": "Redundant assets",
+  "ModalNewUpload.redundant-assets-text": "You've selected the same assets multiple times. Click 'Remove assets' to remove the duplicates all at once.",
+  "ModalNewUpload.duplicate-assets-title": "Assets already uploaded",
+  "ModalNewUpload.duplicate-assets-text": "Following assets have been uploaded already. Click 'Replace' to reupload or 'Skip' to only upload the other videos.",
+  "ModalNewUpload.remove-assets": "Remove assets",
+  "ModalNewUpload.skip": "Skip",
+  "ModalNewUpload.replace": "Replace",
 
   "Uploading.uploading": "Uploading to Mux",
 

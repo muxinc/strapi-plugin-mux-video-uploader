@@ -215,8 +215,15 @@ export const PendingAssetStep = ({
       />
 
       <DuplicateAssetsDialog
-        title="Redundant assets"
-        text="You've selected the same assets multiple times. Click 'Remove assets' to remove the duplicates all at once. Or click 'Cancel' to go back to the overview and manage the uploads manually"
+        title={formatMessage({
+          id: 'ModalNewUpload.redundant-assets-title',
+          defaultMessage: 'Redundant assets',
+        })}
+        text={formatMessage({
+          id: 'ModalNewUpload.redundant-assets-text',
+          defaultMessage:
+            "You've selected the same assets multiple times. Click 'Remove assets' to remove the duplicates all at once.",
+        })}
         assets={redundantAssets}
         onClose={() => setRedundantAssetsDialogVisible(false)}
         isOpen={redundantAssetsDialogVisible}
@@ -225,7 +232,10 @@ export const PendingAssetStep = ({
             onClick={() => setRedundantAssetsDialogVisible(false)}
             variant="tertiary"
           >
-            Cancel
+            {formatMessage({
+              id: 'app.components.Button.cancel',
+              defaultMessage: 'cancel',
+            })}
           </Button>
         }
         endAction={
@@ -234,14 +244,24 @@ export const PendingAssetStep = ({
               onRemoveAssets(redundantAssets);
             }}
           >
-            Remove assets
+            {formatMessage({
+              id: 'ModalNewUpload.remove-assets',
+              defaultMessage: 'Remove assets',
+            })}
           </Button>
         }
       ></DuplicateAssetsDialog>
 
       <DuplicateAssetsDialog
-        title="Assets already uploaded"
-        text="Following assets have been uploaded already. Click 'Replace' to reupload, 'Skip' to only upload the other videos or 'Cancel' to go back to the overview and manage the uploads manually"
+        title={formatMessage({
+          id: 'ModalNewUpload.duplicate-assets-title',
+          defaultMessage: 'Assets already uploaded',
+        })}
+        text={formatMessage({
+          id: 'ModalNewUpload.duplicate-assets-text',
+          defaultMessage:
+            "Following assets have been uploaded already. Click 'Replace' to reupload or 'Skip' to only upload the other videos.",
+        })}
         assets={duplicateAssets}
         onClose={() => setDuplicateAssetsDialogVisible(false)}
         isOpen={duplicateAssetsDialogVisible}
@@ -250,7 +270,10 @@ export const PendingAssetStep = ({
             onClick={() => setDuplicateAssetsDialogVisible(false)}
             variant="tertiary"
           >
-            Cancel
+            {formatMessage({
+              id: 'app.components.Button.cancel',
+              defaultMessage: 'cancel',
+            })}
           </Button>
         }
         endAction={
@@ -262,7 +285,10 @@ export const PendingAssetStep = ({
                 }}
                 variant="tertiary"
               >
-                Skip
+                {formatMessage({
+                  id: 'ModalNewUpload.skip',
+                  defaultMessage: 'Skip',
+                })}
               </Button>
             </Box>
             <Box>
@@ -272,7 +298,10 @@ export const PendingAssetStep = ({
                   submit(true);
                 }}
               >
-                Replace
+                {formatMessage({
+                  id: 'ModalNewUpload.replace',
+                  defaultMessage: 'Replace',
+                })}
               </Button>
             </Box>
           </Flex>
