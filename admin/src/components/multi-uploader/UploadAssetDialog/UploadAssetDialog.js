@@ -114,7 +114,7 @@ export const UploadAssetDialog = ({
     }
   };
 
-  const cleanUpDuplicate = (assetToRemove, remainingAssets) => {
+  const cleanUpDuplicateError = (assetToRemove, remainingAssets) => {
     const firstDuplicate = remainingAssets.find(
       (asset) =>
         asset.nameWithoutExtension === assetToRemove.nameWithoutExtension
@@ -128,9 +128,17 @@ export const UploadAssetDialog = ({
   };
 
   const handleRemoveAsset = (assetToRemove) => {
-    const nextAssets = assets.filter((asset) => asset !== assetToRemove);
+    handleRemoveAssets([assetToRemove]);
+  };
 
-    cleanUpDuplicate(assetToRemove, nextAssets);
+  const handleRemoveAssets = (assetsToRemove) => {
+    const nextAssets = assets.filter(
+      (asset) => !assetsToRemove.includes(asset)
+    );
+
+    for (const assetToRemove of assetsToRemove) {
+      cleanUpDuplicateError(assetToRemove, nextAssets);
+    }
 
     setAssets(nextAssets);
   };
@@ -150,6 +158,7 @@ export const UploadAssetDialog = ({
           onClose={handleClose}
           assets={assets}
           onRemoveAsset={handleRemoveAsset}
+          onRemoveAssets={handleRemoveAssets}
           onClickAddAsset={moveToAddAsset}
           onCancelUpload={handleCancelUpload}
           onUploadSucceed={handleUploadSuccess}

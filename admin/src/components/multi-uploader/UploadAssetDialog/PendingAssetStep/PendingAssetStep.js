@@ -9,6 +9,7 @@ import { Typography } from '@strapi/design-system/Typography';
 import { Button } from '@strapi/design-system/Button';
 import { useIntl } from 'react-intl';
 import { Flex } from '@strapi/design-system/Flex';
+import { Box } from '@strapi/design-system/Box';
 import { Stack } from '@strapi/design-system/Stack';
 import { Grid, GridItem } from '@strapi/design-system/Grid';
 import { KeyboardNavigable } from '@strapi/design-system/KeyboardNavigable';
@@ -16,6 +17,8 @@ import { AssetCard } from '../../AssetCard/AssetCard';
 import { UploadingAssetCard } from '../../AssetCard/UploadingAssetCard';
 import getTrad from '../../../../utils/getTrad';
 import { AssetDefinition } from '../../constants';
+import { DuplicateAssetsDialog } from './DuplicateAssetsDialog';
+import { useEffect } from 'react';
 
 const Status = {
   Idle: 'IDLE',
@@ -27,6 +30,7 @@ export const PendingAssetStep = ({
   addUploadedFiles,
   onClose,
   onRemoveAsset,
+  onRemoveAssets,
   assets,
   onClickAddAsset,
   onCancelUpload,
@@ -36,12 +40,53 @@ export const PendingAssetStep = ({
   const assetCountRef = useRef(0);
   const { formatMessage } = useIntl();
   const [uploadStatus, setUploadStatus] = useState(Status.Idle);
+  const [duplicateAssetsDialogVisible, setDuplicateAssetsDialogVisible] =
+    useState(false);
+  const [redundantAssetsDialogVisible, setRedundantAssetsDialogVisible] =
+    useState(false);
+
+  const duplicateAssets = assets.filter(
+    (asset) =>
+      asset.duplicate &&
+      asset.duplicate.some((duplicate) => duplicate.type === 'already_uploaded')
+  );
+
+  const redundantAssets = assets.filter(
+    (asset) =>
+      asset.duplicate &&
+      asset.duplicate.some((duplicate) => duplicate.type === 'already_in_list')
+  );
+
+  useEffect(() => {
+    if (duplicateAssets.length === 0 && duplicateAssetsDialogVisible) {
+      setDuplicateAssetsDialogVisible(false);
+      submit();
+    }
+  }, [duplicateAssets]);
+
+  useEffect(() => {
+    if (redundantAssets.length === 0 && redundantAssetsDialogVisible) {
+      setRedundantAssetsDialogVisible(false);
+      submit();
+    }
+  }, [redundantAssets]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     e.stopPropagation();
 
-    setUploadStatus(Status.Uploading);
+    submit();
+  };
+
+  const submit = (force = false) => {
+    if (redundantAssets.length > 0) {
+      setRedundantAssetsDialogVisible(true);
+    } else if (!force && duplicateAssets.length > 0) {
+      setDuplicateAssetsDialogVisible(true);
+    } else {
+      // setUploadStatus(Status.Uploading);
+      console.log('UPLOAD');
+    }
   };
 
   const handleStatusChange = (status, file) => {
@@ -169,6 +214,71 @@ export const PendingAssetStep = ({
           </Button>
         }
       />
+
+      <DuplicateAssetsDialog
+        title="Redundant assets"
+        text="You've selected the same assets multiple times. Click 'Remove assets' to remove the duplicates all at once. Or click 'Cancel' to go back to the overview and manage the uploads manually"
+        assets={redundantAssets}
+        onClose={() => setRedundantAssetsDialogVisible(false)}
+        isOpen={redundantAssetsDialogVisible}
+        startAction={
+          <Button
+            onClick={() => setRedundantAssetsDialogVisible(false)}
+            variant="tertiary"
+          >
+            Cancel
+          </Button>
+        }
+        endAction={
+          <Button
+            onClick={() => {
+              onRemoveAssets(redundantAssets);
+            }}
+          >
+            Remove assets
+          </Button>
+        }
+      ></DuplicateAssetsDialog>
+
+      <DuplicateAssetsDialog
+        title="Assets already uploaded"
+        text="Following assets have been uploaded already. Click 'Replace' to reupload, 'Skip' to only upload the other videos or 'Cancel' to go back to the overview and manage the uploads manually"
+        assets={duplicateAssets}
+        onClose={() => setDuplicateAssetsDialogVisible(false)}
+        isOpen={duplicateAssetsDialogVisible}
+        startAction={
+          <Button
+            onClick={() => setDuplicateAssetsDialogVisible(false)}
+            variant="tertiary"
+          >
+            Cancel
+          </Button>
+        }
+        endAction={
+          <Flex>
+            <Box paddingRight={2}>
+              <Button
+                onClick={() => {
+                  onRemoveAssets(duplicateAssets);
+                }}
+                variant="tertiary"
+              >
+                Skip
+              </Button>
+            </Box>
+            <Box>
+              <Button
+                onClick={() => {
+                  setDuplicateAssetsDialogVisible(false);
+                  submit(true);
+                }}
+              >
+                Replace
+              </Button>
+            </Box>
+          </Flex>
+        }
+      ></DuplicateAssetsDialog>
     </form>
   );
 };
