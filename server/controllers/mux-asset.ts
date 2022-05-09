@@ -8,13 +8,16 @@ import pluginId from './../../admin/src/pluginId';
 const model = `plugin::${pluginId}.mux-asset`;
 
 const search = (ctx: Context) => {
-  const { start, limit, sort = 'createdAt', order = 'desc' } = ctx.query;
+  const { start, sort = 'createdAt', order = 'desc' } = ctx.query;
 
   const params: any = {
     start,
-    limit,
     sort: [{ [sort as string]: order }],
   };
+
+  if (ctx.query.limit) {
+    params.limit = ctx.query.limit;
+  }
 
   if (ctx.query.filter) {
     const [filter, ...rest] = (ctx.query.filter as string).split(':');

@@ -110,7 +110,9 @@ const getMuxAssets = (
     ? `&sort=${sortVector.field}&order=${sortVector.desc ? 'desc' : 'asc'}`
     : '';
 
-  const url = `${getServiceUri()}/${pluginId}/mux-asset?start=${start}${sort}&limit=${limit}${search}`;
+  const limitParam = limit ? `&limit=${limit}` : '';
+
+  const url = `${getServiceUri()}/${pluginId}/mux-asset?start=${start}${sort}${limitParam}${search}`;
 
   return fetch(url, {
     method: 'GET',
