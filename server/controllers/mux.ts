@@ -138,11 +138,15 @@ const submitDirectUpload = async (ctx: Context) => {
   let muxAsset = await tryResolveMuxAssets({ title: data.title });
 
   if (muxAsset) {
+    const assetId = muxAsset.asset_id
+      ? muxAsset.asset_id
+      : await getService('mux').getAssetIdByUploadId(muxAsset.upload_id);
+
     data.asset_id = null;
     data.playback_id = null;
 
     await strapi.entityService.update(model, muxAsset.id, { data });
-    await getService('mux').deleteAsset(muxAsset.asset_id);
+    await getService('mux').deleteAsset(assetId);
   } else {
     muxAsset = await strapi.entityService.create(model, { data });
   }
