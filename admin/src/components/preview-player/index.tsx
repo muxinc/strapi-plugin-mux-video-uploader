@@ -1,5 +1,6 @@
 import React from 'react';
-import videojs from '@mux/videojs-kit';
+// @ts-ignore
+import videojs from '@mux/videojs-kit/dist/index.vhs.js';
 
 import { MuxAsset } from '../../../../types';
 import { getPlaybackToken, getThumbnail } from '../../services/strapi';
