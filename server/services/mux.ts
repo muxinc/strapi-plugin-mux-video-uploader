@@ -49,7 +49,13 @@ export default ({ strapi }: { strapi: any }) => ({
       headers: { 'Content-Type': 'application/json' },
     });
 
-    return result.data.data[0].id;
+    const data = result.data.data;
+
+    if (data.length > 0) {
+      return data[0].id;
+    } else {
+      return undefined;
+    }
   },
   async getDirectUploadUrl(
     playbackPolicy: MuxPlaybackPolicy,

@@ -54,6 +54,22 @@ const setMuxSettings = (body: FormData) => {
   });
 };
 
+const createMuxAssetShells = async (titles: string[]) => {
+  const body = new FormData();
+
+  for (const title of titles) {
+    body.append('titles', title);
+  }
+
+  const response = await fetch(`${getServiceUri()}/${pluginId}/mux-assets`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${getJwtToken()}` },
+    body,
+  });
+
+  return await response.json();
+};
+
 const submitUpload = async (
   uploadInfo: UploadInfo
 ): Promise<UploadInfoResponse> => {
@@ -186,6 +202,7 @@ export {
   getIsConfigured,
   getMuxSettings,
   setMuxSettings,
+  createMuxAssetShells,
   submitUpload,
   getMuxAssets,
   setMuxAsset,
