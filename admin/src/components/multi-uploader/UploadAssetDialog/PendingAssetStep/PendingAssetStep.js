@@ -19,6 +19,7 @@ import getTrad from '../../../../utils/getTrad';
 import { AssetDefinition } from '../../constants';
 import { DuplicateAssetsDialog } from './DuplicateAssetsDialog';
 import { useEffect } from 'react';
+import { createMuxAssetShells } from '../../../../services/strapi';
 
 const Status = {
   Idle: 'IDLE',
@@ -78,12 +79,13 @@ export const PendingAssetStep = ({
     submit();
   };
 
-  const submit = (force = false) => {
+  const submit = async (force = false) => {
     if (redundantAssets.length > 0) {
       setRedundantAssetsDialogVisible(true);
     } else if (!force && duplicateAssets.length > 0) {
       setDuplicateAssetsDialogVisible(true);
     } else {
+      await createMuxAssetShells(assets.map((a) => a.nameWithoutExtension));
       setUploadStatus(Status.Uploading);
     }
   };

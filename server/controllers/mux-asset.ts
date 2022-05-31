@@ -1,6 +1,6 @@
 import { parseMultipartData } from '@strapi/utils';
 import { Context } from 'koa';
-import { MuxPlaybackPolicy } from '../../types';
+import { MuxAsset, MuxPlaybackPolicy } from '../../types';
 import { getService } from '../utils';
 
 import pluginId from './../../admin/src/pluginId';
@@ -81,6 +81,34 @@ const create = async (ctx: Context) => {
   return entity;
 };
 
+const createBulk = async (ctx: Context) => {
+  let titles = ctx.request.body.titles;
+  if (typeof titles === 'string') {
+    titles = [titles];
+  }
+
+  const existing = await strapi.entityService.findMany(model, {
+    filters: {
+      title: { $in: titles },
+    },
+  });
+
+  const existingTitles = existing.map((asset: MuxAsset) => asset.title);
+  const titlesNotInDb = titles.filter(
+    (title: string) => !existingTitles.includes(title)
+  );
+
+  if (titlesNotInDb.length > 0) {
+    const entities = await strapi.db.query(model).createMany({
+      data: titlesNotInDb.map((title: string) => ({ title })),
+    });
+
+    return entities;
+  } else {
+    return [];
+  }
+};
+
 const update = async (ctx: Context) => {
   const { id } = ctx.params;
 
@@ -119,4 +147,4 @@ const del = async (ctx: Context) => {
   return await strapi.entityService.delete({ params: { id } }, { model });
 };
 
-export = { index, find, findOne, count, create, update, del };
+export = { index, find, findOne, count, create, createBulk, update, del };

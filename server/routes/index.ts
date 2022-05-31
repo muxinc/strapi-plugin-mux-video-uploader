@@ -118,6 +118,16 @@ const routes = [
   },
 
   {
+    method: 'POST',
+    path: '/mux-video-uploader/mux-assets',
+    handler: 'mux-asset.createBulk',
+    config: {
+      policies: [],
+      prefix: false,
+    },
+  },
+
+  {
     method: 'GET',
     path: '/mux-video-uploader/mux-settings/configured',
     handler: 'mux-settings.isConfiged',
