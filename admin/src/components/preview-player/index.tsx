@@ -1,49 +1,39 @@
 import React from 'react';
-import videojs from '@mux/videojs-kit';
+import styled from 'styled-components';
+import MuxPlayer from '@mux-elements/mux-player-react';
 
+import pluginPkg from './../../../../package.json';
 import { MuxAsset } from '../../../../types';
 import { getThumbnail } from '../../services/strapi';
-
-import '@mux/videojs-kit/dist/index.css';  
 
 interface Props {
   muxAsset?: MuxAsset;
 }
 
+const MuxPlayerStyled = styled(MuxPlayer)`
+  width: 100%;
+`;
+
 const PreviewPlayer = (props:Props) => {
   const { muxAsset } = props;
 
-  const playerRef = React.useRef<any|undefined>();
-
-  const handleOnPlayerReady = () => playerRef.current?.src({ type: 'video/mux', src: muxAsset?.playback_id });
-
-  React.useEffect(() => {
-    playerRef.current = videojs('mux-default', {
-      "timelineHoverPreviews": true,
-      "plugins": {
-        "mux": {
-          "data": {}
-        }
-      }
-    });
-
-    playerRef.current?.ready(handleOnPlayerReady);
-
-    return () => playerRef.current?.dispose();
-  }, []);
-
-  if(muxAsset === undefined) return null;
-
-  const posterUrl = getThumbnail(muxAsset.playback_id);
+  if(muxAsset === undefined || !muxAsset.playback_id) return null;
   
+  const posterUrl = getThumbnail(muxAsset.playback_id);
+
   return (
-    <video
-      id="mux-default"
-      className="video-js vjs-16-9"
-      controls
-      preload="auto"
-      width="100%"
+    <MuxPlayerStyled
+      playbackId={muxAsset.playback_id}
       poster={posterUrl}
+      metadata={{
+        video_id: muxAsset.id,
+        video_title: muxAsset.title,
+        player_name: 'Mux Video Uploader - Preview Player',
+        player_version: pluginPkg.version,
+        page_type: 'Strapi CMS Admin'
+      }}
+      streamType="on-demand"
+      playsInline
     />
   );
 };
