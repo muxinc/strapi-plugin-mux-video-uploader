@@ -1,4 +1,5 @@
 import pluginId from './../admin/src/pluginId';
+import { sync } from './utils/sync';
 
 export = async ({ strapi }: { strapi: any }) => {
   const actions = [
@@ -43,6 +44,8 @@ export = async ({ strapi }: { strapi: any }) => {
       pluginName: pluginId
     },
   ];
+
+  sync();
 
   await strapi.admin.services.permission.actionProvider.registerMany(actions);
 };

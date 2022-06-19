@@ -147,14 +147,16 @@ const deleteMuxAsset = async (ctx: Context) => {
 
   // If the directive exists deleting the Asset from Mux
   if (delete_on_mux) {
-    // Resolve the asset_id
-    // - Use the asset_id that was available on the deleted mux-asset entry
-    // - Else, resolve it from Mux using the upload_id
-    const assetId = asset_id !== '' ? asset_id : await getService('mux').getAssetIdByUploadId(upload_id);
+    try {
+      // Resolve the asset_id
+      // - Use the asset_id that was available on the deleted mux-asset entry
+      // - Else, resolve it from Mux using the upload_id
+      const assetId = asset_id !== '' ? asset_id : (await getService('mux').getAssetByUploadId(upload_id)).id;
 
-    const deletedOnMux = await getService('mux').deleteAsset(assetId);
+      const deletedOnMux = await getService('mux').deleteAsset(assetId);
 
-    result.deletedOnMux = deletedOnMux;
+      result.deletedOnMux = deletedOnMux;
+    } catch (err) {}
   }
 
   ctx.send(result);
