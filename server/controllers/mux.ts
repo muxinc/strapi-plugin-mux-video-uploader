@@ -123,19 +123,33 @@ const submitRemoteUpload = async (ctx:Context) => {
 
 const deleteMuxAsset = async (ctx:Context) => {
   const data = ctx.request.body;
+  const { id, delete_on_mux } = data;
 
-  if(!data.upload_id) {
-    ctx.badRequest("ValidationError", { errors: { "upload_id": ["upload_id needs to be defined"]}});
+  if(!id) {
+    ctx.badRequest("ValidationError", { errors: { "id": ["id needs to be defined"]}});
 
     return;
   }
 
-  strapi.entityService.delete(model, data.id);
+  // Ensure that the mux-asset entry exists for the id
+  const muxAsset = await strapi.entityService.findOne(model, id);
 
+  if (!muxAsset) {
+    ctx.notFound('mux-asset.notFound');
+
+    return;
+  }
+
+  // Delete mux-asset entry
+  const { asset_id, upload_id } = await strapi.entityService.delete(model, id);
   const result = { success: true, deletedOnMux: false };
 
-  if(data.delete_on_mux === "true") {
-    const assetId = data.asset_id !== '' ? data.asset_id : await getService('mux').getAssetIdByUploadId(data.upload_id);
+  // If the directive exists deleting the Asset from Mux
+  if (delete_on_mux) {
+    // Resolve the asset_id
+    // - Use the asset_id that was available on the deleted mux-asset entry
+    // - Else, resolve it from Mux using the upload_id
+    const assetId = asset_id !== '' ? asset_id : await getService('mux').getAssetIdByUploadId(upload_id);
 
     const deletedOnMux = await getService('mux').deleteAsset(assetId);
 

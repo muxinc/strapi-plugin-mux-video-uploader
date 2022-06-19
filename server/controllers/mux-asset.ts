@@ -1,4 +1,3 @@
-import { parseMultipartData } from '@strapi/utils';
 import { Context } from 'koa';
 
 import pluginId from './../../admin/src/pluginId';
@@ -41,10 +40,10 @@ const find = async (ctx: Context) => {
   };
 };
 
-const findOne = async (ctx:Context) => {
+const findOne = async (ctx: Context) => {
   const { id } = ctx.params;
-  
-  return await strapi.entityService.findOne({ id }, { model });
+
+  return await strapi.entityService.findOne(model, id);
 };
 
 const count = (ctx: Context) => {
@@ -60,23 +59,14 @@ const count = (ctx: Context) => {
 };
 
 const create = async (ctx: Context) => {
-  let entity;
-
-  if (ctx.is('multipart')) {
-    const { data, files } = parseMultipartData(ctx);
-
-    entity = await strapi.entityService.create({ data, files }, { model });
-  } else {
-    entity = await strapi.entityService.create({ data: ctx.request.body }, { model });
-  }
-
-  return entity;
+  const { body } = ctx.request;
+  
+  return await strapi.entityService.create(model, { data: body });
 };
 
 const update = async (ctx:Context) => {
   const { id } = ctx.params;
-
-  const { data: body } = parseMultipartData(ctx);
+  const { body } = ctx.request;
 
   const data: { title?: string, isReady?: boolean } = {};
   
@@ -93,7 +83,7 @@ const update = async (ctx:Context) => {
 const del = async (ctx:Context) => {
   const { id } = ctx.params;
 
-  return await strapi.entityService.delete({ params: { id } }, { model });
+  return await strapi.entityService.delete(model, id);
 };
 
 export = {
@@ -104,4 +94,4 @@ export = {
   create,
   update,
   del
-}
+};

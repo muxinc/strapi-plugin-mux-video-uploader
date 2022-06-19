@@ -107,17 +107,19 @@ const setMuxAsset = async (muxAsset:MuxAssetUpdate): Promise<MuxAsset> => {
 };
 
 const deleteMuxAsset = async (muxAsset: MuxAsset): Promise<any> => {
-  const body = new FormData();
-  body.append("id", muxAsset.id.toString());
-  body.append("asset_id", muxAsset.asset_id || '');
-  body.append("upload_id", muxAsset.upload_id);
-  body.append("delete_on_mux", "true");
+  const body = JSON.stringify({
+    id: muxAsset.id,
+    delete_on_mux: true
+  });
 
   const url = `${getServiceUri()}/${pluginId}/deleteMuxAsset`;
 
   const response = await fetch(url, {
     method: "POST",
-    headers: { 'Authorization': `Bearer ${getJwtToken()}` },
+    headers: {
+      'Contet-Type': 'application/json',
+      'Authorization': `Bearer ${getJwtToken()}`
+    },
     body
   });
 
