@@ -52,6 +52,14 @@ export = {
       "type": "boolean",
       "default": false,
       "required": false
+    },
+    "duration": {
+      "type": "decimal",
+      "required": false
+    },
+    "aspect_ratio": {
+      "type": "string",
+      "required": false
     }
   }
 };

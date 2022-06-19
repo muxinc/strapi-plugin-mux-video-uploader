@@ -4,8 +4,10 @@ export interface MuxAsset extends MuxAssetUpdate {
   asset_id: string | null;
   playback_id: string | null;
   error_message: string | null;
-  created_by: string | null;
-  updated_by: string | null;
+  duration: number | null;
+  aspect_ratio: string | null;
+  created_by_id: string | null;
+  updated_by_id: string | null;
   createdAt: string;
   updatedAt: string;
 }

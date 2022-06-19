@@ -47,6 +47,8 @@ const processWebhookEvent = async (webhookEvent:any) => {
         {
           data: {
             playback_id: data.playback_ids[0].id,
+            duration: data.duration,
+            aspect_ratio: data.aspect_ratio,
             isReady: true
           }
         }
