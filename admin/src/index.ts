@@ -7,6 +7,7 @@ import PluginIcon from './components/icons';
 import getTrad from './utils/getTrad';
 
 const name = pluginPkg.strapi.name;
+const displayName = pluginPkg.strapi.displayName;
 
 export default {
   register(app:any) {
@@ -15,7 +16,7 @@ export default {
       icon: PluginIcon,
       intlLabel: {
         id: `${pluginId}.plugin.name`,
-        defaultMessage: name,
+        defaultMessage: displayName,
       },
       permissions: pluginPermissions.mainRead,
       Component: async () => { 
