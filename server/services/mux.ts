@@ -1,81 +1,50 @@
-import axios from 'axios';
+import Mux from '@mux/mux-node';
+import { Asset, Upload } from '@mux/mux-node/cjs/video/domain';
 
 import { Config } from "./../utils";
 
-export interface UploadInfo {
-  id: string
-}
-
 export interface MuxService {
   getAssetIdByUploadId: (uploadId: string) => Promise<string>;
-  getDirectUploadUrl: (corsOrigin?: string) => Promise<UploadInfo>;
-  createAsset: (url: string) => Promise<any>;
+  getDirectUploadUrl: (corsOrigin?: string) => Promise<Upload>;
+  createAsset: (url: string) => Promise<Asset>;
   deleteAsset: (assetId: string) => Promise<boolean>;
 } 
 
 export default ({ strapi }: { strapi: any }) => ({
-  async getAssetIdByUploadId(uploadId:string) {
-    const config = await Config.getConfig('general');
+  async getAssetIdByUploadId(uploadId:string): Promise<string> {
+    const { access_token, secret_key } = await Config.getConfig('general');
+    const { Video } = new Mux(access_token, secret_key);
 
-    const result = await axios(`https://api.mux.com/video/v1/assets`, {
-      params: {
-        upload_id: uploadId
-      },
-      auth: {
-        username: config.access_token,
-        password: config.secret_key
-      },
-      headers: { 'Content-Type': 'application/json' }
-    });
+    const assets = await Video.Assets.list({ upload_id: uploadId });
 
-    return result.data.data[0].id;
+    return assets[0].id;
   },
-  async getDirectUploadUrl(corsOrigin:string = "*") {
-    const config = await Config.getConfig('general');
+  async getDirectUploadUrl(corsOrigin:string = "*"): Promise<Upload> {
+    const { access_token, secret_key } = await Config.getConfig('general');
+    const { Video } = new Mux(access_token, secret_key);
 
-    const result = await axios({
-      url: 'https://api.mux.com/video/v1/uploads',
-      method: "post",
-      auth: {
-        username: config.access_token,
-        password: config.secret_key
-      },
-      headers: { 'Content-Type': 'application/json' },
-      data: { "cors_origin": corsOrigin, "new_asset_settings": { "playback_policy": ["public"] } }
+    return Video.Uploads.create({
+      cors_origin: corsOrigin,
+      new_asset_settings: {
+        playback_policy: ['public']
+      }
     });
-
-    return result.data.data;
   },
-  async createAsset(url:string) {
-    const config = await Config.getConfig('general');
+  async createAsset(url:string): Promise<Asset> {
+    const { access_token, secret_key } = await Config.getConfig('general');
+    const { Video } = new Mux(access_token, secret_key);
 
-    const body = { "input": url, "playback_policy": ["public"] };
-
-    const result = await axios('https://api.mux.com/video/v1/assets', {
-      method: "post",
-      validateStatus: () => true,
-      auth: {
-        username: config.access_token,
-        password: config.secret_key
-      },
-      headers: { 'Content-Type': 'application/json' },
-      data: body
+    return Video.Assets.create({
+      input: url,
+      playback_policy: ['public']
     });
-
-    return result.data.data;
   },
-  async deleteAsset(assetId:string) {
-    const config = await Config.getConfig('general');
+  async deleteAsset(assetId:string): Promise<boolean> {
+    const { access_token, secret_key } = await Config.getConfig('general');
+    const { Video } = new Mux(access_token, secret_key);
+
+    await Video.Assets.del(assetId);
     
-    const muxResult = await axios(`https://api.mux.com/video/v1/assets/${assetId}`, {
-      method: "delete",
-      auth: {
-        username: config.access_token,
-        password: config.secret_key
-      },
-      headers: { 'Content-Type': 'application/json' }
-    });
-
-    return muxResult.status === 204;
+    return true;
   }
 });
