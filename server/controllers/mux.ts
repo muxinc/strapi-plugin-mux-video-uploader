@@ -87,8 +87,6 @@ const thumbnail = async (ctx: Context) => {
   ctx.body = response.data;
 };
 
-const index = async (ctx:Context) => ctx.send({ message: 'ok' });
-
 const submitDirectUpload = async (ctx:Context) => {
   const data = ctx.request.body;
 
@@ -212,7 +210,6 @@ const muxWebhookHandler = async (ctx:Context) => {
 };
 
 export = {
-  index,
   submitDirectUpload,
   submitRemoteUpload,
   deleteMuxAsset,
