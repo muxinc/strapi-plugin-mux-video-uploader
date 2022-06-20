@@ -22,12 +22,6 @@ const search = (ctx: Context) => {
   return strapi.entityService.findMany(model, params);
 }
 
-const index = async (ctx:Context) => {
-  ctx.send({
-    message: 'ok'
-  });
-};
-
 const find = async (ctx: Context) => {
   const entities = await search(ctx);
   const totalCount = await count(ctx);
@@ -87,7 +81,6 @@ const del = async (ctx:Context) => {
 };
 
 export = {
-  index,
   find,
   findOne,
   count,
