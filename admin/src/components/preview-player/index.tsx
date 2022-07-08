@@ -28,9 +28,9 @@ const PreviewPlayer = (props:Props) => {
       metadata={{
         video_id: muxAsset.id,
         video_title: muxAsset.title,
-        player_name: 'Mux Video Uploader - Preview Player',
+        player_name: 'Strapi Admin Dashboard',
         player_version: pluginPkg.version,
-        page_type: 'Strapi CMS Admin'
+        page_type: 'Preview Player'
       }}
       streamType="on-demand"
       playsInline

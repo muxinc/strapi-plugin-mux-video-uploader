@@ -5,18 +5,14 @@ import pluginId from './../../admin/src/pluginId';
 const model = `plugin::${pluginId}.mux-asset`;
 
 const search = (ctx: Context) => {
-  const { start, limit, sort = 'createdAt', order = 'desc' } = ctx.query;
+  const params = ctx.query;
 
-  const params:any = {
-    start,
-    limit,
-    sort: [{ [sort as string]: order }]
-  };
+  if (!params.sort) {
+    params.sort = 'createdAt';
+  }
 
-  if (ctx.query.filter) {
-    const [filter, ...rest] = (ctx.query.filter as string).split(':');
-
-    params.filters = { [filter]: { '$containsi': rest.join(':') } };
+  if (!params.order) {
+    params.order = 'desc';
   }
 
   return strapi.entityService.findMany(model, params);
@@ -28,27 +24,18 @@ const find = async (ctx: Context) => {
 
   const items = entities.map((entity:any) => entity);
 
-  return {
-    items,
-    totalCount
-  };
+  return { items, totalCount };
 };
 
 const findOne = async (ctx: Context) => {
   const { id } = ctx.params;
 
-  return await strapi.entityService.findOne(model, id);
+  return await strapi.entityService.findOne(model, id, ctx.query);
 };
 
 const count = (ctx: Context) => {
-  const params:any = {};
+  const params = ctx.query;
 
-  if (ctx.query.filter) {
-    const [filter, ...rest] = (ctx.query.filter as string).split(':');
-
-    params.filters = { [filter]: rest.join(':') };
-  }
-  
   return strapi.entityService.count(model, params);
 };
 
