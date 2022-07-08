@@ -67,12 +67,12 @@ const getMuxAssets = (searchVector?:SearchVector, sortVector?:SortVector, start 
 
   switch(searchVector?.field) {
     case 'by_title': {
-      search = `&filter=title:${searchVector.value}`;
+      search = `&filters[title][$containsi]=${searchVector.value}`;
 
       break;
     }
     case 'by_asset_id': {
-      search = `&filter=asset_id:${searchVector.value}`;
+      search = `&filters[asset_id][$containsi]=${searchVector.value}`;
 
       break;
     }
