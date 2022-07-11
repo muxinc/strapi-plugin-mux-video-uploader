@@ -4,6 +4,7 @@ import { createUpload, UpChunk } from '@mux/upchunk';
 import { FormikErrors, FormikHelpers, useFormik } from 'formik';
 import { Box } from '@strapi/design-system/Box';
 import { Button } from '@strapi/design-system/Button';
+import { Divider } from '@strapi/design-system/Divider';
 import { Grid, GridItem } from '@strapi/design-system/Grid';
 import { ModalBody, ModalFooter } from '@strapi/design-system/ModalLayout';
 import { Tabs, Tab, TabGroup, TabPanels, TabPanel } from '@strapi/design-system/Tabs';
@@ -243,6 +244,7 @@ const ModalNewUpload = (props:Props) => {
                 }
               </Tab>
             </Tabs>
+            <Divider />
             <TabPanels>
               <TabPanel>
                 <Box padding={1} background="neutral0">
