@@ -37,7 +37,8 @@
   "scripts": {
     "postinstall": "tsc",
     "build": "tsc",
-    "clean": "find . -type f -name '*.js' -delete"
+    "clean": "find . -type f -name '*.js' -delete",
+    "dev": "tsc --watch"
   },
   "author": {
     "name": "Erik Peña",

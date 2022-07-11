@@ -15,12 +15,12 @@ import { Grid, GridItem } from '@strapi/design-system/Grid';
 import { HeaderLayout, ContentLayout } from '@strapi/design-system/Layout';
 import { Main } from '@strapi/design-system/Main';
 import { Stack } from '@strapi/design-system/Stack';
-import { TextInput } from '@strapi/design-system/TextInput';
 import { Typography } from '@strapi/design-system/Typography';
 
 import { setMuxSettings } from '../../services/strapi';
 import pluginPermissions from './../../permissions';
 import getTrad from '../../utils/getTrad';
+import SettingsField from './settings-field';
 
 interface FormValues {
   access_token: string;
@@ -76,10 +76,7 @@ const Settings = () => {
     if (formData.entries().next().done) {
       notification({
         type: 'info',
-        message: {
-          id: getTrad('notification.no-changes'),
-          defaultMessage: 'No changes made'
-        },
+        message: { id: getTrad('notification.no-changes'), defaultMessage: 'No changes made' },
       });
 
       unlockApp();
@@ -91,20 +88,14 @@ const Settings = () => {
     if (response.status === 200) {
       notification({
         type: 'success',
-        message: {
-          id: getTrad('notification.changes-saved'),
-          defaultMessage: 'Changes saved'
-        },
+        message: { id: getTrad('notification.changes-saved'), defaultMessage: 'Changes saved' },
       });
 
       resetForm();
     } else {
       notification({
         type: 'warning',
-        message: {
-          id: getTrad('notification.error-saving'),
-          defaultMessage: 'Error while saving changes'
-        },
+        message: { id: getTrad('notification.error-saving'), defaultMessage: 'Error while saving changes' },
       });
     }
 
@@ -121,17 +112,11 @@ const Settings = () => {
   return (
     <Main>
       <SettingsPageTitle
-        name={formatMessage({
-          id: getTrad('Settings.page-title'),
-          defaultMessage: 'Mux Video Uploader'
-        })}
+        name={formatMessage({ id: getTrad('Settings.page-title'), defaultMessage: 'Mux Video Uploader' })}
       />
       <form onSubmit={handleSubmit}>
         <HeaderLayout
-          title={formatMessage({
-            id: getTrad('Settings.header'),
-            defaultMessage: 'Mux Video Uploader'
-          })}
+          title={formatMessage({ id: getTrad('Settings.header'), defaultMessage: 'Mux Video Uploader' })}
           primaryAction={
             <Button
               type="submit"
@@ -140,12 +125,7 @@ const Settings = () => {
               startIcon={<Check />}
               size="L"
             >
-              {
-                formatMessage({
-                  id: getTrad('Common.save-button'),
-                  defaultMessage: 'Save'
-                })
-              }
+              {formatMessage({ id: getTrad('Common.save-button'), defaultMessage: 'Save' })}
             </Button>
           }
         />
@@ -161,30 +141,22 @@ const Settings = () => {
           >
             <Stack size={4}>
               <Typography variant="delta" as="h2">
-                {
-                  formatMessage({
-                    id: getTrad('Settings.section-header'),
-                    defaultMessage: 'Settings'
-                  })
-                }
+                {formatMessage({ id: getTrad('Settings.section-header'), defaultMessage: 'Settings' })}
               </Typography>
               <Grid gap={6}>
                 <GridItem col={6} s={12}>
-                  <TextInput
-                    label={
-                      formatMessage({
-                        id: getTrad('Settings.access-token-label'),
-                        defaultMessage: 'Access Token'
-                      })
-                    }
+                  <SettingsField
                     name="access_token"
-                    placeholder={
+                    label={formatMessage({ id: getTrad('Settings.access-token-label'), defaultMessage: 'Access Token ID' })}
+                    value={values.access_token}
+                    placeholder={formatMessage({ id: getTrad('Settings.access-token-placeholder'), defaultMessage: 'Mux Access Token ID' })}
+                    tooltip={
                       formatMessage({
-                        id: getTrad('Settings.access-token-placeholder'),
-                        defaultMessage: 'Mux access token'
+                        id: getTrad('Settings.access-token-tooltip'),
+                        defaultMessage: 'Generated in the Mux Dashboard and used for authenticating API calls against Mux'
                       })
                     }
-                    value={values.access_token}
+                    detailsLink="https://docs.mux.com/guides/video/make-api-requests#http-basic-auth"
                     error={errors && errors.access_token}
                     onChange={handleChange}
                   />
@@ -192,46 +164,40 @@ const Settings = () => {
               </Grid>
               <Grid gap={6}>
                 <GridItem col={6} s={12}>
-                  <TextInput
-                    label={
-                      formatMessage({
-                        id: getTrad('Settings.secret-key-label'),
-                        defaultMessage: 'Secret Key'
-                      })
-                    }
+                  <SettingsField
                     name="secret_key"
-                    type="password"
-                    placeholder={
+                    label={formatMessage({ id: getTrad('Settings.secret-key-label'), defaultMessage: 'Access Token Secret' })}
+                    value={values.secret_key}
+                    placeholder={formatMessage({ id: getTrad('Settings.secret-key-placeholder'), defaultMessage: 'Mux Access Token Secret' })}
+                    tooltip={
                       formatMessage({
-                        id: getTrad('Settings.secret-key-placeholder'),
-                        defaultMessage: 'Mux secret key'
+                        id: getTrad('Settings.secret-key-tooltip'),
+                        defaultMessage: 'Generated in the Mux Dashboard and used for authenticating API calls against Mux'
                       })
                     }
-                    value={values.secret_key}
+                    detailsLink="https://docs.mux.com/guides/video/make-api-requests#http-basic-auth"
                     error={errors && errors.secret_key}
+                    isPassword
                     onChange={handleChange}
-                  />
+                    />
                 </GridItem>
               </Grid>
               <Grid gap={6}>
                 <GridItem col={6} s={12}>
-                  <TextInput
-                    label={
+                  <SettingsField
+                    name="webhook_signing_secret"
+                    label={formatMessage({ id: getTrad('Settings.webhook-signing-secret-label'), defaultMessage: 'Webhook Signing Secret' })}
+                    value={values.webhook_signing_secret}
+                    placeholder={formatMessage({ id: getTrad('Settings.webhook-signing-secret-placeholder'), defaultMessage: 'Mux Webhook Signing Secret' })}
+                    tooltip={
                       formatMessage({
-                        id: getTrad('Settings.webhook-signing-secret-label'),
-                        defaultMessage: 'Webhook Signing Secret'
+                        id: getTrad('Settings.webhook-signing-secret-tooltip'),
+                        defaultMessage: 'Generated in the Mux Dashboard and used for verifying Webhook payloads'
                       })
                     }
-                    name="webhook_signing_secret"
-                    type="password"
-                    placeholder={
-                      formatMessage({
-                        id: getTrad('Settings.webhook-signing-secret-placeholder'),
-                        defaultMessage: 'Mux webhook signing secret'
-                      }) 
-                    }
-                    value={values.webhook_signing_secret}
+                    detailsLink="https://docs.mux.com/guides/video/verify-webhook-signatures"
                     error={errors && errors.webhook_signing_secret}
+                    isPassword
                     onChange={handleChange}
                   />
                 </GridItem>
