@@ -1,5 +1,6 @@
 import bootstrap from './bootstrap';
 import services from './services';
+import policies from './policies';
 import routes from './routes';
 import controllers from './controllers';
 import contentTypes from './content-types';
@@ -10,6 +11,7 @@ export = () => ({
   register,
   bootstrap,
   // config,
+  policies,
   routes,
   controllers,
   contentTypes,

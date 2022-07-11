@@ -22,7 +22,8 @@ const routes = [
     path: '/mux-video-uploader/submitRemoteUpload',
     handler: 'mux.submitRemoteUpload',
     config: {
-      policies: [],
+      policies: ['plugin::mux-video-uploader.adminOrApiAuth'],
+      auth: false,
       prefix: false,
     },
   },
@@ -122,7 +123,8 @@ const routes = [
     path: '/mux-video-uploader/mux-assets',
     handler: 'mux-asset.createBulk',
     config: {
-      policies: [],
+      policies: ['plugin::mux-video-uploader.adminOrApiAuth'],
+      auth: false,
       prefix: false,
     },
   },
