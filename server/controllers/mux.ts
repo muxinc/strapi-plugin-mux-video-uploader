@@ -1,6 +1,7 @@
 import Mux from '@mux/mux-node';
 import axios from 'axios';
 import { Context } from 'koa';
+import { MuxAsset } from '../../types';
 
 import { getService, Config } from '../utils';
 import pluginId from './../../admin/src/pluginId';
@@ -34,6 +35,38 @@ const tryResolveMuxAssets = async (filters: MuxAssetFilter) => {
   } catch (_) {
     return undefined;
   }
+};
+
+const createOrReplaceMuxAsset = async (asset: Partial<MuxAsset>) => {
+  let muxAssetEntity = await tryResolveMuxAssets({ title: asset.title });
+
+  if (muxAssetEntity) {
+    let assetId = muxAssetEntity.asset_id;
+
+    if (!assetId && muxAssetEntity.upload_id) {
+      assetId = await getService('mux').getAssetIdByUploadId(
+        muxAssetEntity.upload_id
+      );
+    }
+
+    asset.playback_id = null;
+
+    muxAssetEntity = await strapi.entityService.update(
+      model,
+      muxAssetEntity.id,
+      {
+        data: asset,
+      }
+    );
+
+    if (assetId) {
+      await getService('mux').deleteAsset(assetId);
+    }
+  } else {
+    muxAssetEntity = await strapi.entityService.create(model, { data: asset });
+  }
+
+  return muxAssetEntity;
 };
 
 const processWebhookEvent = async (webhookEvent: any) => {
@@ -135,28 +168,7 @@ const submitDirectUpload = async (ctx: Context) => {
 
   data.upload_id = result.id;
 
-  let muxAsset = await tryResolveMuxAssets({ title: data.title });
-
-  if (muxAsset) {
-    let assetId = muxAsset.asset_id;
-
-    if (!assetId && muxAsset.upload_id) {
-      assetId = await getService('mux').getAssetIdByUploadId(
-        muxAsset.upload_id
-      );
-    }
-
-    data.asset_id = null;
-    data.playback_id = null;
-
-    await strapi.entityService.update(model, muxAsset.id, { data });
-
-    if (assetId) {
-      await getService('mux').deleteAsset(assetId);
-    }
-  } else {
-    muxAsset = await strapi.entityService.create(model, { data });
-  }
+  const muxAsset = await createOrReplaceMuxAsset(data);
 
   ctx.send({
     data: result,
@@ -175,7 +187,10 @@ const submitRemoteUpload = async (ctx: Context) => {
     return;
   }
 
-  const result = await getService('mux').createAsset(body.url);
+  const result = await getService('mux').createAsset(
+    body.url,
+    body.playback_policy ?? 'signed'
+  );
 
   const data = {
     asset_id: result.id,
@@ -183,9 +198,9 @@ const submitRemoteUpload = async (ctx: Context) => {
     url: body.url,
   };
 
-  const response = await strapi.entityService.create(model, { data });
+  const muxAsset = await createOrReplaceMuxAsset(data);
 
-  ctx.send(response);
+  ctx.send(muxAsset);
 };
 
 const deleteMuxAsset = async (ctx: Context) => {

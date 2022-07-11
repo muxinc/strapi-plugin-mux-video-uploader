@@ -26,7 +26,7 @@ export interface MuxService {
     type: MuxResourceType,
     params?: unknown
   ) => Promise<string>;
-  createAsset: (url: string) => Promise<any>;
+  createAsset: (url: string, playbackPolicy: MuxPlaybackPolicy) => Promise<any>;
   updatePlaybackPolicy: (
     assetId: MuxAsset,
     playbackPolicy: MuxPlaybackPolicy
@@ -117,10 +117,10 @@ export default ({ strapi }: { strapi: any }) => ({
     return Mux.JWT.sign(playbackId, options);
   },
 
-  async createAsset(url: string) {
+  async createAsset(url: string, playbackPolicy: MuxPlaybackPolicy) {
     const config = await Config.getConfig('general');
 
-    const body = { input: url, playback_policy: ['public'] };
+    const body = { input: url, playback_policy: [playbackPolicy] };
 
     const result = await axios('https://api.mux.com/video/v1/assets', {
       method: 'post',
