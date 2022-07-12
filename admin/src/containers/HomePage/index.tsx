@@ -167,7 +167,7 @@ const HomePage = () => {
                 {
                   formatMessage({
                     id: getTrad('HomePage.new-upload-button'),
-                    defaultMessage: 'New Upload'
+                    defaultMessage: 'Upload new assets'
                   })
                 }
               </Button>
