@@ -2,10 +2,13 @@ import React from 'react';
 import { useIntl } from 'react-intl';
 import { createUpload, UpChunk } from '@mux/upchunk';
 import { FormikErrors, FormikHelpers, useFormik } from 'formik';
+import Cross from '@strapi/icons/Cross';
+import Plus from '@strapi/icons/Plus';
 import { Box } from '@strapi/design-system/Box';
 import { Button } from '@strapi/design-system/Button';
 import { Divider } from '@strapi/design-system/Divider';
 import { Grid, GridItem } from '@strapi/design-system/Grid';
+import { IconButton } from '@strapi/design-system/IconButton';
 import { ModalBody, ModalFooter } from '@strapi/design-system/ModalLayout';
 import { Tabs, Tab, TabGroup, TabPanels, TabPanel } from '@strapi/design-system/Tabs';
 import { TextInput } from '@strapi/design-system/TextInput';
@@ -67,13 +70,6 @@ const ModalNewUpload = (props:Props) => {
       setUploadPercent(undefined);
     });
   };
-
-  const handleOnReset = () => {
-    setActiveTab(0);
-    setUploadPercent(undefined);
-    setIsComplete(false);
-    setUploadError(undefined);
-  }
 
   const generateUploadInfo = (body: FormValues): UploadInfo => {
     const errors: FormikErrors<FormValues> = {};
@@ -219,7 +215,7 @@ const ModalNewUpload = (props:Props) => {
     if (uploadError) {
       return (<UploadError message={uploadError} />)
     } else if (isComplete) {
-      return (<Uploaded onReset={handleOnReset} />);
+      return (<Uploaded />);
     } else if (uploadPercent !== undefined) {
       return (<Uploading percent={uploadPercent} />);
     } else {
@@ -335,14 +331,26 @@ const ModalNewUpload = (props:Props) => {
   const renderFooter = () => {
     if(uploadError || isComplete) {
       return (
-        <ModalFooter endActions={<Button onClick={handleOnModalFinish}>
-          {
-            formatMessage({
-              id: getTrad('Common.finish-button'),
-              defaultMessage: 'Finish'
-            })
-          }
-        </Button>} />
+        <ModalFooter endActions={
+          <>
+            <Button variant='secondary' startIcon={<Plus />} onClick={handleOnReset}>
+            {
+              formatMessage({
+                id: getTrad('Uploaded.upload-another-button'),
+                defaultMessage: 'Upload another asset'
+              })
+            }
+            </Button>
+            <Button onClick={handleOnModalFinish}>
+            {
+              formatMessage({
+                id: getTrad('Common.finish-button'),
+                defaultMessage: 'Finish'
+              })
+            }
+            </Button>
+          </>
+        } />
       );
     } else if(uploadPercent !== undefined) {
       return (
@@ -383,12 +391,20 @@ const ModalNewUpload = (props:Props) => {
     }
   };
 
-  const { values, errors, setFieldValue, handleChange, handleSubmit } = useFormik({
+  const { values, errors, resetForm, setFieldValue, handleChange, handleSubmit } = useFormik({
     initialValues: INITIAL_VALUES,
     enableReinitialize: true,
     validateOnChange: false,
     onSubmit: handleOnSubmit
   });
+
+  const handleOnReset = () => {
+    setActiveTab(0);
+    setUploadPercent(undefined);
+    setIsComplete(false);
+    setUploadError(undefined);
+    resetForm();
+  }
 
   return (
     <>
@@ -402,6 +418,7 @@ const ModalNewUpload = (props:Props) => {
               })
             }
           </Typography>
+          <IconButton onClick={handleOnModalClose} aria-label={'Close modal'} icon={<Cross />} />
         </ModalHeader>
         <form onSubmit={handleSubmit}>
           <ModalBody>

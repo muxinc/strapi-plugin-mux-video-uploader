@@ -8,6 +8,7 @@ declare module '@strapi/design-system/Flex';
 declare module '@strapi/design-system/FocusTrap';
 declare module '@strapi/design-system/Grid';
 declare module '@strapi/design-system/Icon';
+declare module '@strapi/design-system/IconButton';
 declare module '@strapi/design-system/Layout';
 declare module '@strapi/design-system/Loader';
 declare module '@strapi/design-system/Link';
