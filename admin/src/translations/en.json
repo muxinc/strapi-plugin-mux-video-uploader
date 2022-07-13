@@ -74,9 +74,9 @@
 
   "Uploading.uploading": "Uploading to Mux",
 
-  "Uploaded.upload-complete": "Upload Complete",
+  "Uploaded.upload-complete": "Video uploaded successfully",
   "Uploaded.message": "The file has been successfully uploaded to Mux and is now able to be referenced by other Content Types within Strapi.",
-  "Uploaded.upload-another-button": "Upload Another",
+  "Uploaded.upload-another-button": "Upload another asset",
 
   "UploadError.title": "Upload Error",
   "UploadError.message": "An error occurred while uploading the file.  Submit an issue with the following error message",
