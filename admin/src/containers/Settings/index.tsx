@@ -150,7 +150,7 @@ const Settings = () => {
                     label={formatMessage({ id: getTrad('Settings.access-token-label'), defaultMessage: 'Access Token ID' })}
                     value={values.access_token}
                     placeholder={formatMessage({ id: getTrad('Settings.access-token-placeholder'), defaultMessage: 'Mux Access Token ID' })}
-                    tooltip={
+                    description={
                       formatMessage({
                         id: getTrad('Settings.access-token-tooltip'),
                         defaultMessage: 'Generated in the Mux Dashboard and used for authenticating API calls against Mux'
@@ -169,7 +169,7 @@ const Settings = () => {
                     label={formatMessage({ id: getTrad('Settings.secret-key-label'), defaultMessage: 'Access Token Secret' })}
                     value={values.secret_key}
                     placeholder={formatMessage({ id: getTrad('Settings.secret-key-placeholder'), defaultMessage: 'Mux Access Token Secret' })}
-                    tooltip={
+                    description={
                       formatMessage({
                         id: getTrad('Settings.secret-key-tooltip'),
                         defaultMessage: 'Generated in the Mux Dashboard and used for authenticating API calls against Mux'
@@ -189,7 +189,7 @@ const Settings = () => {
                     label={formatMessage({ id: getTrad('Settings.webhook-signing-secret-label'), defaultMessage: 'Webhook Signing Secret' })}
                     value={values.webhook_signing_secret}
                     placeholder={formatMessage({ id: getTrad('Settings.webhook-signing-secret-placeholder'), defaultMessage: 'Mux Webhook Signing Secret' })}
-                    tooltip={
+                    description={
                       formatMessage({
                         id: getTrad('Settings.webhook-signing-secret-tooltip'),
                         defaultMessage: 'Generated in the Mux Dashboard and used for verifying Webhook payloads'
