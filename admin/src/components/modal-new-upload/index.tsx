@@ -418,7 +418,11 @@ const ModalNewUpload = (props:Props) => {
               })
             }
           </Typography>
-          <IconButton onClick={handleOnModalClose} aria-label={'Close modal'} icon={<Cross />} />
+          <IconButton
+            onClick={handleOnModalClose}
+            aria-label={formatMessage({ id: getTrad('ModalNewUpload.close-modal'), defaultMessage: 'Close modal' })}
+            icon={<Cross />}
+          />
         </ModalHeader>
         <form onSubmit={handleSubmit}>
           <ModalBody>

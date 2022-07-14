@@ -152,7 +152,7 @@ const Settings = () => {
                     placeholder={formatMessage({ id: getTrad('Settings.access-token-placeholder'), defaultMessage: 'Mux Access Token ID' })}
                     description={
                       formatMessage({
-                        id: getTrad('Settings.access-token-tooltip'),
+                        id: getTrad('Settings.access-token-description'),
                         defaultMessage: 'Generated in the Mux Dashboard and used for authenticating API calls against Mux'
                       })
                     }
@@ -171,7 +171,7 @@ const Settings = () => {
                     placeholder={formatMessage({ id: getTrad('Settings.secret-key-placeholder'), defaultMessage: 'Mux Access Token Secret' })}
                     description={
                       formatMessage({
-                        id: getTrad('Settings.secret-key-tooltip'),
+                        id: getTrad('Settings.secret-key-description'),
                         defaultMessage: 'Generated in the Mux Dashboard and used for authenticating API calls against Mux'
                       })
                     }
@@ -191,7 +191,7 @@ const Settings = () => {
                     placeholder={formatMessage({ id: getTrad('Settings.webhook-signing-secret-placeholder'), defaultMessage: 'Mux Webhook Signing Secret' })}
                     description={
                       formatMessage({
-                        id: getTrad('Settings.webhook-signing-secret-tooltip'),
+                        id: getTrad('Settings.webhook-signing-secret-description'),
                         defaultMessage: 'Generated in the Mux Dashboard and used for verifying Webhook payloads'
                       })
                     }
