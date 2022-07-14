@@ -23,13 +23,13 @@
   "Settings.section-header": "Settings",
   "Settings.access-token-label": "Access Token ID",
   "Settings.access-token-placeholder": "Mux Access Token ID",
-  "Settings.access-token-tooltip": "Generated in the Mux Dashboard and used for authenticating API calls against Mux",
+  "Settings.access-token-description": "Generated in the Mux Dashboard and used for authenticating API calls against Mux",
   "Settings.secret-key-label": "Access Token Secret",
   "Settings.secret-key-placeholder": "Mux Access Token Secret",
-  "Settings.secret-key-tooltip": "Generated in the Mux Dashboard and used for authenticating API calls against Mux",
+  "Settings.secret-key-description": "Generated in the Mux Dashboard and used for authenticating API calls against Mux",
   "Settings.webhook-signing-secret-label": "Webhook Signing Secret",
   "Settings.webhook-signing-secret-placeholder": "Mux Webhook Signing Secret",
-  "Settings.webhook-signing-secret-tooltip": "Generated in the Mux Dashboard and used for verifying Webhook payloads",
+  "Settings.webhook-signing-secret-description": "Generated in the Mux Dashboard and used for verifying Webhook payloads",
 
   "SettingsField.tooltip-label": "Information about the field",
   "SettingsField.details-label": "Details",
@@ -49,6 +49,8 @@
 
   "AssetCard.is-loading": "Asset is being processed",
   "AssetCard.is-error": "Asset encountered an error",
+  "AssetCard.loading": "Loading",
+  "AssetCard.no-aspect-ratio": "No aspect ratio",
 
   "ListPagination.previous-page": "Previous page",
   "ListPagination.next-page": "Next page",
@@ -67,6 +69,7 @@
   "Summary.updated": "Updated",
 
   "ModalNewUpload.header": "New upload",
+  "ModalNewUpload.close-modal": "Close modal",
   "ModalNewUpload.from-computer-tab-label": "From computer",
   "ModalNewUpload.from-url-tab-label": "From url",
   "ModalNewUpload.unknown-error": "Unknown error encountered",

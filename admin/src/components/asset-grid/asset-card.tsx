@@ -55,7 +55,7 @@ const AssetCard = (props:Props) => {
       return (<Icon color="danger500" as={ExclamationMarkCircle} />);
     }
     else if (isLoading) {
-      return (<Loader small>Loading</Loader>);
+      return (<Loader small>{formatMessage({ id: getTrad('AssetCard.loading'), defaultMessage: 'Loading' })}</Loader>);
     }
   }, [muxAsset]);
 
@@ -91,7 +91,14 @@ const AssetCard = (props:Props) => {
         <CardBody>
           <CardContent>
             <CardTitleStyled title={muxAsset.title}>{muxAsset.title}</CardTitleStyled>
-            <CardSubtitle>{muxAsset.aspect_ratio ?? 'No aspect ratio'}</CardSubtitle>
+            <CardSubtitle>
+              {
+                muxAsset.aspect_ratio ?? formatMessage({
+                  id: getTrad('AssetCard.no-aspect-ratio'),
+                  defaultMessage: 'No aspect ratio'
+                })
+              }
+            </CardSubtitle>
           </CardContent>
           {/* <CardBadge>Video | Audio</CardBadge> */}
         </CardBody>
