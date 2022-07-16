@@ -154,7 +154,7 @@ const ModalDetails = (props:Props) => {
         })
       }
       {' '}
-      <Link href="https://www.npmjs.com/package/@mux/mux-player" isExternal>
+      <Link href="https://docs.mux.com/guides/video/mux-player" isExternal>
         {
           formatMessage({
             id: getTrad('ModalDetails.read-more'),
