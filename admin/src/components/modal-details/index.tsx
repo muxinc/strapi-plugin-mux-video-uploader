@@ -1,5 +1,6 @@
 import React from 'react';
 import { useIntl } from 'react-intl';
+import styled from 'styled-components';
 import { FormikHelpers, FormikTouched, useFormik } from 'formik';
 import ExclamationMarkCircle from '@strapi/icons/ExclamationMarkCircle';
 import Trash from '@strapi/icons/Trash';
@@ -20,6 +21,12 @@ import PreviewPlayer from '../preview-player';
 import Summary from './summary';
 import { deleteMuxAsset, setMuxAsset } from '../../services/strapi';
 import getTrad from '../../utils/getTrad';
+import PlayerWrapper from './player-wrapper';
+
+const GridItemStyled = styled(GridItem)`
+  position: sticky;
+  top: 0;
+`;
 
 interface FormProps {
   title: string;
@@ -122,11 +129,25 @@ const ModalDetails = (props:Props) => {
         <form onSubmit={handleSubmit}>
           <ModalBody>
             <Grid gap={4}>
-              <GridItem col={6} s={12}>
-                <PreviewPlayer muxAsset={muxAsset} />
-              </GridItem>
+              <GridItemStyled col={6} s={12}>
+                <PlayerWrapper disableDelete={!enableDelete} onDelete={toggleDeleteWarning}>
+                  <PreviewPlayer muxAsset={muxAsset} />
+                </PlayerWrapper>
+              </GridItemStyled>
               <GridItem col={6} s={12}>
                 <Stack>
+                  {muxAsset.error_message ?
+                    (
+                      <Box paddingBottom={4}>
+                        <Status variant="danger">
+                          <Typography>{muxAsset.error_message}</Typography>
+                        </Status>
+                      </Box>
+                    ) : null
+                  }
+                  <Box paddingBottom={4}>
+                    <Summary muxAsset={muxAsset} />
+                  </Box>
                   <Box paddingBottom={4}>
                     <TextInput
                       label={
@@ -166,18 +187,6 @@ const ModalDetails = (props:Props) => {
                       }}
                     />
                   </Box>
-                  {muxAsset.error_message ?
-                    (
-                      <Box paddingBottom={4}>
-                        <Status variant="danger">
-                          <Typography>{muxAsset.error_message}</Typography>
-                        </Status>
-                      </Box>
-                    ) : null
-                  }
-                  <Box>
-                    <Summary muxAsset={muxAsset} />
-                  </Box>
                 </Stack>
               </GridItem>
             </Grid>
@@ -190,14 +199,6 @@ const ModalDetails = (props:Props) => {
                     formatMessage({
                       id: getTrad('Common.cancel-button'),
                       defaultMessage: 'Cancel'
-                    })
-                  }
-                </Button>
-                <Button variant="danger" disabled={!enableDelete} onClick={toggleDeleteWarning}>
-                  {
-                    formatMessage({
-                      id: getTrad('Common.delete-button'),
-                      defaultMessage: 'Delete'
                     })
                   }
                 </Button>
