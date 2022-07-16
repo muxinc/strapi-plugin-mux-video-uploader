@@ -30,45 +30,51 @@ const Summary = (props:Props) => {
   const updated_time = formatTime(Date.parse(muxAsset.updatedAt));
   
   return (
-    <Box padding={3} background="neutral150">
+    <Box padding={4} background="neutral100" hasRadius>
       <Stack>
         <Box paddingBottom={4}>
           <Stack>
-            <Typography variant="pi" fontWeight="bold">
-              {
-                formatMessage({
-                  id: getTrad('Summary.assetId'),
-                  defaultMessage: 'Asset Id'
-                })
-              }
-            </Typography>
-            <TypographyWrapped variant="pi">{muxAsset.asset_id}</TypographyWrapped>
+            <Box paddingBottom={1}>
+              <Typography variant="sigma" fontWeight="bold" textColor="neutral600" textTransform="uppercase">
+                {
+                  formatMessage({
+                    id: getTrad('Summary.assetId'),
+                    defaultMessage: 'Asset Id'
+                  })
+                }
+              </Typography>
+            </Box>
+            <TypographyWrapped variant="pi" textColor="neutral700">{muxAsset.asset_id}</TypographyWrapped>
           </Stack>
         </Box>
         <Box paddingBottom={4}>
           <Stack>
-            <Typography variant="pi" fontWeight="bold">
-              {
-                formatMessage({
-                  id: getTrad('Summary.uploadId'),
-                  defaultMessage: 'Upload Id'
-                })
-              }
-            </Typography>
-            <TypographyWrapped variant="pi">{muxAsset.upload_id}</TypographyWrapped>
+            <Box paddingBottom={1}>
+              <Typography variant="sigma" fontWeight="bold" textColor="neutral600" textTransform="uppercase">
+                {
+                  formatMessage({
+                    id: getTrad('Summary.uploadId'),
+                    defaultMessage: 'Upload Id'
+                  })
+                }
+              </Typography>
+            </Box>
+            <TypographyWrapped variant="pi" textColor="neutral700">{muxAsset.upload_id}</TypographyWrapped>
           </Stack>
         </Box>
         <Box paddingBottom={4}>
           <Stack>
-            <Typography variant="pi" fontWeight="bold">
-              {
-                formatMessage({
-                  id: getTrad('Summary.playbackId'),
-                  defaultMessage: 'Playback Id'
-                })
-              }
-            </Typography>
-            <TypographyWrapped variant="pi">{muxAsset.playback_id}</TypographyWrapped>
+            <Box paddingBottom={1}>
+              <Typography variant="sigma" fontWeight="bold" textColor="neutral600" textTransform="uppercase">
+                {
+                  formatMessage({
+                    id: getTrad('Summary.playbackId'),
+                    defaultMessage: 'Playback Id'
+                  })
+                }
+              </Typography>
+            </Box>
+            <TypographyWrapped variant="pi" textColor="neutral700">{muxAsset.playback_id}</TypographyWrapped>
           </Stack>
         </Box>
         <Box>
@@ -76,30 +82,34 @@ const Summary = (props:Props) => {
             <GridItem col={6} s={12}>
               <Box>
                 <Stack>
-                  <Typography variant="pi" fontWeight="bold">
-                    {
-                      formatMessage({
-                        id: getTrad('Summary.created'),
-                        defaultMessage: 'Created'
-                      })
-                    }
-                  </Typography>
-                  <Typography variant="pi">{created_date} {created_time}</Typography>
+                  <Box paddingBottom={1}>
+                    <Typography variant="sigma" fontWeight="bold" textColor="neutral600" textTransform="uppercase">
+                      {
+                        formatMessage({
+                          id: getTrad('Summary.created'),
+                          defaultMessage: 'Created'
+                        })
+                      }
+                    </Typography>
+                  </Box>
+                  <Typography variant="pi" textColor="neutral700">{created_date} {created_time}</Typography>
                 </Stack>
               </Box>
             </GridItem>
             <GridItem col={6} s={12}>
               <Box>
                 <Stack>
-                  <Typography variant="pi" fontWeight="bold">
-                    {
-                      formatMessage({
-                        id: getTrad('Summary.updated'),
-                        defaultMessage: 'Updated'
-                      })
-                    }
-                  </Typography>
-                  <Typography variant="pi">{updated_date} {updated_time}</Typography>
+                  <Box paddingBottom={1}>
+                    <Typography variant="sigma" fontWeight="bold" textColor="neutral600" textTransform="uppercase">
+                      {
+                        formatMessage({
+                          id: getTrad('Summary.updated'),
+                          defaultMessage: 'Updated'
+                        })
+                      }
+                    </Typography>
+                  </Box>
+                  <Typography variant="pi" textColor="neutral700">{updated_date} {updated_time}</Typography>
                 </Stack>
               </Box>
             </GridItem>
