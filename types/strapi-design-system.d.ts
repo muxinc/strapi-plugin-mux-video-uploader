@@ -23,6 +23,7 @@ declare module '@strapi/design-system/Select';
 declare module '@strapi/design-system/Stack';
 declare module '@strapi/design-system/Status';
 declare module '@strapi/design-system/Tabs';
+declare module '@strapi/design-system/Textarea';
 declare module '@strapi/design-system/TextInput';
 declare module '@strapi/design-system/ToggleInput';
 declare module '@strapi/design-system/Tooltip';
