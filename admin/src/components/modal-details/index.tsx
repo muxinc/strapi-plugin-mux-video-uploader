@@ -2,16 +2,21 @@ import React from 'react';
 import { useIntl } from 'react-intl';
 import styled from 'styled-components';
 import { FormikHelpers, FormikTouched, useFormik } from 'formik';
+import { useNotification } from '@strapi/helper-plugin';
 import ExclamationMarkCircle from '@strapi/icons/ExclamationMarkCircle';
+import Duplicate from '@strapi/icons/Duplicate';
 import Trash from '@strapi/icons/Trash';
 import { Box } from '@strapi/design-system/Box';
 import { Button } from '@strapi/design-system/Button';
 import { Dialog, DialogBody, DialogFooter } from '@strapi/design-system/Dialog';
 import { Flex } from '@strapi/design-system/Flex';
 import { Grid, GridItem } from '@strapi/design-system/Grid';
+import { IconButton } from '@strapi/design-system/IconButton';
+import { Link } from '@strapi/design-system/Link';
 import { ModalLayout, ModalBody, ModalHeader, ModalFooter } from '@strapi/design-system/ModalLayout';
 import { Stack } from '@strapi/design-system/Stack';
 import { Status } from '@strapi/design-system/Status';
+import { Textarea } from '@strapi/design-system/Textarea';
 import { TextInput } from '@strapi/design-system/TextInput';
 import { ToggleInput } from '@strapi/design-system/ToggleInput';
 import { Typography } from '@strapi/design-system/Typography';
@@ -22,10 +27,19 @@ import Summary from './summary';
 import { deleteMuxAsset, setMuxAsset } from '../../services/strapi';
 import getTrad from '../../utils/getTrad';
 import PlayerWrapper from './player-wrapper';
+import copy from 'copy-to-clipboard';
 
 const GridItemStyled = styled(GridItem)`
   position: sticky;
   top: 0;
+`;
+
+const IconButtonStyled = styled(IconButton)`
+  cursor: pointer;
+
+  :hover {
+    filter: brightness(85%);
+  }
 `;
 
 interface FormProps {
@@ -54,13 +68,33 @@ const ModalDetails = (props:Props) => {
   const [touchedFields, setTouchedFields] = React.useState<FormikTouched<FormProps>>({});
   const [showDeleteWarning, setShowDeleteWarning] = React.useState(false);
   const [isProcessing, setIsProcessing] = React.useState(false);
+  const [codeSnippet] = React.useState<string>(`<mux-player
+  playback-id="${muxAsset.playback_id}"
+  env-key="ENV_KEY"
+  metadata-video-title="${muxAsset.title}"
+  controls
+/>`);
 
+  const notification = useNotification();
+  
   const INITIAL_VALUES = {
     title: muxAsset.title,
     isReady: muxAsset.isReady 
   };
 
   const toggleDeleteWarning = () => setShowDeleteWarning(prevState => !prevState);
+
+  const handleCopyCodeSnippet = () => {
+    copy(codeSnippet);
+
+    notification({
+      type: 'success',
+      message: {
+        id: getTrad('ModalDetails.copied-to-clipboard'),
+        defaultMessage: 'Copied code snippet to clipboard'
+      }
+    });
+  }
 
   const handleOnDeleteConfirm = async () => {
     setIsProcessing(true);
@@ -109,7 +143,27 @@ const ModalDetails = (props:Props) => {
     validateOnChange: false,
     enableReinitialize: true,
     onSubmit: handleOnSubmit
-  }); 
+  });
+
+  const codeSnippetHint = (
+    <div>
+      {
+        formatMessage({
+          id: getTrad('ModalDetails.powered-by-mux'),
+          defaultMessage: 'Powered by mux-player.'
+        })
+      }
+      {' '}
+      <Link href="https://www.npmjs.com/package/@mux/mux-player" isExternal>
+        {
+          formatMessage({
+            id: getTrad('ModalDetails.read-more'),
+            defaultMessage: 'Read more about it'
+          })
+        }
+      </Link>
+    </div>
+  )
 
   if (!isOpen) return null;
 
@@ -185,6 +239,21 @@ const ModalDetails = (props:Props) => {
                         setTouchedFields({ ...touchedFields, isReady: true });
                         handleChange(e);
                       }}
+                    />
+                  </Box>
+                  <Box paddingBottom={4}>
+                    <Textarea
+                      label={
+                        formatMessage({
+                          id: getTrad('ModalDetails.code-snippet'),
+                          defaultMessage: 'Code snippet'
+                        })
+                      }
+                      name="codeSnippet"
+                      value={codeSnippet}
+                      hint={codeSnippetHint}
+                      labelAction={<IconButtonStyled color="secondary500" as={Duplicate} onClick={handleCopyCodeSnippet} noBorder />}
+                      disabled
                     />
                   </Box>
                 </Stack>
