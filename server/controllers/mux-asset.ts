@@ -117,6 +117,7 @@ export = {
   findOne,
   count,
   create,
+  createBulk,
   update,
   del,
 };

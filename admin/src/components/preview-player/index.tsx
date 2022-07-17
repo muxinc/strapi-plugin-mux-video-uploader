@@ -16,31 +16,26 @@ const MuxPlayerStyled = styled(MuxPlayer)`
 `;
 
 const PreviewPlayer = ({ muxAsset }:Props) => {
-  const [playbackId, setPlaybackId] = useState("");
+  const [videoToken, setVideoToken] = useState("");
   
   useEffect(() => {
-    const generateSignedSrc = async (playbackId: string) => {
+    const generateVideoToken = async (playbackId: string) => {
       const token = await getPlaybackToken(playbackId, 'video');
-      
-      return `${playbackId}?token=${token}`;
+
+      setVideoToken(token);
     }
 
-    const generateVideoSrc = async () => {
-      const src = muxAsset && muxAsset.playback_id && muxAsset.playback_policy === 'signed' ?
-        await generateSignedSrc(muxAsset.playback_id) :
-        muxAsset?.playback_id;
-
-      if(src) {
-        setPlaybackId(src);
-      }
+    if (muxAsset && muxAsset.playback_id && muxAsset.playback_policy === 'signed') {
+      generateVideoToken(muxAsset.playback_id);
     }
-
-    generateVideoSrc();
   });
-
-  return (muxAsset && muxAsset.playback_id && playbackId &&
+  
+  return (muxAsset && muxAsset.playback_id && (muxAsset.playback_policy === 'public' || videoToken) ?
     <MuxPlayerStyled
-      playbackId={playbackId}
+      playbackId={muxAsset.playback_id}
+      tokens={{
+        playback: videoToken
+      }}
       poster={getThumbnail(muxAsset.playback_id)}
       metadata={{
         video_id: muxAsset.id,
@@ -51,7 +46,7 @@ const PreviewPlayer = ({ muxAsset }:Props) => {
       }}
       streamType="on-demand"
       playsInline
-    />
+    /> : null
   );
 };
 

@@ -1,7 +1,7 @@
 import Mux from '@mux/mux-node';
-import { Asset, Upload, JWTOptions } from '@mux/mux-node/cjs/video/domain';
+import { Asset, Upload } from '@mux/mux-node/cjs/video/domain';
 
-import { Config, handleAxiosRequest } from './../utils';
+import { Config } from './../utils';
 import { MuxAsset, MuxPlaybackPolicy, MuxResourceType } from '../../types';
 
 export interface UploadInfoData {
@@ -50,14 +50,17 @@ export default ({ strapi }: { strapi: any }) => ({
 
     return assets[0];
   },
-  async getDirectUploadUrl(corsOrigin: string = '*'): Promise<Upload> {
+  async getDirectUploadUrl(
+    playbackPolicy: MuxPlaybackPolicy,
+    corsOrigin: string = '*'
+  ): Promise<Upload> {
     const { access_token, secret_key } = await Config.getConfig('general');
     const { Video } = new Mux(access_token, secret_key);
 
     return Video.Uploads.create({
       cors_origin: corsOrigin,
       new_asset_settings: {
-        playback_policy: ['public'],
+        playback_policy: [playbackPolicy],
       },
     });
   },
@@ -73,7 +76,8 @@ export default ({ strapi }: { strapi: any }) => ({
       '\n'
     );
 
-    const options: JWTOptions = {
+    //@ts-ignore
+    const options: MuxJWTSignOptions = {
       keyId: config.playback_key_id,
       keySecret: sanitizedSecret,
       type,
@@ -84,6 +88,7 @@ export default ({ strapi }: { strapi: any }) => ({
       options.params = params;
     }
 
+    //@ts-ignore
     return Mux.JWT.sign(playbackId, options);
   },
 
