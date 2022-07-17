@@ -1,4 +1,3 @@
-import { parseMultipartData } from '@strapi/utils';
 import { Context } from 'koa';
 import { MuxAsset, MuxPlaybackPolicy } from '../../types';
 import { getService } from '../utils';
@@ -8,30 +7,17 @@ import pluginId from './../../admin/src/pluginId';
 const model = `plugin::${pluginId}.mux-asset`;
 
 const search = (ctx: Context) => {
-  const { start, sort = 'createdAt', order = 'desc' } = ctx.query;
+  const params = ctx.query;
 
-  const params: any = {
-    start,
-    sort: [{ [sort as string]: order }],
-  };
-
-  if (ctx.query.limit) {
-    params.limit = ctx.query.limit;
+  if (!params.sort) {
+    params.sort = 'createdAt';
   }
 
-  if (ctx.query.filter) {
-    const [filter, ...rest] = (ctx.query.filter as string).split(':');
-
-    params.filters = { [filter]: { $containsi: rest.join(':') } };
+  if (!params.order) {
+    params.order = 'desc';
   }
 
   return strapi.entityService.findMany(model, params);
-};
-
-const index = async (ctx: Context) => {
-  ctx.send({
-    message: 'ok',
-  });
 };
 
 const find = async (ctx: Context) => {
@@ -40,45 +26,25 @@ const find = async (ctx: Context) => {
 
   const items = entities.map((entity: any) => entity);
 
-  return {
-    items,
-    totalCount,
-  };
+  return { items, totalCount };
 };
 
 const findOne = async (ctx: Context) => {
   const { id } = ctx.params;
 
-  return await strapi.entityService.findOne({ id }, { model });
+  return await strapi.entityService.findOne(model, id, ctx.query);
 };
 
 const count = (ctx: Context) => {
-  const params: any = {};
-
-  if (ctx.query.filter) {
-    const [filter, ...rest] = (ctx.query.filter as string).split(':');
-
-    params.filters = { [filter]: rest.join(':') };
-  }
+  const params = ctx.query;
 
   return strapi.entityService.count(model, params);
 };
 
 const create = async (ctx: Context) => {
-  let entity;
+  const { body } = ctx.request;
 
-  if (ctx.is('multipart')) {
-    const { data, files } = parseMultipartData(ctx);
-
-    entity = await strapi.entityService.create({ data, files }, { model });
-  } else {
-    entity = await strapi.entityService.create(
-      { data: ctx.request.body },
-      { model }
-    );
-  }
-
-  return entity;
+  return await strapi.entityService.create(model, { data: body });
 };
 
 const createBulk = async (ctx: Context) => {
@@ -111,8 +77,7 @@ const createBulk = async (ctx: Context) => {
 
 const update = async (ctx: Context) => {
   const { id } = ctx.params;
-
-  const { data: body } = parseMultipartData(ctx);
+  const { body } = ctx.request;
 
   const data: {
     title?: string;
@@ -134,8 +99,8 @@ const update = async (ctx: Context) => {
       body.playbackPolicy
     );
 
-    data.playback_id = policyUpdate.playbackId;
-    data.playback_policy = policyUpdate.playbackPolicy;
+    data.playback_id = policyUpdate.id;
+    data.playback_policy = policyUpdate.policy;
   }
 
   return await strapi.entityService.update(model, id, { data });
@@ -144,7 +109,14 @@ const update = async (ctx: Context) => {
 const del = async (ctx: Context) => {
   const { id } = ctx.params;
 
-  return await strapi.entityService.delete({ params: { id } }, { model });
+  return await strapi.entityService.delete(model, id);
 };
 
-export = { index, find, findOne, count, create, createBulk, update, del };
+export = {
+  find,
+  findOne,
+  count,
+  create,
+  update,
+  del,
+};

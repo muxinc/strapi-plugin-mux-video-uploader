@@ -1,5 +1,5 @@
-import axios from 'axios';
-import Mux, { JWTOptions } from '@mux/mux-node';
+import Mux from '@mux/mux-node';
+import { Asset, Upload, JWTOptions } from '@mux/mux-node/cjs/video/domain';
 
 import { Config, handleAxiosRequest } from './../utils';
 import { MuxAsset, MuxPlaybackPolicy, MuxResourceType } from '../../types';
@@ -11,12 +11,13 @@ export interface UploadInfoData {
 }
 
 interface UpdatePlaybackPolicyData {
-  playbackId: string;
-  playbackPolicy: MuxPlaybackPolicy;
+  id: string;
+  policy: MuxPlaybackPolicy;
 }
 
 export interface MuxService {
-  getAssetIdByUploadId: (uploadId: string) => Promise<string>;
+  getAssetById: (assetId: string) => Promise<Asset>;
+  getAssetByUploadId: (uploadId: string) => Promise<Asset>;
   getDirectUploadUrl: (
     playbackPolicy: MuxPlaybackPolicy,
     corsOrigin?: string
@@ -35,62 +36,31 @@ export interface MuxService {
 }
 
 export default ({ strapi }: { strapi: any }) => ({
-  async getAssetIdByUploadId(uploadId: string) {
-    const config = await Config.getConfig('general');
+  async getAssetById(assetId: string): Promise<Asset> {
+    const { access_token, secret_key } = await Config.getConfig('general');
+    const { Video } = new Mux(access_token, secret_key);
 
-    const result = await axios(`https://api.mux.com/video/v1/assets`, {
-      params: {
-        upload_id: uploadId,
+    return await Video.Assets.get(assetId);
+  },
+  async getAssetByUploadId(uploadId: string): Promise<Asset> {
+    const { access_token, secret_key } = await Config.getConfig('general');
+    const { Video } = new Mux(access_token, secret_key);
+
+    const assets = await Video.Assets.list({ upload_id: uploadId });
+
+    return assets[0];
+  },
+  async getDirectUploadUrl(corsOrigin: string = '*'): Promise<Upload> {
+    const { access_token, secret_key } = await Config.getConfig('general');
+    const { Video } = new Mux(access_token, secret_key);
+
+    return Video.Uploads.create({
+      cors_origin: corsOrigin,
+      new_asset_settings: {
+        playback_policy: ['public'],
       },
-      auth: {
-        username: config.access_token,
-        password: config.secret_key,
-      },
-      headers: { 'Content-Type': 'application/json' },
     });
-
-    const data = result.data.data;
-
-    if (data.length > 0) {
-      return data[0].id;
-    } else {
-      return undefined;
-    }
   },
-  async getDirectUploadUrl(
-    playbackPolicy: MuxPlaybackPolicy,
-    corsOrigin: string = '*'
-  ): Promise<UploadInfoData> {
-    const config = await Config.getConfig('general');
-
-    const result = await handleAxiosRequest(
-      axios({
-        url: 'https://api.mux.com/video/v1/uploads',
-        method: 'post',
-        auth: {
-          username: config.access_token,
-          password: config.secret_key,
-        },
-        headers: { 'Content-Type': 'application/json' },
-        data: {
-          cors_origin: corsOrigin,
-          new_asset_settings: { playback_policy: [playbackPolicy] },
-        },
-      })
-    );
-
-    const data = (result.data?.data ?? {}) as UploadInfoData;
-
-    if (result.status !== 201 && !data.error) {
-      data.error = {
-        type: result.status.toString(),
-        message: `${result.status} - ${result.statusText}`,
-      };
-    }
-
-    return data;
-  },
-
   async getPlaybackToken(
     playbackId: string,
     type: MuxResourceType = 'video',
@@ -117,33 +87,36 @@ export default ({ strapi }: { strapi: any }) => ({
     return Mux.JWT.sign(playbackId, options);
   },
 
-  async createAsset(url: string, playbackPolicy: MuxPlaybackPolicy) {
-    const config = await Config.getConfig('general');
+  async createAsset(
+    url: string,
+    playbackPolicy: MuxPlaybackPolicy
+  ): Promise<Asset> {
+    const { access_token, secret_key } = await Config.getConfig('general');
+    const { Video } = new Mux(access_token, secret_key);
 
-    const body = { input: url, playback_policy: [playbackPolicy] };
-
-    const result = await axios('https://api.mux.com/video/v1/assets', {
-      method: 'post',
-      validateStatus: () => true,
-      auth: {
-        username: config.access_token,
-        password: config.secret_key,
-      },
-      headers: { 'Content-Type': 'application/json' },
-      data: body,
+    return Video.Assets.create({
+      input: url,
+      playback_policy: [playbackPolicy],
     });
+  },
 
-    return result.data.data;
+  async deleteAsset(assetId: string): Promise<boolean> {
+    const { access_token, secret_key } = await Config.getConfig('general');
+    const { Video } = new Mux(access_token, secret_key);
+
+    await Video.Assets.del(assetId);
+
+    return true;
   },
 
   async updatePlaybackPolicy(
     asset: MuxAsset,
     playbackPolicy: MuxPlaybackPolicy
-  ) {
+  ): Promise<UpdatePlaybackPolicyData> {
     if (asset.playback_policy === playbackPolicy) {
       return {
-        playbackId: asset.playback_id,
-        playbackPolicy: asset.playback_policy,
+        id: asset.playback_id ?? '',
+        policy: asset.playback_policy,
       };
     }
 
@@ -166,68 +139,16 @@ export default ({ strapi }: { strapi: any }) => ({
   },
 
   async createPlaybackId(assetId: string, policy: MuxPlaybackPolicy) {
-    const config = await Config.getConfig('general');
+    const { access_token, secret_key } = await Config.getConfig('general');
+    const { Video } = new Mux(access_token, secret_key);
 
-    const createResponse = await axios(
-      `https://api.mux.com/video/v1/assets/${assetId}/playback-ids`,
-      {
-        method: 'post',
-        auth: {
-          username: config.access_token,
-          password: config.secret_key,
-        },
-        headers: { 'Content-Type': 'application/json' },
-        data: { policy },
-      }
-    );
-
-    if (createResponse.status !== 201) {
-      throw new Error('Unable to create new playback id');
-    }
-
-    const data = createResponse.data.data;
-
-    return {
-      playbackId: data.id,
-      playbackPolicy: data.policy,
-    };
+    return await Video.Assets.createPlaybackId(assetId, { policy });
   },
 
   async deletePlaybackId(assetId: string, playbackId: string) {
-    const config = await Config.getConfig('general');
+    const { access_token, secret_key } = await Config.getConfig('general');
+    const { Video } = new Mux(access_token, secret_key);
 
-    const response = await axios(
-      `https://api.mux.com/video/v1/assets/${assetId}/playback-ids/${playbackId}`,
-      {
-        method: 'delete',
-        auth: {
-          username: config.access_token,
-          password: config.secret_key,
-        },
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
-
-    if (response.status !== 204) {
-      throw new Error('Unable to delete playback id');
-    }
-  },
-
-  async deleteAsset(assetId: string) {
-    const config = await Config.getConfig('general');
-
-    const muxResult = await axios(
-      `https://api.mux.com/video/v1/assets/${assetId}`,
-      {
-        method: 'delete',
-        auth: {
-          username: config.access_token,
-          password: config.secret_key,
-        },
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
-
-    return muxResult.status === 204;
+    return await Video.Assets.deletePlaybackId(assetId, playbackId);
   },
 });

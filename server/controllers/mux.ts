@@ -44,9 +44,11 @@ const createOrReplaceMuxAsset = async (asset: Partial<MuxAsset>) => {
     let assetId = muxAssetEntity.asset_id;
 
     if (!assetId && muxAssetEntity.upload_id) {
-      assetId = await getService('mux').getAssetIdByUploadId(
+      const asset = await getService('mux').getAssetByUploadId(
         muxAssetEntity.upload_id
       );
+
+      assetId = asset.id;
     }
 
     asset.playback_id = null;
@@ -89,6 +91,8 @@ const processWebhookEvent = async (webhookEvent: any) => {
         {
           data: {
             playback_id: data.playback_ids[0].id,
+            duration: data.duration,
+            aspect_ratio: data.aspect_ratio,
             isReady: true,
           },
         },
@@ -156,8 +160,6 @@ const thumbnail = async (ctx: Context) => {
   ctx.body = response.data;
 };
 
-const index = async (ctx: Context) => ctx.send({ message: 'ok' });
-
 const submitDirectUpload = async (ctx: Context) => {
   const data = ctx.request.body;
 
@@ -204,29 +206,44 @@ const submitRemoteUpload = async (ctx: Context) => {
 };
 
 const deleteMuxAsset = async (ctx: Context) => {
-  const data = ctx.request.body;
+  const { id, delete_on_mux } = JSON.parse(ctx.request.body);
 
-  if (!data.upload_id) {
+  if (!id) {
     ctx.badRequest('ValidationError', {
-      errors: { upload_id: ['upload_id needs to be defined'] },
+      errors: { id: ['id needs to be defined'] },
     });
 
     return;
   }
 
-  strapi.entityService.delete(model, data.id);
+  // Ensure that the mux-asset entry exists for the id
+  const muxAsset = await strapi.entityService.findOne(model, id);
 
+  if (!muxAsset) {
+    ctx.notFound('mux-asset.notFound');
+
+    return;
+  }
+
+  // Delete mux-asset entry
+  const { asset_id, upload_id } = await strapi.entityService.delete(model, id);
   const result = { success: true, deletedOnMux: false };
 
-  if (data.delete_on_mux === 'true') {
-    const assetId =
-      data.asset_id !== ''
-        ? data.asset_id
-        : await getService('mux').getAssetIdByUploadId(data.upload_id);
+  // If the directive exists deleting the Asset from Mux
+  if (delete_on_mux) {
+    try {
+      // Resolve the asset_id
+      // - Use the asset_id that was available on the deleted mux-asset entry
+      // - Else, resolve it from Mux using the upload_id
+      const assetId =
+        asset_id !== ''
+          ? asset_id
+          : (await getService('mux').getAssetByUploadId(upload_id)).id;
 
-    const deletedOnMux = await getService('mux').deleteAsset(assetId);
+      const deletedOnMux = await getService('mux').deleteAsset(assetId);
 
-    result.deletedOnMux = deletedOnMux;
+      result.deletedOnMux = deletedOnMux;
+    } catch (err) {}
   }
 
   ctx.send(result);
@@ -285,7 +302,6 @@ const muxWebhookHandler = async (ctx: Context) => {
 };
 
 export = {
-  index,
   submitDirectUpload,
   submitRemoteUpload,
   deleteMuxAsset,

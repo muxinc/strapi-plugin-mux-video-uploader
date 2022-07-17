@@ -49,10 +49,18 @@ export = {
       required: false,
       maxLength: 255,
     },
-    isReady: {
-      type: 'boolean',
-      default: false,
-      required: false,
+    "isReady": {
+      "type": "boolean",
+      "default": false,
+      "required": false
+    },
+    "duration": {
+      "type": "decimal",
+      "required": false
+    },
+    "aspect_ratio": {
+      "type": "string",
+      "required": false
     },
     playback_policy: {
       type: 'enumeration',

@@ -1,4 +1,5 @@
 import pluginId from './../admin/src/pluginId';
+import { sync } from './utils/sync';
 import { addMuxPlaybackUrlFieldsToGraphQlSchema } from './api/mux-playback-url-graphql-fields';
 
 export = async ({ strapi }: { strapi: any }) => {
@@ -50,6 +51,8 @@ export = async ({ strapi }: { strapi: any }) => {
       pluginName: pluginId,
     },
   ];
+
+  sync();
 
   await strapi.admin.services.permission.actionProvider.registerMany(actions);
 };

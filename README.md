@@ -9,7 +9,7 @@ This plugin provides the ability to upload content via a url or a direct file up
 - Upload videos using a url or a file to [Mux](https://mux.com) from inside of [Strapi](https://strapi.io/)
 - Manage assets with the plugin's asset grid and pagination capabilities
 - Search for assets using title or [Mux](https://mux.com) Asset ID values
-- Preview content using a player (powered by the [videojs-mux-kit](https://github.com/muxinc/videojs-mux-kit) project)
+- Preview content using a player (powered by the [mux-player-react](https://github.com/muxinc/elements/tree/main/packages/mux-player-react) project)
 - Delete assets which result in the [Mux](https://mux.com) Asset also being deleted
 - Support uploading audio files
 - [Mux](https://mux.com) updates [Strapi](https://strapi.io/) automatically when the asset is ready using Webhooks
@@ -37,7 +37,7 @@ yarn add strapi-plugin-mux-video-uploader@2.0.0
 - A [Mux](https://mux.com) account
 - You will need both the **Access Token** and **Secret Key** scoped with "Full Access" permissions which can be created in the [Mux Dashboard](https://dashboard.mux.com/settings/access-tokens)
 - The **Webhook Signing Secret** which can be created in the [Mux Dashboard](https://dashboard.mux.com/settings/webhooks) (See the [Webhooks](#Webhooks) section for more info)
-- Tested with [Strapi](https://strapi.io/) v4.0.5 Community Edition
+- Tested with [Strapi](https://strapi.io/) v4.2.0 Community Edition
 
 ## ⚙️ Configuration
 

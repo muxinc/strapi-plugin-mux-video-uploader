@@ -108,12 +108,12 @@ const getMuxAssets = (
 
   switch (searchVector?.field) {
     case 'by_title': {
-      search = `&filter=title:${searchVector.value}`;
+      search = `&filters[title][$containsi]=${searchVector.value}`;
 
       break;
     }
     case 'by_asset_id': {
-      search = `&filter=asset_id:${searchVector.value}`;
+      search = `&filters[asset_id][$containsi]=${searchVector.value}`;
 
       break;
     }
@@ -151,22 +151,21 @@ const setMuxAsset = async (muxAsset: MuxAssetUpdate): Promise<MuxAsset> => {
   return await response.json();
 };
 
-const deleteMuxAsset = async (
-  muxAsset: MuxAsset,
-  deleteOnMux = true
-): Promise<any> => {
-  const body = new FormData();
-  body.append('id', muxAsset.id.toString());
-  body.append('asset_id', muxAsset.asset_id || '');
-  body.append('upload_id', muxAsset.upload_id);
-  body.append('delete_on_mux', deleteOnMux ? 'true' : 'false');
+const deleteMuxAsset = async (muxAsset: MuxAsset, deleteOnMux = true): Promise<any> => {
+  const body = JSON.stringify({
+    id: muxAsset.id,
+    delete_on_mux: deleteOnMux
+  });
 
   const url = `${getServiceUri()}/${pluginId}/deleteMuxAsset`;
 
   const response = await fetch(url, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${getJwtToken()}` },
-    body,
+    method: "POST",
+    headers: {
+      'Contet-Type': 'application/json',
+      'Authorization': `Bearer ${getJwtToken()}`
+    },
+    body
   });
 
   return await response.json();
