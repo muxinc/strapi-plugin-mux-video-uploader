@@ -10,7 +10,7 @@ const sync = async () => {
   const filters = {
     $or: [
       {
-        error_message: { $ne: ASSET_NO_LONGER_EXISTS }
+        error_message: { $ne: ASSET_NO_LONGER_EXISTS },
       },
       {
         $or: [
@@ -18,25 +18,22 @@ const sync = async () => {
           { playback_id: { $null: true } },
           { duration: { $null: true } },
           { aspect_ratio: { $null: true } },
-          { is_ready: false }
-        ]
-      }
-    ]
+          { is_ready: false },
+        ],
+      },
+    ],
   };
 
-  const assets = await strapi.entityService.findMany(
-    model,
-    {
-      filters,
-      limit: -1
-    }
-  );
+  const assets = await strapi.entityService.findMany(model, {
+    filters,
+    limit: -1,
+  });
 
   if (assets.length === 0) return;
 
   strapi.log.info(`[mux-video-uploader] Found ${assets.length} to be sync'd`);
 
-  const predicate = async (a:MuxAsset) => {
+  const predicate = async (a: MuxAsset) => {
     let asset;
     try {
       if (a.asset_id) {
@@ -47,7 +44,7 @@ const sync = async () => {
         strapi.log.warn('Unresolvable asset for sync:', JSON.stringify(a));
         return;
       }
-    } catch (err:any) {
+    } catch (err: any) {
       if (err && err.type === 'not_found') {
         asset = undefined;
       } else {
@@ -55,25 +52,27 @@ const sync = async () => {
       }
     }
 
-    const params:any = {
-      data: {}
+    const params: any = {
+      data: {},
     };
 
     if (asset) {
-      const playback_id = asset?.playback_ids?.find(playback_id => playback_id.policy === 'public')?.id;
-      const duration = typeof (asset.duration) === 'number' ? asset.duration : null;
-      
+      const playback_id = asset?.playback_ids?.find(
+        (playback_id) => playback_id.policy === a.playback_policy
+      )?.id;
+      const duration =
+        typeof asset.duration === 'number' ? asset.duration : null;
+
       params.data.asset_id = asset.id;
       params.data.aspect_ratio = asset.aspect_ratio;
       params.data.playback_id = playback_id;
       params.data.duration = duration;
       params.data.isReady = true;
-    }
-    else {
+    } else {
       params.data.error_message = ASSET_NO_LONGER_EXISTS;
       params.data.isReady = false;
     }
-    
+
     await strapi.entityService.update(model, a.id, params);
 
     strapi.log.info(`[mux-video-uploader] Updated mux-asset with id: ${a.id}`);
