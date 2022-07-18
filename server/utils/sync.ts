@@ -72,6 +72,7 @@ const sync = async () => {
       params.data.playback_id = playback_id;
       params.data.duration = duration;
       params.data.isReady = true;
+      params.data.error_message = null;
     } else {
       params.data.error_message = ASSET_NO_LONGER_EXISTS;
       params.data.isReady = false;
