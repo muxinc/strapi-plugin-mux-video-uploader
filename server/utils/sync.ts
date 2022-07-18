@@ -37,7 +37,11 @@ const sync = async () => {
     let asset;
     try {
       if (a.asset_id) {
-        asset = await getService('mux').getAssetById(a.asset_id);
+        try {
+          asset = await getService('mux').getAssetById(a.asset_id);
+        } catch (_) {
+          asset = await getService('mux').getAssetByUploadId(a.upload_id);
+        }
       } else if (a.upload_id) {
         asset = await getService('mux').getAssetByUploadId(a.upload_id);
       } else {
