@@ -180,10 +180,19 @@ const submitDirectUpload = async (ctx: Context) => {
 
 const submitRemoteUpload = async (ctx: Context) => {
   const { body } = ctx.request;
+  const data = body;
 
   if (!body.url) {
     ctx.badRequest('ValidationError', {
       errors: { url: ['url cannot be empty'] },
+    });
+
+    return;
+  }
+
+  if (!body.title) {
+    ctx.badRequest('ValidationError', {
+      errors: { title: ['title cannot be empty'] },
     });
 
     return;
@@ -194,11 +203,7 @@ const submitRemoteUpload = async (ctx: Context) => {
     body.playback_policy ?? 'signed'
   );
 
-  const data = {
-    asset_id: result.id,
-    title: body.title,
-    url: body.url,
-  };
+  data.asset_id = result.id;
 
   const muxAsset = await createOrReplaceMuxAsset(data);
 
