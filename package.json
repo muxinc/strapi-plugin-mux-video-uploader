@@ -1,6 +1,6 @@
 {
   "name": "strapi-plugin-mux-video-uploader",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "description": "This plugin allows you to upload your content to Mux and use it with Strapi.",
   "strapi": {
     "name": "mux-video-uploader",
