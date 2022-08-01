@@ -162,7 +162,7 @@ const deleteMuxAsset = async (muxAsset: MuxAsset, deleteOnMux = true): Promise<a
   const response = await fetch(url, {
     method: "POST",
     headers: {
-      'Contet-Type': 'application/json',
+      'Content-Type': 'application/json',
       'Authorization': `Bearer ${getJwtToken()}`
     },
     body
