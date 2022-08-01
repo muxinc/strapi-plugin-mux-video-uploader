@@ -211,7 +211,7 @@ const submitRemoteUpload = async (ctx: Context) => {
 };
 
 const deleteMuxAsset = async (ctx: Context) => {
-  const { id, delete_on_mux } = JSON.parse(ctx.request.body);
+  const { id, delete_on_mux } = ctx.request.body;
 
   if (!id) {
     ctx.badRequest('ValidationError', {
