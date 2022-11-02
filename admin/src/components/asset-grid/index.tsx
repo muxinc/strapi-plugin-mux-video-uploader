@@ -2,8 +2,8 @@ import React from 'react';
 import { Box } from '@strapi/design-system/Box';
 import { Grid, GridItem } from '@strapi/design-system/Grid';
 
-import { MuxAsset } from '../../../../types';
 import AssetCard from './asset-card';
+import { MuxAsset } from '../../../../server/content-types/mux-asset/types';
 
 interface DefaultProps {
   onMuxAssetClick: (muxAsset:MuxAsset) => void;

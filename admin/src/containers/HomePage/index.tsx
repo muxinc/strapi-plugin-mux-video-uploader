@@ -10,7 +10,6 @@ import { Main } from '@strapi/design-system/Main';
 import { Searchbar } from '@strapi/design-system/Searchbar';
 import { Select, Option } from '@strapi/design-system/Select';
 
-import { GetMuxAssetsResponse, MuxAsset } from '../../../../types';
 import SetupNeeded from '../../components/setup-needed';
 import { getIsConfigured, getMuxAssets } from '../../services/strapi';
 import AssetGrid from '../../components/asset-grid';
@@ -21,6 +20,7 @@ import pluginPermissions from '../../permissions';
 import getTrad from '../../utils/getTrad';
 import ListPagination from '../../components/list-pagination';
 import { appendQueryParameter } from '../../utils/url';
+import { GetMuxAssetsResponse, MuxAsset } from '../../../../server/content-types/mux-asset/types';
 
 const ProtectedHomePage = () => (
   <CheckPagePermissions permissions={pluginPermissions.mainRead}>

@@ -3,8 +3,8 @@ import styled from 'styled-components';
 import MuxPlayer from '@mux-elements/mux-player-react';
 
 import pluginPkg from './../../../../package.json';
-import { MuxAsset } from '../../../../types';
 import { getThumbnail } from '../../services/strapi';
+import { MuxAsset } from '../../../../server/content-types/mux-asset/types';
 
 interface Props {
   muxAsset?: MuxAsset;

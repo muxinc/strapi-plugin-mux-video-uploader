@@ -1,6 +1,6 @@
 import { auth } from '@strapi/helper-plugin';
+import { MuxAsset, MuxAssetUpdate } from '../../../../server/content-types/mux-asset/types';
 
-import { MuxAsset, MuxAssetUpdate } from '../../../../types';
 import pluginId from '../../pluginId';
 import { SearchVector, SortVector } from './types';
 
@@ -13,6 +13,7 @@ export interface UploadInfo {
 };
 
 function getServiceUri() {
+  // @ts-ignore
   return strapi.backendURL;
 }
 
