@@ -59,21 +59,26 @@ const Settings = () => {
   const handleOnSubmit = async (body:FormValues, { resetForm }:FormikHelpers<FormValues>) => {
     lockApp();
 
+    let hasChanged = false;
+
     const formData = new FormData();
 
     if(body.access_token) {
       formData.append("access_token", body.access_token);
+      hasChanged = true;
     }
     
     if(body.secret_key) {
       formData.append("secret_key", body.secret_key);
+      hasChanged = true;
     }
     
     if(body.webhook_signing_secret) {
       formData.append("webhook_signing_secret", body.webhook_signing_secret);
+      hasChanged = true;
     }
     
-    if (formData.entries().next().done) {
+    if (!hasChanged) {
       notification({
         type: 'info',
         message: { id: getTrad('notification.no-changes'), defaultMessage: 'No changes made' },
