@@ -5,9 +5,9 @@ import { Grid, GridItem } from '@strapi/design-system/Grid';
 import { Stack } from '@strapi/design-system/Stack';
 import { Typography } from '@strapi/design-system/Typography';
 
-import { MuxAsset } from '../../../../types';
 import getTrad from '../../utils/getTrad';
 import styled from 'styled-components';
+import { MuxAsset } from '../../../../server/content-types/mux-asset/types';
 
 const TypographyWrapped = styled(Typography)`
   overflow-wrap: break-word;

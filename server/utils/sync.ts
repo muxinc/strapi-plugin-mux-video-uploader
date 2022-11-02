@@ -1,5 +1,5 @@
 import { getService } from '.';
-import { MuxAsset } from '../../types';
+import { MuxAsset } from '../content-types/mux-asset/types';
 import pluginId from './../../admin/src/pluginId';
 import { forEachRateLimit } from './rate-limit';
 

@@ -21,13 +21,13 @@ import { TextInput } from '@strapi/design-system/TextInput';
 import { ToggleInput } from '@strapi/design-system/ToggleInput';
 import { Typography } from '@strapi/design-system/Typography';
 
-import { MuxAsset } from '../../../../types';
 import PreviewPlayer from '../preview-player';
 import Summary from './summary';
 import { deleteMuxAsset, setMuxAsset } from '../../services/strapi';
 import getTrad from '../../utils/getTrad';
 import PlayerWrapper from './player-wrapper';
 import copy from 'copy-to-clipboard';
+import { MuxAsset } from '../../../../server/content-types/mux-asset/types';
 
 const GridItemStyled = styled(GridItem)`
   position: sticky;

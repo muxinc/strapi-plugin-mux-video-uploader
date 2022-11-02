@@ -17,11 +17,10 @@ import {
 import { Icon } from '@strapi/design-system/Icon';
 import { Loader } from '@strapi/design-system/Loader';
 
-import { MuxAsset } from '../../../../types';
-import errorIcon from './../../static/error-icon.svg';
 import { getThumbnail } from '../../services/strapi';
 import getTrad from '../../utils/getTrad';
 import { secondsToFormattedString } from '../../utils/date-time';
+import { MuxAsset } from '../../../../server/content-types/mux-asset/types';
 
 const BoxStyled = styled(Box)`
   cursor: pointer;
