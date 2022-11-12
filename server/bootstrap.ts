@@ -2,6 +2,11 @@ import pluginId from './../admin/src/pluginId';
 import { sync } from './utils/sync';
 
 export = async ({ strapi }: { strapi: any }) => {
+  // @ts-ignore - No types for global strapi variable
+  if(Object.keys(strapi.plugins).indexOf('users-permissions') === -1) {
+    throw new Error("The users-permissions plugin is required in order to use the Mux Video Uploader");
+  }
+
   const actions = [
     // App
     {
