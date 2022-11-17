@@ -21,4 +21,3 @@ export interface MuxAsset extends MuxAssetUpdate {
     items: MuxAsset[];
     totalCount: number;
   }
-  
