@@ -88,11 +88,16 @@ const thumbnail = async (ctx: Context) => {
 };
 
 const submitDirectUpload = async (ctx:Context) => {
-  const data = ctx.request.body;
+  const { title, origin } = ctx.request.body;
 
-  const result = await getService('mux').getDirectUploadUrl(ctx.request.header.origin);
+  const cors = origin || ctx.request.header.origin
 
-  data.upload_id = result.id;
+  const result = await getService('mux').getDirectUploadUrl(cors);
+
+  const data = {
+    title,
+    upload_id: result.id
+  };
 
   await strapi.entityService.create(model, { data });
 
