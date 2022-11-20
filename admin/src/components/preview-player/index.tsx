@@ -14,11 +14,11 @@ const MuxPlayerStyled = styled(MuxPlayer)`
   width: 100%;
 `;
 
-const PreviewPlayer = (props:Props) => {
+const PreviewPlayer = (props: Props) => {
   const { muxAsset } = props;
 
-  if(muxAsset === undefined || !muxAsset.playback_id) return null;
-  
+  if (muxAsset === undefined || !muxAsset.playback_id) return null;
+
   const posterUrl = getThumbnail(muxAsset.playback_id);
 
   return (
@@ -30,7 +30,7 @@ const PreviewPlayer = (props:Props) => {
         video_title: muxAsset.title,
         player_name: 'Strapi Admin Dashboard',
         player_version: pluginPkg.version,
-        page_type: 'Preview Player'
+        page_type: 'Preview Player',
       }}
       streamType="on-demand"
     />

@@ -37,7 +37,7 @@ yarn add strapi-plugin-mux-video-uploader@2.0.0
 - A [Mux](https://mux.com) account
 - You will need both the **Access Token** and **Secret Key** scoped with "Full Access" permissions which can be created in the [Mux Dashboard](https://dashboard.mux.com/settings/access-tokens)
 - The **Webhook Signing Secret** which can be created in the [Mux Dashboard](https://dashboard.mux.com/settings/webhooks) (See the [Webhooks](#Webhooks) section for more info)
-- Tested with [Strapi](https://strapi.io/) v4.2.0 Community Edition
+- Tested with [Strapi](https://strapi.io/) v4.5.1 Community Edition
 
 ## ⚙️ Configuration
 
@@ -61,11 +61,15 @@ Where `{STRAPI_BASE_URL}` is the publicly accessible hostname of your [Strapi](h
 
 ## 🧑‍⚖️ Permissions
 
-Currently, anyone with "Super Admin" access to your [Strapi](https://strapi.io/) instance will be able to utilize the plugin for uploading and managing content.
+Currently, anyone with "Super Admin" access to your [Strapi](https://strapi.io/) instance will be able to utilize the plugin for uploading and managing content within the [Strapi](https://strapi.io/) CE version.  More sophisticated permissions can be defined for [Strapi](https://strapi.io/) Enterprise users using [RBAC](https://docs.strapi.io/developer-docs/latest/setup-deployment-guides/configurations/optional/rbac.html#declaring-new-conditions).
+
+**Please note**: End Users can only have read operation permissions (`find`, `findOne` and `count`).  Write operations are not supported due to potential security reasons. 
 
 ## 🤝 Contributing
 
 Contributions, issues and feature requests are welcome!
+
+Developers for this plugin should take a look at the `README_INTERNAL.md` document for details on setting up dev environments. 
 
 If you encounter an error or have questions, please feel free to file inquiries on the [Issues](https://github.com/muxinc/strapi-plugin-mux-video-uploader/issues) page for `strapi-plugin-mux-video-uploader`.
 
