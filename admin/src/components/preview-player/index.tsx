@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import MuxPlayer from '@mux-elements/mux-player-react';
+import MuxPlayer from '@mux/mux-player-react';
 
 import pluginPkg from './../../../../package.json';
 import { getThumbnail } from '../../services/strapi';
@@ -33,7 +33,6 @@ const PreviewPlayer = (props:Props) => {
         page_type: 'Preview Player'
       }}
       streamType="on-demand"
-      playsInline
     />
   );
 };
