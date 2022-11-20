@@ -27,7 +27,7 @@
     "clean": "rimraf dist/",
     "copy-files": "copyfiles README.md yarn.lock dist/",
     "dev": "tsc --watch",
-    "prepare": "husky install"
+    "preprepare": "husky install"
   },
   "dependencies": {
     "@mux/mux-node": "^6.4.0",
