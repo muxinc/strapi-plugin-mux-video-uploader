@@ -3,6 +3,7 @@ import { prefixPluginTranslations } from '@strapi/helper-plugin';
 import pluginPkg from '../../package.json';
 import pluginId from './pluginId';
 import pluginPermissions from './permissions';
+import { registerCustomFields } from './custom-fields';
 import PluginIcon from './components/icons';
 import getTrad from './utils/getTrad';
 
@@ -10,7 +11,7 @@ const name = pluginPkg.strapi.name;
 const displayName = pluginPkg.strapi.displayName;
 
 export default {
-  register(app:any) {
+  register(app: any) {
     app.addMenuLink({
       to: `/plugins/${pluginId}`,
       icon: PluginIcon,
@@ -19,10 +20,8 @@ export default {
         defaultMessage: displayName,
       },
       permissions: pluginPermissions.mainRead,
-      Component: async () => { 
-        const component = await import(
-          /* webpackChunkName: "mux-video-uploader" */ './containers/App'
-        );
+      Component: async () => {
+        const component = await import(/* webpackChunkName: "mux-video-uploader" */ './containers/App');
 
         return component;
       },
@@ -52,7 +51,7 @@ export default {
 
             return component;
           },
-        }
+        },
       ]
     );
 
@@ -60,14 +59,14 @@ export default {
       id: pluginId,
       name,
     });
+
+    registerCustomFields(app);
   },
   bootstrap() {},
-  async registerTrads({ locales }: { locales:string[]}) {
+  async registerTrads({ locales }: { locales: string[] }) {
     const importedTrads = await Promise.all(
-      locales.map((locale:string) => {
-        return import(
-          /* webpackChunkName: "users-permissions-translation-[request]" */ `./translations/${locale}.json`
-        )
+      locales.map((locale: string) => {
+        return import(/* webpackChunkName: "users-permissions-translation-[request]" */ `./translations/${locale}.json`)
           .then(({ default: data }) => {
             return {
               data: prefixPluginTranslations(data, pluginId),

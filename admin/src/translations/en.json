@@ -89,6 +89,9 @@
   "UploadError.message": "An error occurred while uploading the file.  Submit an issue with the following error message",
   "UploadError.issues": "File issue",
 
+  "CustomField.label": "Mux Video Uploader",
+  "CustomField.description": "Specify video uploaded to Mux",
+
   "notification.changes-saved": "Changes saved",
   "notification.no-changes": "No changes made",
   "notification.error-saving": "Error while saving changes"
