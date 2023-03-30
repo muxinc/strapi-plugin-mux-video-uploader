@@ -57,7 +57,7 @@ export const FromComputerForm = ({ onClose, onAddAssets, trackedLocation }) => {
       const file = files.item(i);
       const asset = rawFileToAsset(file, AssetSource.Computer);
 
-      if (asset.type === AssetType.Video) {
+      if ([AssetType.Video, AssetType.Audio].includes(asset.type)) {
         assets.push(asset);
       }
     }
@@ -81,7 +81,7 @@ export const FromComputerForm = ({ onClose, onAddAssets, trackedLocation }) => {
         const file = files.item(i);
         const asset = rawFileToAsset(file, AssetSource.Computer);
 
-        if (asset.type === AssetType.Video) {
+        if ([AssetType.Video, AssetType.Audio].includes(asset.type)) {
           assets.push(asset);
         }
       }
@@ -132,7 +132,7 @@ export const FromComputerForm = ({ onClose, onAddAssets, trackedLocation }) => {
                   top={0}
                   width="100%"
                   type="file"
-                  accept="video/*"
+                  accept="video/*,audio/*"
                   multiple
                   name="files"
                   tabIndex={-1}
