@@ -1,6 +1,6 @@
 import React from 'react';
 import { useIntl } from 'react-intl';
-import { useNavigate } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 import { Box } from '@strapi/design-system/Box';
 import { Button } from '@strapi/design-system/Button';
 import { BaseHeaderLayout, Layout, ContentLayout } from '@strapi/design-system/Layout';
@@ -12,10 +12,10 @@ import pluginId from '../../pluginId';
 import getTrad from '../../utils/getTrad';
 
 const SetupNeeded = () => {
-  const navigate = useNavigate();
+  const history = useHistory();
   const { formatMessage } = useIntl();
 
-  const onSettingsClick = () => navigate(`/settings/${pluginId}`);
+  const onSettingsClick = () => history.push(`/settings/${pluginId}`);
 
   return (
     <Layout>

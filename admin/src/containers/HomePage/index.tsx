@@ -1,6 +1,6 @@
 import React from 'react';
 import { useIntl } from 'react-intl';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 import { CheckPagePermissions, useRBAC } from '@strapi/helper-plugin';
 import Plus from '@strapi/icons/Plus';
 import { Button } from '@strapi/design-system/Button';
@@ -30,7 +30,7 @@ const ProtectedHomePage = () => (
 
 const HomePage = () => {
   const location = useLocation();
-  const navigate = useNavigate();
+  const history = useHistory();
 
   const { formatMessage } = useIntl();
 
@@ -122,11 +122,11 @@ const HomePage = () => {
   } = useRBAC(permissions);
 
   const handleOnSearchFieldChange = (field: SearchField) => {
-    navigate(appendQueryParameter(location, { field }));
+    history.push(appendQueryParameter(location, { field }));
   };
 
   const handleOnSearchValueChange = (event: any) => {
-    navigate(appendQueryParameter(location, { value: event?.target.value || '' }));
+    history.push(appendQueryParameter(location, { value: event?.target.value || '' }));
   };
 
   const handleOnMuxAssetClick = (muxAsset: MuxAsset) => setSelectedAsset(muxAsset);
