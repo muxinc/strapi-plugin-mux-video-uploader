@@ -16,13 +16,13 @@ const search = (ctx: Context) => {
   }
 
   return strapi.entityService.findMany(model, params);
-}
+};
 
 const find = async (ctx: Context) => {
   const entities = await search(ctx);
   const totalCount = await count(ctx);
 
-  const items = entities.map((entity:any) => entity);
+  const items = entities.map((entity: any) => entity);
 
   return { items, totalCount };
 };
@@ -40,28 +40,20 @@ const count = (ctx: Context) => {
 };
 
 const create = async (ctx: Context) => {
-  const { body } = ctx.request;
-  
+  const { body } = ctx.request.body;
+
   return await strapi.entityService.create(model, { data: body });
 };
 
-const update = async (ctx:Context) => {
+const update = async (ctx: Context) => {
   const { id } = ctx.params;
-  const { body } = ctx.request;
+  const { title, isReady, duration, aspect_ratio, error_message } = <MuxAssetUpdateRequest>ctx.request.body;
+  const data: MuxAssetUpdateRequest = { title, isReady, duration, aspect_ratio, error_message };
 
-  const data: { title?: string, isReady?: boolean } = {};
-  
-  if (body.title !== undefined) {
-    data.title = body.title;
-  }
-  if (body.isReady !== undefined) {
-    data.isReady = body.isReady;
-  }
-  
   return await strapi.entityService.update(model, id, { data });
 };
 
-const del = async (ctx:Context) => {
+const del = async (ctx: Context) => {
   const { id } = ctx.params;
 
   return await strapi.entityService.delete(model, id);
@@ -73,5 +65,5 @@ export = {
   count,
   create,
   update,
-  del
+  del,
 };
