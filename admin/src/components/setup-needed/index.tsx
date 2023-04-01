@@ -1,6 +1,6 @@
 import React from 'react';
 import { useIntl } from 'react-intl';
-import { useHistory } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
 import { Box } from '@strapi/design-system/Box';
 import { Button } from '@strapi/design-system/Button';
 import { BaseHeaderLayout, Layout, ContentLayout } from '@strapi/design-system/Layout';
@@ -12,12 +12,10 @@ import pluginId from '../../pluginId';
 import getTrad from '../../utils/getTrad';
 
 const SetupNeeded = () => {
-  const history = useHistory();
+  const navigate = useNavigate();
   const { formatMessage } = useIntl();
 
-  const onSettingsClick = () => {
-    history.push(`/settings/${pluginId}`);
-  };
+  const onSettingsClick = () => navigate(`/settings/${pluginId}`);
 
   return (
     <Layout>
@@ -44,7 +42,11 @@ const SetupNeeded = () => {
               </Typography>
               <Box paddingTop={3} paddingBottom={3}>
                 <Typography variant="omega">
-                  {formatMessage({ id: getTrad('SetupNeeded.setup-instructions'), defaultMessage: 'In order for uploads to function, an administrator will need to complete the setup of this plugin by visiting the settings page.  Click the button below to be taken there now.' })}
+                  {formatMessage({
+                    id: getTrad('SetupNeeded.setup-instructions'),
+                    defaultMessage:
+                      'In order for uploads to function, an administrator will need to complete the setup of this plugin by visiting the settings page.  Click the button below to be taken there now.',
+                  })}
                 </Typography>
               </Box>
               <Button size="S" onClick={onSettingsClick} endIcon={<ArrowRight />}>
