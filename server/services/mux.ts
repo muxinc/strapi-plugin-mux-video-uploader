@@ -8,9 +8,10 @@ import { Config } from './../utils';
 export interface MuxService {
   getAssetById: (assetId: string) => Promise<Asset>;
   getAssetByUploadId: (uploadId: string) => Promise<Asset>;
-  getDirectUploadUrl: (corsOrigin?: string) => Promise<Upload>;
+  getDirectUploadUrl: (signed: string, corsOrigin?: string) => Promise<Upload>;
   createAsset: (url: string) => Promise<Asset>;
   deleteAsset: (assetId: string) => Promise<boolean>;
+  signPlaybackId: (playbackId: string, type: string) => Promise<string>;
 }
 
 const getMuxClient = async () => {
@@ -33,22 +34,24 @@ export default ({ strapi }: { strapi: any }) => ({
 
     return assets[0];
   },
-  async getDirectUploadUrl(corsOrigin: string = '*'): Promise<Upload> {
+  async getDirectUploadUrl(signed: string, corsOrigin: string = '*'): Promise<Upload> {
     const { Video } = await getMuxClient();
+
+    const isPrivate = signed == 'true' ? 'signed' : 'public';
 
     return Video.Uploads.create({
       cors_origin: corsOrigin,
       new_asset_settings: {
-        playback_policy: ['public'],
+        playback_policy: isPrivate,
       },
     });
   },
-  async createAsset(url: string): Promise<Asset> {
+  async createAsset(url: string, signed: boolean): Promise<Asset> {
     const { Video } = await getMuxClient();
 
     return Video.Assets.create({
       input: url,
-      playback_policy: ['public'],
+      playback_policy: [signed == true ? 'signed' : 'public'],
     });
   },
   async deleteAsset(assetId: string): Promise<boolean> {
@@ -57,5 +60,19 @@ export default ({ strapi }: { strapi: any }) => ({
     await Video.Assets.del(assetId);
 
     return true;
+  },
+  async signPlaybackId(playbackId: string, type: string): Promise<object> {
+    const { JWT } = Mux;
+    const { playback_signing_secret, playback_signing_id } = await Config.getConfig('general');
+
+    let baseOptions = {
+      keyId: playback_signing_id,
+      keySecret: playback_signing_secret,
+      expiration: type == 'video' ? '1d' : '1h',
+    };
+
+    const token = JWT.signPlaybackId(playbackId, { ...baseOptions, type: type });
+
+    return { token: token };
   },
 });

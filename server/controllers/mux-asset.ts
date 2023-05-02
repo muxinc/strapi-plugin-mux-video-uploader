@@ -47,8 +47,8 @@ const create = async (ctx: Context) => {
 
 const update = async (ctx: Context) => {
   const { id } = ctx.params;
-  const { title, isReady, duration, aspect_ratio, error_message } = <MuxAssetUpdateRequest>ctx.request.body;
-  const data: MuxAssetUpdateRequest = { title, isReady, duration, aspect_ratio, error_message };
+  const { title, isReady, duration, aspect_ratio, signed, error_message } = <MuxAssetUpdateRequest>ctx.request.body;
+  const data: MuxAssetUpdateRequest = { title, isReady, duration, aspect_ratio, signed, error_message };
 
   return await strapi.entityService.update(model, id, { data });
 };

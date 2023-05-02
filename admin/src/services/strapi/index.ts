@@ -7,10 +7,11 @@ import { SearchVector, SortVector } from './types';
 export type UploadOrigin = 'from_computer' | 'from_url';
 
 export interface UploadInfo {
-  title: string,
-  media: File[] | string,
-  origin: UploadOrigin
-};
+  title: string;
+  media: File[] | string;
+  origin: UploadOrigin;
+  signed: boolean;
+}
 
 function getServiceUri() {
   // @ts-ignore
@@ -22,51 +23,50 @@ function getJwtToken() {
 }
 
 const getIsConfigured = () => {
-  return fetch(
-    `${getServiceUri()}/${pluginId}/mux-settings`,
-    {
-      method: "GET",
-      headers: { 'Authorization': `Bearer ${getJwtToken()}` }
-    }).then((response) => response.json())
-}
+  return fetch(`${getServiceUri()}/${pluginId}/mux-settings`, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${getJwtToken()}` },
+  }).then((response) => response.json());
+};
 
 const setMuxSettings = (body: FormData) => {
   return fetch(`${getServiceUri()}/${pluginId}/mux-settings`, {
-    method: "POST",
-    headers: { 'Authorization': `Bearer ${getJwtToken()}` },
-    body
+    method: 'POST',
+    headers: { Authorization: `Bearer ${getJwtToken()}` },
+    body,
   });
-}
+};
 
-const submitUpload = async (uploadInfo:UploadInfo) => {
+const submitUpload = async (uploadInfo: UploadInfo) => {
   const body = new FormData();
-  body.append("title", uploadInfo.title);
+  body.append('title', uploadInfo.title);
+  body.append('signed', uploadInfo.signed as unknown as string);
 
   let submitUrl;
-    
-  if(uploadInfo.origin === 'from_url') {
+
+  if (uploadInfo.origin === 'from_url') {
     submitUrl = `${getServiceUri()}/${pluginId}/submitRemoteUpload`;
 
-    body.append("url", uploadInfo.media as string);
-  } else if(uploadInfo.origin === 'from_computer') {
+    body.append('url', uploadInfo.media as string);
+  } else if (uploadInfo.origin === 'from_computer') {
     submitUrl = `${getServiceUri()}/${pluginId}/submitDirectUpload`;
   } else {
     throw new Error('Unable to determine upload origin');
   }
 
   const response = await fetch(submitUrl, {
-    method: "POST",
-    headers: { 'Authorization': `Bearer ${getJwtToken()}` },
-    body
+    method: 'POST',
+    headers: { Authorization: `Bearer ${getJwtToken()}` },
+    body,
   });
-  
-  return await response.json();
-}
 
-const getMuxAssets = (searchVector?:SearchVector, sortVector?:SortVector, start = 0, limit = 10) => {
+  return await response.json();
+};
+
+const getMuxAssets = (searchVector?: SearchVector, sortVector?: SortVector, start = 0, limit = 10) => {
   let search;
 
-  switch(searchVector?.field) {
+  switch (searchVector?.field) {
     case 'by_title': {
       search = `&filters[title][$containsi]=${searchVector.value}`;
 
@@ -87,21 +87,21 @@ const getMuxAssets = (searchVector?:SearchVector, sortVector?:SortVector, start 
   const url = `${getServiceUri()}/${pluginId}/mux-asset?start=${start}${sort}&limit=${limit}${search}`;
 
   return fetch(url, {
-    method: "GET",
-    headers: { 'Authorization': `Bearer ${getJwtToken()}` }
+    method: 'GET',
+    headers: { Authorization: `Bearer ${getJwtToken()}` },
   }).then((response) => response.json());
 };
 
-const setMuxAsset = async (muxAsset:MuxAssetUpdate): Promise<MuxAsset> => {
+const setMuxAsset = async (muxAsset: MuxAssetUpdate): Promise<MuxAsset> => {
   const url = `${getServiceUri()}/${pluginId}/mux-asset/${muxAsset.id}`;
 
   const response = await fetch(url, {
-    method: "PUT",
+    method: 'PUT',
     headers: {
-      'Authorization': `Bearer ${getJwtToken()}`,
-      'Content-Type': 'application/json'
+      Authorization: `Bearer ${getJwtToken()}`,
+      'Content-Type': 'application/json',
     },
-    body: JSON.stringify(muxAsset)
+    body: JSON.stringify(muxAsset),
   });
 
   return await response.json();
@@ -110,18 +110,18 @@ const setMuxAsset = async (muxAsset:MuxAssetUpdate): Promise<MuxAsset> => {
 const deleteMuxAsset = async (muxAsset: MuxAsset): Promise<any> => {
   const body = JSON.stringify({
     id: muxAsset.id,
-    delete_on_mux: true
+    delete_on_mux: true,
   });
 
   const url = `${getServiceUri()}/${pluginId}/deleteMuxAsset`;
 
   const response = await fetch(url, {
-    method: "POST",
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${getJwtToken()}`
+      Authorization: `Bearer ${getJwtToken()}`,
     },
-    body
+    body,
   });
 
   return await response.json();
@@ -132,6 +132,26 @@ const getThumbnail = (playbackId: string | null) => {
   return `${getServiceUri()}/${pluginId}/thumbnail/${playbackId}?width=512`;
 };
 
+const getPlaybackToken = async (playbackId: string | null, type: string) => {
+  const url = `${getServiceUri()}/${pluginId}/sign/${playbackId}?type=${type}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${getJwtToken()}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  return await response.json();
+};
+
+const getMuxThumbnail = async (playbackId: string | null) => {
+  if (!playbackId) return undefined;
+  const token = await getPlaybackToken(playbackId, 'thumbnail');
+  return `//image.mux.com/${playbackId}/thumbnail.jpg?token=${token.token}`;
+};
+
 export {
   getIsConfigured,
   setMuxSettings,
@@ -139,5 +159,7 @@ export {
   getMuxAssets,
   setMuxAsset,
   deleteMuxAsset,
-  getThumbnail
+  getThumbnail,
+  getMuxThumbnail,
+  getPlaybackToken,
 };

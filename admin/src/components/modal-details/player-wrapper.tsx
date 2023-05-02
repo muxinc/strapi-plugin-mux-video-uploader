@@ -21,9 +21,9 @@ interface Props {
   onDelete?: () => void;
 }
 
-const PlayerWrapper = (props:PropsWithChildren<Props>) => {
-  const { children, disableDelete = false, onDelete = () => { } } = props;
-  
+const PlayerWrapper = (props: PropsWithChildren<Props>) => {
+  const { children, disableDelete = false, onDelete = () => {} } = props;
+
   const { formatMessage } = useIntl();
 
   return (
@@ -34,7 +34,7 @@ const PlayerWrapper = (props:PropsWithChildren<Props>) => {
             label={formatMessage({ id: getTrad('Common.delete-button'), defaultMessage: 'Delete' })}
             disableDelete={disableDelete}
             onClick={onDelete}
-          icon={<Trash />}
+            icon={<Trash />}
           />
         </Flex>
       </ActionBoxStyled>

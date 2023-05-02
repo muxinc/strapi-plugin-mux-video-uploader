@@ -29,12 +29,10 @@ const Uploading = (props: Props) => {
       <Box paddingBottom={5}>
         <Flex justifyContent="center">
           <Typography variant="alpha">
-            {
-              formatMessage({
-                id: getTrad('Uploading.uploading'),
-                defaultMessage: 'Uploading to Mux'
-              })
-            }
+            {formatMessage({
+              id: getTrad('Uploading.uploading'),
+              defaultMessage: 'Uploading to Mux',
+            })}
           </Typography>
         </Flex>
       </Box>

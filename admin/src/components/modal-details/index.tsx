@@ -48,41 +48,42 @@ interface FormProps {
 }
 
 interface DefaultProps {
-  onToggle: (refresh?:boolean) => void;
+  onToggle: (refresh?: boolean) => void;
 }
 
-interface Props extends DefaultProps{
+interface Props extends DefaultProps {
   isOpen: boolean;
   muxAsset?: MuxAsset;
   enableUpdate: boolean;
   enableDelete: boolean;
 }
 
-const ModalDetails = (props:Props) => {
+const ModalDetails = (props: Props) => {
   const { isOpen, muxAsset, enableUpdate, enableDelete, onToggle } = props;
 
   const { formatMessage } = useIntl();
 
-  if(muxAsset === undefined) return null;
+  if (muxAsset === undefined) return null;
 
   const [touchedFields, setTouchedFields] = React.useState<FormikTouched<FormProps>>({});
   const [showDeleteWarning, setShowDeleteWarning] = React.useState(false);
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [codeSnippet] = React.useState<string>(`<mux-player
   playback-id="${muxAsset.playback_id}"
+  playback-token="TOKEN"
   env-key="ENV_KEY"
   metadata-video-title="${muxAsset.title}"
   controls
 />`);
 
   const notification = useNotification();
-  
+
   const INITIAL_VALUES = {
     title: muxAsset.title,
-    isReady: muxAsset.isReady 
+    isReady: muxAsset.isReady,
   };
 
-  const toggleDeleteWarning = () => setShowDeleteWarning(prevState => !prevState);
+  const toggleDeleteWarning = () => setShowDeleteWarning((prevState) => !prevState);
 
   const handleCopyCodeSnippet = () => {
     copy(codeSnippet);
@@ -91,10 +92,10 @@ const ModalDetails = (props:Props) => {
       type: 'success',
       message: {
         id: getTrad('ModalDetails.copied-to-clipboard'),
-        defaultMessage: 'Copied code snippet to clipboard'
-      }
+        defaultMessage: 'Copied code snippet to clipboard',
+      },
     });
-  }
+  };
 
   const handleOnDeleteConfirm = async () => {
     setIsProcessing(true);
@@ -110,26 +111,26 @@ const ModalDetails = (props:Props) => {
   const handleOnSubmit = async (values: FormProps, { setErrors, setSubmitting }: FormikHelpers<FormProps>) => {
     const title = formatMessage({
       id: getTrad('Common.title-required'),
-      defaultMessage: 'No title specified'
+      defaultMessage: 'No title specified',
     });
 
     if (!values.title) {
-      setErrors({ title });  
+      setErrors({ title });
 
       return;
     }
-    
-    if(Object.keys(touchedFields).length > 0) {
-      const data:any = { id: muxAsset.id };
+
+    if (Object.keys(touchedFields).length > 0) {
+      const data: any = { id: muxAsset.id };
 
       if (touchedFields.title) {
         data.title = values.title;
       }
 
-      if(touchedFields.isReady) {
+      if (touchedFields.isReady) {
         data.isReady = values.isReady;
       }
-      
+
       await setMuxAsset(data);
     }
 
@@ -142,28 +143,23 @@ const ModalDetails = (props:Props) => {
     initialValues: INITIAL_VALUES,
     validateOnChange: false,
     enableReinitialize: true,
-    onSubmit: handleOnSubmit
+    onSubmit: handleOnSubmit,
   });
 
   const codeSnippetHint = (
     <div>
-      {
-        formatMessage({
-          id: getTrad('ModalDetails.powered-by-mux'),
-          defaultMessage: 'Powered by mux-player.'
-        })
-      }
-      {' '}
+      {formatMessage({
+        id: getTrad('ModalDetails.powered-by-mux'),
+        defaultMessage: 'Powered by mux-player.',
+      })}{' '}
       <Link href="https://docs.mux.com/guides/video/mux-player" isExternal>
-        {
-          formatMessage({
-            id: getTrad('ModalDetails.read-more'),
-            defaultMessage: 'Read more about it'
-          })
-        }
+        {formatMessage({
+          id: getTrad('ModalDetails.read-more'),
+          defaultMessage: 'Read more about it',
+        })}
       </Link>
     </div>
-  )
+  );
 
   if (!isOpen) return null;
 
@@ -172,12 +168,10 @@ const ModalDetails = (props:Props) => {
       <ModalLayout onClose={onToggle} labelledBy="title">
         <ModalHeader>
           <Typography fontWeight="bold" textColor="neutral800" as="h2" id="title">
-            {
-              formatMessage({
-                id: getTrad('ModalDetails.header'),
-                defaultMessage: 'Details'
-              })
-            }
+            {formatMessage({
+              id: getTrad('ModalDetails.header'),
+              defaultMessage: 'Details',
+            })}
           </Typography>
         </ModalHeader>
         <form onSubmit={handleSubmit}>
@@ -190,26 +184,22 @@ const ModalDetails = (props:Props) => {
               </GridItemStyled>
               <GridItem col={6} s={12}>
                 <Stack>
-                  {muxAsset.error_message ?
-                    (
-                      <Box paddingBottom={4}>
-                        <Status variant="danger">
-                          <Typography>{muxAsset.error_message}</Typography>
-                        </Status>
-                      </Box>
-                    ) : null
-                  }
+                  {muxAsset.error_message ? (
+                    <Box paddingBottom={4}>
+                      <Status variant="danger">
+                        <Typography>{muxAsset.error_message}</Typography>
+                      </Status>
+                    </Box>
+                  ) : null}
                   <Box paddingBottom={4}>
                     <Summary muxAsset={muxAsset} />
                   </Box>
                   <Box paddingBottom={4}>
                     <TextInput
-                      label={
-                        formatMessage({
-                          id: getTrad('Common.title-label'),
-                          defaultMessage: 'Title'
-                        })
-                      }
+                      label={formatMessage({
+                        id: getTrad('Common.title-label'),
+                        defaultMessage: 'Title',
+                      })}
                       name="title"
                       value={values.title}
                       error={errors.title}
@@ -223,12 +213,10 @@ const ModalDetails = (props:Props) => {
                   </Box>
                   <Box paddingBottom={4}>
                     <ToggleInput
-                      label={
-                        formatMessage({
-                          id: getTrad('Common.isReady-label'),
-                          defaultMessage: 'Is ready'
-                        })
-                      }
+                      label={formatMessage({
+                        id: getTrad('Common.isReady-label'),
+                        defaultMessage: 'Is ready',
+                      })}
                       name="isReady"
                       onLabel="on"
                       offLabel="off"
@@ -243,16 +231,21 @@ const ModalDetails = (props:Props) => {
                   </Box>
                   <Box paddingBottom={4}>
                     <Textarea
-                      label={
-                        formatMessage({
-                          id: getTrad('ModalDetails.code-snippet'),
-                          defaultMessage: 'Code snippet'
-                        })
-                      }
+                      label={formatMessage({
+                        id: getTrad('ModalDetails.code-snippet'),
+                        defaultMessage: 'Code snippet',
+                      })}
                       name="codeSnippet"
                       value={codeSnippet}
                       hint={codeSnippetHint}
-                      labelAction={<IconButtonStyled color="secondary500" as={Duplicate} onClick={handleCopyCodeSnippet} noBorder />}
+                      labelAction={
+                        <IconButtonStyled
+                          color="secondary500"
+                          as={Duplicate}
+                          onClick={handleCopyCodeSnippet}
+                          noBorder
+                        />
+                      }
                       disabled
                     />
                   </Box>
@@ -264,23 +257,19 @@ const ModalDetails = (props:Props) => {
             startActions={
               <>
                 <Button variant="tertiary" onClick={onToggle}>
-                  {
-                    formatMessage({
-                      id: getTrad('Common.cancel-button'),
-                      defaultMessage: 'Cancel'
-                    })
-                  }
+                  {formatMessage({
+                    id: getTrad('Common.cancel-button'),
+                    defaultMessage: 'Cancel',
+                  })}
                 </Button>
               </>
             }
             endActions={
               <Button type="submit" variant="success" disabled={isProcessing || isSubmitting}>
-                {
-                  formatMessage({
-                    id: getTrad('Common.finish-button'),
-                    defaultMessage: 'Finish'
-                  })
-                }
+                {formatMessage({
+                  id: getTrad('Common.finish-button'),
+                  defaultMessage: 'Finish',
+                })}
               </Button>
             }
           />
@@ -288,34 +277,28 @@ const ModalDetails = (props:Props) => {
       </ModalLayout>
       <Dialog
         onClose={toggleDeleteWarning}
-        title={
-          formatMessage({
-            id: getTrad('ModalDetails.delete-confirmation-header'),
-            defaultMessage: 'Delete confirmation'
-          })
-        }
+        title={formatMessage({
+          id: getTrad('ModalDetails.delete-confirmation-header'),
+          defaultMessage: 'Delete confirmation',
+        })}
         isOpen={showDeleteWarning}
       >
         <DialogBody icon={<ExclamationMarkCircle />}>
           <Stack>
             <Flex justifyContent="center">
               <Typography>
-                {
-                  formatMessage({
-                    id: getTrad('ModalDetails.delete-confirmation-prompt'),
-                    defaultMessage: 'Are you sure you want to delete this item?'
-                  })
-                }
+                {formatMessage({
+                  id: getTrad('ModalDetails.delete-confirmation-prompt'),
+                  defaultMessage: 'Are you sure you want to delete this item?',
+                })}
               </Typography>
             </Flex>
             <Flex justifyContent="center">
               <Typography>
-                {
-                  formatMessage({
-                    id: getTrad('ModalDetails.delete-confirmation-callout'),
-                    defaultMessage: 'This will also delete the Asset from Mux.'
-                  })
-                }
+                {formatMessage({
+                  id: getTrad('ModalDetails.delete-confirmation-callout'),
+                  defaultMessage: 'This will also delete the Asset from Mux.',
+                })}
               </Typography>
             </Flex>
           </Stack>
@@ -323,32 +306,28 @@ const ModalDetails = (props:Props) => {
         <DialogFooter
           startAction={
             <Button onClick={toggleDeleteWarning} variant="tertiary">
-              {
-                formatMessage({
-                  id: getTrad('Common.cancel-button'),
-                  defaultMessage: 'Cancel'
-                })
-              }
+              {formatMessage({
+                id: getTrad('Common.cancel-button'),
+                defaultMessage: 'Cancel',
+              })}
             </Button>
           }
           endAction={
             <Button variant="danger-light" startIcon={<Trash />} onClick={handleOnDeleteConfirm}>
-              {
-                formatMessage({
-                  id: getTrad('Common.confirm-button'),
-                  defaultMessage: 'Confirm'
-                })
-              }
+              {formatMessage({
+                id: getTrad('Common.confirm-button'),
+                defaultMessage: 'Confirm',
+              })}
             </Button>
           }
         />
       </Dialog>
     </>
   );
-}
+};
 
 ModalDetails.defaultProps = {
-  onToggle: () => {}
+  onToggle: () => {},
 } as DefaultProps;
 
 export default ModalDetails;

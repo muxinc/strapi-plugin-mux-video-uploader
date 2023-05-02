@@ -1,4 +1,4 @@
-const appendQueryParameter = (location: Location|any, queryParameters: { [key: string]: string }): Location => {
+const appendQueryParameter = (location: Location | any, queryParameters: { [key: string]: string }): Location => {
   const params = new URLSearchParams(location.search);
 
   for (let key in queryParameters) {
@@ -8,6 +8,4 @@ const appendQueryParameter = (location: Location|any, queryParameters: { [key: s
   return { ...location, search: params.toString() };
 };
 
-export {
-  appendQueryParameter
-};
+export { appendQueryParameter };

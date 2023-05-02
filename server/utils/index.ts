@@ -6,12 +6,8 @@ const getCoreStore = () => {
   return strapi.store({ type: 'plugin', name: CONFIG_NAME });
 };
 
-const getService = <T extends ServiceName>(name: ServiceName):ServiceType<T> => {
+const getService = <T extends ServiceName>(name: ServiceName): ServiceType<T> => {
   return strapi.plugin(PLUGIN_NAME).service(name);
 };
 
-export {
-  getCoreStore,
-  getService,
-  Config
-};
+export { getCoreStore, getService, Config };

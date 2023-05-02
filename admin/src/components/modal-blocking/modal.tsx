@@ -25,14 +25,14 @@ const ModalContainer = styled(Flex)`
   flex-direction: column;
 
   & > * {
-    width: 100%
+    width: 100%;
   }
 `;
 
 interface Props {
-  onClose?: () => void,
-  isOpen: boolean,
-};
+  onClose?: () => void;
+  isOpen: boolean;
+}
 
 const ModalBlocking = ({ children, onClose, isOpen }: React.PropsWithChildren<Props>) => {
   useLockScroll(isOpen);
@@ -43,9 +43,7 @@ const ModalBlocking = ({ children, onClose, isOpen }: React.PropsWithChildren<Pr
     <Portal>
       <ModalWrapper>
         <FocusTrap onEscape={() => {}}>
-          <ModalContainer>
-            {children}
-          </ModalContainer>
+          <ModalContainer>{children}</ModalContainer>
         </FocusTrap>
       </ModalWrapper>
     </Portal>

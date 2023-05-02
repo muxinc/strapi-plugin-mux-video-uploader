@@ -10,7 +10,7 @@ const name = pluginPkg.strapi.name;
 const displayName = pluginPkg.strapi.displayName;
 
 export default {
-  register(app:any) {
+  register(app: any) {
     app.addMenuLink({
       to: `/plugins/${pluginId}`,
       icon: PluginIcon,
@@ -19,10 +19,8 @@ export default {
         defaultMessage: displayName,
       },
       permissions: pluginPermissions.mainRead,
-      Component: async () => { 
-        const component = await import(
-          /* webpackChunkName: "mux-video-uploader" */ './containers/App'
-        );
+      Component: async () => {
+        const component = await import(/* webpackChunkName: "mux-video-uploader" */ './containers/App');
 
         return component;
       },
@@ -52,7 +50,7 @@ export default {
 
             return component;
           },
-        }
+        },
       ]
     );
 
@@ -62,12 +60,10 @@ export default {
     });
   },
   bootstrap() {},
-  async registerTrads({ locales }: { locales:string[]}) {
+  async registerTrads({ locales }: { locales: string[] }) {
     const importedTrads = await Promise.all(
-      locales.map((locale:string) => {
-        return import(
-          /* webpackChunkName: "users-permissions-translation-[request]" */ `./translations/${locale}.json`
-        )
+      locales.map((locale: string) => {
+        return import(/* webpackChunkName: "users-permissions-translation-[request]" */ `./translations/${locale}.json`)
           .then(({ default: data }) => {
             return {
               data: prefixPluginTranslations(data, pluginId),

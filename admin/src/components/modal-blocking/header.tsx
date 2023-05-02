@@ -10,12 +10,10 @@ const ModalHeaderWrapper = styled(Box)`
 
 type Props = {};
 
-const ModalHeader = ({ children }:PropsWithChildren<Props>) => {
+const ModalHeader = ({ children }: PropsWithChildren<Props>) => {
   return (
     <ModalHeaderWrapper paddingTop={4} paddingBottom={4} paddingLeft={5} paddingRight={5} background="neutral100">
-      <Flex justifyContent="space-between">
-        {children}
-      </Flex>
+      <Flex justifyContent="space-between">{children}</Flex>
     </ModalHeaderWrapper>
   );
 };

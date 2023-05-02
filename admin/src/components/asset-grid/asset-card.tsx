@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 import styled from 'styled-components';
 import ExclamationMarkCircle from '@strapi/icons/ExclamationMarkCircle';
+import Lock from '@strapi/icons/Lock';
+import Earth from '@strapi/icons/Earth';
 import { Box } from '@strapi/design-system/Box';
+import { Tooltip } from '@strapi/design-system';
 import {
   Card,
   CardHeader,
@@ -17,7 +20,7 @@ import {
 import { Icon } from '@strapi/design-system/Icon';
 import { Loader } from '@strapi/design-system/Loader';
 
-import { getThumbnail } from '../../services/strapi';
+import { getMuxThumbnail, getThumbnail } from '../../services/strapi';
 import getTrad from '../../utils/getTrad';
 import { secondsToFormattedString } from '../../utils/date-time';
 import { MuxAsset } from '../../../../server/content-types/mux-asset/types';
@@ -33,17 +36,27 @@ const CardTitleStyled = styled(CardTitle)`
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   min-height: 2.66em;
+
+  svg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 `;
 
 interface DefaultProps {
-  onClick: (muxAsset:MuxAsset) => void;
+  onClick: (muxAsset: MuxAsset) => void;
 }
 interface Props extends DefaultProps {
   muxAsset: MuxAsset;
 }
 
-const AssetCard = (props:Props) => {
+const AssetCard = (props: Props) => {
   const { muxAsset, onClick } = props;
+
+  console.log(muxAsset);
+
+  const [thumbnailImageUrl, setThumbnailImageUrl] = useState('');
 
   const { formatMessage } = useIntl();
 
@@ -51,54 +64,68 @@ const AssetCard = (props:Props) => {
 
   const renderCardAssetStatus = React.useCallback(() => {
     if (muxAsset.error_message !== null) {
-      return (<Icon color="danger500" as={ExclamationMarkCircle} />);
-    }
-    else if (isLoading) {
-      return (<Loader small>{formatMessage({ id: getTrad('AssetCard.loading'), defaultMessage: 'Loading' })}</Loader>);
+      return <Icon color="danger500" as={ExclamationMarkCircle} />;
+    } else if (isLoading) {
+      return <Loader small>{formatMessage({ id: getTrad('AssetCard.loading'), defaultMessage: 'Loading' })}</Loader>;
     }
   }, [muxAsset]);
 
-  const thumbnailImageUrl = muxAsset.playback_id !== null ? 
-    // If we have a playback_id, construct a thumbnail url
-    getThumbnail(muxAsset.playback_id) :
-    // Else, we use a transparent single-pixel png data uri
-    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+  useEffect(() => {
+    if (muxAsset.playback_id !== null && muxAsset.signed) {
+      // If we have a playback_id and signed, construct a signed thumbnail url
+      getMuxThumbnail(muxAsset.playback_id).then((data) => setThumbnailImageUrl(data as string));
+    } else if (muxAsset.playback_id !== null && !muxAsset.signed) {
+      // If we have a playback_id and public, construct a public thumbnail url
+      setThumbnailImageUrl(getThumbnail(muxAsset.playback_id) as string);
+    } else {
+      // Else, we use a transparent single-pixel png data uri
+      setThumbnailImageUrl(
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+      );
+    }
+  }, []);
 
   const handleOnClick = () => {
     onClick(muxAsset);
-  }
+  };
 
-  const loadingTitle = isLoading && formatMessage({
-    id: getTrad('AssetCard.is-loading'),
-    defaultMessage: 'Asset is being processed'
-  });
+  const loadingTitle =
+    isLoading &&
+    formatMessage({
+      id: getTrad('AssetCard.is-loading'),
+      defaultMessage: 'Asset is being processed',
+    });
 
-  const errorTitle = isLoading && formatMessage({
-    id: getTrad('AssetCard.is-error'),
-    defaultMessage: 'Asset encountered an error'
-  });
+  const errorTitle =
+    isLoading &&
+    formatMessage({
+      id: getTrad('AssetCard.is-error'),
+      defaultMessage: 'Asset encountered an error',
+    });
 
   return (
     <BoxStyled onClick={handleOnClick} title={errorTitle || loadingTitle || undefined}>
       <Card>
         <CardHeader>
-          <CardAsset src={thumbnailImageUrl}>
-            {renderCardAssetStatus()}
-          </CardAsset>
-          {muxAsset.duration && (<CardTimer>{secondsToFormattedString(muxAsset.duration)}</CardTimer>)}
+          <CardAsset src={thumbnailImageUrl}>{renderCardAssetStatus()}</CardAsset>
+          {muxAsset.duration && <CardTimer>{secondsToFormattedString(muxAsset.duration)}</CardTimer>}
         </CardHeader>
         <CardBody>
           <CardContent>
             <CardTitleStyled title={muxAsset.title}>{muxAsset.title}</CardTitleStyled>
             <CardSubtitle>
-              {
-                muxAsset.aspect_ratio ?? formatMessage({
+              {muxAsset.aspect_ratio ??
+                formatMessage({
                   id: getTrad('AssetCard.no-aspect-ratio'),
-                  defaultMessage: 'No aspect ratio'
-                })
-              }
+                  defaultMessage: 'No aspect ratio',
+                })}
             </CardSubtitle>
           </CardContent>
+          <CardBadge>
+            <Tooltip description={muxAsset.signed ? 'Private Playback' : 'Public Playback'}>
+              <Icon as={muxAsset.signed ? Lock : Earth} />
+            </Tooltip>
+          </CardBadge>
           {/* <CardBadge>Video | Audio</CardBadge> */}
         </CardBody>
       </Card>
@@ -107,7 +134,7 @@ const AssetCard = (props:Props) => {
 };
 
 AssetCard.defaultProps = {
-  onClick: () => {}
+  onClick: () => {},
 } as DefaultProps;
 
 export default AssetCard;

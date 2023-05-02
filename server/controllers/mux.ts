@@ -74,8 +74,16 @@ const processWebhookEvent = async (webhookEvent: any) => {
 // Rage, rage against the dying of the light.
 const thumbnail = async (ctx: Context) => {
   const { playbackId } = ctx.params;
+  const { signed } = ctx.query;
 
-  const response = await axios.get(`https://image.mux.com/${playbackId}/thumbnail.png`, {
+  let imageUrl = `https://image.mux.com/${playbackId}/thumbnail.jpg`;
+
+  if (signed) {
+    const token = await getService('mux').signPlaybackId(playbackId, 'thumbnail');
+    imageUrl += `?token=${token}`;
+  }
+
+  const response = await axios.get(imageUrl, {
     params: ctx.query,
     responseType: 'stream',
   });
@@ -85,15 +93,16 @@ const thumbnail = async (ctx: Context) => {
 };
 
 const submitDirectUpload = async (ctx: Context) => {
-  const { title, origin } = ctx.request.body;
+  const { title, origin, signed } = ctx.request.body;
 
   const cors = origin || ctx.request.header.origin;
 
-  const result = await getService('mux').getDirectUploadUrl(cors);
+  const result = await getService('mux').getDirectUploadUrl(signed, cors);
 
   const data = {
     title,
     upload_id: result.id,
+    signed,
   };
 
   await strapi.entityService.create(model, { data });
@@ -214,10 +223,20 @@ const muxWebhookHandler = async (ctx: Context) => {
   }
 };
 
+const signMuxPlaybackId = async (ctx: Context) => {
+  const { playbackId } = ctx.params;
+  const { type } = ctx.query;
+
+  const result = await getService('mux').signPlaybackId(playbackId, type as string);
+
+  ctx.send(result);
+};
+
 export = {
   submitDirectUpload,
   submitRemoteUpload,
   deleteMuxAsset,
   muxWebhookHandler,
   thumbnail,
+  signMuxPlaybackId,
 };
