@@ -3,13 +3,16 @@ type ForEachRateLimitCallback<T> = (item: T, index: number, array: Array<T>) => 
 interface ForEachRateLimitOptions {
   count?: number;
   interval?: number;
-};
+}
 
 const forEachRateLimit = <T>(array: Array<T>, fn: ForEachRateLimitCallback<T>, options?: ForEachRateLimitOptions) => {
-  const { count, interval } = Object.assign({
-    count: 1,
-    interval: 1000
-  }, options);
+  const { count, interval } = Object.assign(
+    {
+      count: 1,
+      interval: 1000,
+    },
+    options
+  );
 
   const state = { startIndex: 0 };
 

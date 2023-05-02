@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import MuxPlayer from '@mux/mux-player-react';
 
 import pluginPkg from './../../../../package.json';
-import { getThumbnail } from '../../services/strapi';
+import { getThumbnail, getMuxThumbnail, getPlaybackToken } from '../../services/strapi';
 import { MuxAsset } from '../../../../server/content-types/mux-asset/types';
 
 interface Props {
@@ -16,15 +16,23 @@ const MuxPlayerStyled = styled(MuxPlayer)`
 
 const PreviewPlayer = (props: Props) => {
   const { muxAsset } = props;
+  const [playbackToken, setPlaybackToken] = useState('');
+  const [thumbnailToken, setThumbnailToken] = useState('');
 
   if (muxAsset === undefined || !muxAsset.playback_id) return null;
 
-  const posterUrl = getThumbnail(muxAsset.playback_id);
+  useEffect(() => {
+    if (muxAsset.signed) {
+      getPlaybackToken(muxAsset.playback_id, 'video').then((data) => setPlaybackToken(data.token));
+      getPlaybackToken(muxAsset.playback_id, 'thumbnail').then((data) => setThumbnailToken(data.token));
+    }
+  }, []);
 
   return (
     <MuxPlayerStyled
       playbackId={muxAsset.playback_id}
-      poster={posterUrl}
+      playback-token={playbackToken}
+      thumbnail-token={thumbnailToken}
       metadata={{
         video_id: muxAsset.id,
         video_title: muxAsset.title,

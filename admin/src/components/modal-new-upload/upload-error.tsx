@@ -11,7 +11,7 @@ import { Typography } from '@strapi/design-system/Typography';
 import getTrad from '../../utils/getTrad';
 
 const IconStyled = styled(Icon)`
-  display: inline-block
+  display: inline-block;
 `;
 
 interface Props {
@@ -22,38 +22,36 @@ const UploadError = (props: Props) => {
   const { message } = props;
 
   const { formatMessage } = useIntl();
-  
+
   return (
     <Stack>
       <Box paddingTop={5}>
         <Flex justifyContent="center">
           <Typography variant="alpha">
-            {
-              formatMessage({
-                id: getTrad('UploadError.upload-error'),
-                defaultMessage: 'Upload Error'
-              })
-            }
-            &nbsp;<IconStyled color="danger600"><ExclamationMarkCircle /></IconStyled>
+            {formatMessage({
+              id: getTrad('UploadError.upload-error'),
+              defaultMessage: 'Upload Error',
+            })}
+            &nbsp;
+            <IconStyled color="danger600">
+              <ExclamationMarkCircle />
+            </IconStyled>
           </Typography>
         </Flex>
       </Box>
       <Box paddingTop={5}>
         <Typography variant="omega">
-          {
-            formatMessage({
-              id: getTrad('UploadError.message'),
-              defaultMessage: 'An error occurred while uploading the file.  Submit an issue with the following error message'
-            })
-          }
+          {formatMessage({
+            id: getTrad('UploadError.message'),
+            defaultMessage:
+              'An error occurred while uploading the file.  Submit an issue with the following error message',
+          })}
           &nbsp;-&nbsp;
           <a href="https://github.com/muxinc/strapi-plugin-mux-video-uploader/issues" target="_blank">
-            {
-              formatMessage({
-                id: getTrad('UploadError.issues'),
-                defaultMessage: 'File issue'
-              })
-            }
+            {formatMessage({
+              id: getTrad('UploadError.issues'),
+              defaultMessage: 'File issue',
+            })}
           </a>
         </Typography>
       </Box>

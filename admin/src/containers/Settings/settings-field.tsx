@@ -21,7 +21,7 @@ interface Props {
   description?: string;
   tooltip?: string;
   detailsLink?: string;
-  error?: string
+  error?: string;
   onChange?: (e: React.ChangeEvent<any>) => void;
 }
 
@@ -38,8 +38,19 @@ const TooltipButtonStyled = styled.button`
 `;
 
 const SettingsField = (props: Props) => {
-  const { name, label, value, isPassword, placeholder, description, tooltip, detailsLink, error, onChange = () => { } } = props;
-  
+  const {
+    name,
+    label,
+    value,
+    isPassword,
+    placeholder,
+    description,
+    tooltip,
+    detailsLink,
+    error,
+    onChange = () => {},
+  } = props;
+
   const { formatMessage } = useIntl();
 
   return (
@@ -48,28 +59,27 @@ const SettingsField = (props: Props) => {
         <Flex>
           <FieldLabelStyled>{label}</FieldLabelStyled>
           <Box paddingLeft={2}>
-            {
-              tooltip && (
-                <Tooltip description={tooltip}>
-                  <TooltipButtonStyled
-                    type='button'
-                    aria-label={formatMessage({ id: getTrad('SettingsField.tooltip-label'), defaultMessage: 'Information about the field' })}
-                  >
-                    <Icon as={Information} color="neutral800" aria-hidden={true} />
-                  </TooltipButtonStyled>
-                </Tooltip>
-              )
-            }
+            {tooltip && (
+              <Tooltip description={tooltip}>
+                <TooltipButtonStyled
+                  type="button"
+                  aria-label={formatMessage({
+                    id: getTrad('SettingsField.tooltip-label'),
+                    defaultMessage: 'Information about the field',
+                  })}
+                >
+                  <Icon as={Information} color="neutral800" aria-hidden={true} />
+                </TooltipButtonStyled>
+              </Tooltip>
+            )}
           </Box>
-          {
-            detailsLink && (
-              <Flex width="100%" justifyContent="flex-end">
-                <Link isExternal href={detailsLink}>
-                  {formatMessage({ id: getTrad('SettingsField.details-label'), defaultMessage: 'Details' })}
-                </Link>
-              </Flex>
-            )
-          }
+          {detailsLink && (
+            <Flex width="100%" justifyContent="flex-end">
+              <Link isExternal href={detailsLink}>
+                {formatMessage({ id: getTrad('SettingsField.details-label'), defaultMessage: 'Details' })}
+              </Link>
+            </Flex>
+          )}
         </Flex>
         <FieldInput
           placeholder={placeholder}

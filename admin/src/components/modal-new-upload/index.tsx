@@ -13,6 +13,7 @@ import { ModalBody, ModalFooter } from '@strapi/design-system/ModalLayout';
 import { Tabs, Tab, TabGroup, TabPanels, TabPanel } from '@strapi/design-system/Tabs';
 import { TextInput } from '@strapi/design-system/TextInput';
 import { Typography } from '@strapi/design-system/Typography';
+import { ToggleInput } from '@strapi/design-system/ToggleInput';
 
 import { submitUpload, UploadInfo } from '../../services/strapi';
 import Uploaded from './uploaded';
@@ -27,38 +28,41 @@ interface FormValues {
   from_url_title: string;
   file?: File[];
   url?: string;
+  signed: boolean;
 }
 
 const INITIAL_VALUES: FormValues = {
   from_computer_title: '',
   from_url_title: '',
   file: undefined,
-  url: undefined
+  url: undefined,
+  signed: false,
 };
 
 interface DefaultProps {
   onToggle: (refresh: boolean) => void;
 }
 
-interface Props extends DefaultProps{
+interface Props extends DefaultProps {
   isOpen: boolean;
 }
 
-const ModalNewUpload = (props:Props) => {
+const ModalNewUpload = (props: Props) => {
   const { isOpen, onToggle } = props;
 
   const [activeTab, setActiveTab] = React.useState<number>(0);
   const [uploadPercent, setUploadPercent] = React.useState<number>();
   const [isComplete, setIsComplete] = React.useState<boolean>(false);
+  const [isSigned, setIsSigned] = React.useState<boolean>(false);
   const [uploadError, setUploadError] = React.useState<string>();
 
   const uploadRef = React.useRef<UpChunk | undefined>();
-  
+
   const { formatMessage } = useIntl();
 
   const uploadFile = (endpoint: string, file: File) => {
     setUploadPercent(0);
-    
+
     uploadRef.current = createUpload({ endpoint, file });
     uploadRef.current.on('error', (err) => setUploadError(err.detail));
     uploadRef.current.on('progress', (progressEvt) => {
@@ -80,12 +84,12 @@ const ModalNewUpload = (props:Props) => {
       if (!body.from_computer_title) {
         errors.from_computer_title = formatMessage({
           id: getTrad('Common.title-required'),
-          defaultMessage: 'No title specified'
+          defaultMessage: 'No title specified',
         });
       } else if (body.from_computer_title.length < 3) {
         errors.from_computer_title = formatMessage({
           id: getTrad('Common.title-length'),
-          defaultMessage: 'Needs to be at least 3 letters'
+          defaultMessage: 'Needs to be at least 3 letters',
         });
       }
 
@@ -93,26 +97,25 @@ const ModalNewUpload = (props:Props) => {
         uploadInfo = {
           origin: 'from_computer',
           title: body.from_computer_title,
-          media: body.file
+          media: body.file,
+          signed: body.signed,
         };
       } else {
         errors.file = formatMessage({
           id: getTrad('Common.file-required'),
-          defaultMessage: 'File needs to be selected'
+          defaultMessage: 'File needs to be selected',
         });
       }
-    }
-
-    else if (activeTab === 1) {
+    } else if (activeTab === 1) {
       if (!body.from_url_title) {
         errors.from_url_title = formatMessage({
           id: getTrad('Common.title-required'),
-          defaultMessage: 'No title specified'
+          defaultMessage: 'No title specified',
         });
       } else if (body.from_url_title.length < 3) {
         errors.from_url_title = formatMessage({
           id: getTrad('Common.title-length'),
-          defaultMessage: 'Needs to be at least 3 letters'
+          defaultMessage: 'Needs to be at least 3 letters',
         });
       }
 
@@ -120,12 +123,13 @@ const ModalNewUpload = (props:Props) => {
         uploadInfo = {
           origin: 'from_url',
           title: body.from_url_title,
-          media: body.url
+          media: body.url,
+          signed: body.signed,
         };
       } else {
         errors.url = formatMessage({
           id: getTrad('Common.url-required'),
-          defaultMessage: 'No url specified'
+          defaultMessage: 'No url specified',
         });
       }
     }
@@ -136,7 +140,7 @@ const ModalNewUpload = (props:Props) => {
 
     return uploadInfo!;
   };
-  
+
   const handleOnSubmit = async (body: FormValues, { resetForm, setErrors }: FormikHelpers<FormValues>) => {
     let uploadInfo;
     try {
@@ -150,8 +154,8 @@ const ModalNewUpload = (props:Props) => {
     let result;
     try {
       result = await submitUpload(uploadInfo);
-    } catch(err) {
-      switch(typeof err) {
+    } catch (err) {
+      switch (typeof err) {
         case 'string': {
           setUploadError(err);
           break;
@@ -161,10 +165,12 @@ const ModalNewUpload = (props:Props) => {
           break;
         }
         default: {
-          setUploadError(formatMessage({
-            id: getTrad('ModalNewUpload.unknown-error'),
-            defaultMessage: 'Unknown error encountered'
-          }));
+          setUploadError(
+            formatMessage({
+              id: getTrad('ModalNewUpload.unknown-error'),
+              defaultMessage: 'Unknown error encountered',
+            })
+          );
 
           break;
         }
@@ -175,18 +181,20 @@ const ModalNewUpload = (props:Props) => {
 
     const { statusCode, data } = result;
 
-    if(statusCode && statusCode !== 200) {
+    if (statusCode && statusCode !== 200) {
       return data?.errors;
-    } else if(activeTab === 0) {
+    } else if (activeTab === 0) {
       uploadFile(result.url, uploadInfo.media[0] as File);
-    } else if(activeTab === 1) {
+    } else if (activeTab === 1) {
       setUploadPercent(100);
       setIsComplete(true);
     } else {
-      console.log(formatMessage({
-        id: getTrad('ModalNewUpload.unresolvable-upload-state'),
-        defaultMessage: 'Unable to resolve upload state'
-      }));
+      console.log(
+        formatMessage({
+          id: getTrad('ModalNewUpload.unresolvable-upload-state'),
+          defaultMessage: 'Unable to resolve upload state',
+        })
+      );
     }
 
     resetForm();
@@ -213,31 +221,27 @@ const ModalNewUpload = (props:Props) => {
     handleChange: (e: React.ChangeEvent<any>) => void
   ) => {
     if (uploadError) {
-      return (<UploadError message={uploadError} />)
+      return <UploadError message={uploadError} />;
     } else if (isComplete) {
-      return (<Uploaded />);
+      return <Uploaded />;
     } else if (uploadPercent !== undefined) {
-      return (<Uploading percent={uploadPercent} />);
+      return <Uploading percent={uploadPercent} />;
     } else {
       return (
         <Box background="neutral0">
           <TabGroup label="Upload origin" variant="simple" onTabChange={handleOnTabChange}>
             <Tabs>
               <Tab>
-                {
-                  formatMessage({
-                    id: getTrad('ModalNewUpload.from-computer-tab-label'),
-                    defaultMessage: 'From computer'
-                  })
-                }
+                {formatMessage({
+                  id: getTrad('ModalNewUpload.from-computer-tab-label'),
+                  defaultMessage: 'From computer',
+                })}
               </Tab>
               <Tab>
-                {
-                  formatMessage({
-                    id: getTrad('ModalNewUpload.from-url-tab-label'),
-                    defaultMessage: 'From url'
-                  })
-                }
+                {formatMessage({
+                  id: getTrad('ModalNewUpload.from-url-tab-label'),
+                  defaultMessage: 'From url',
+                })}
               </Tab>
             </Tabs>
             <Divider />
@@ -248,12 +252,10 @@ const ModalNewUpload = (props:Props) => {
                     <GridItem col={6} xs={12} s={12}>
                       <Box paddingTop={2} paddingBottom={2}>
                         <TextInput
-                          label={
-                            formatMessage({
-                              id: getTrad('Common.title-label'),
-                              defaultMessage: 'Title'
-                            })
-                          }
+                          label={formatMessage({
+                            id: getTrad('Common.title-label'),
+                            defaultMessage: 'Title',
+                          })}
                           name="from_computer_title"
                           value={values.from_computer_title}
                           error={errors.from_computer_title}
@@ -264,14 +266,31 @@ const ModalNewUpload = (props:Props) => {
                     </GridItem>
                     <GridItem col={8} xs={12} s={12}>
                       <Box paddingTop={2} paddingBottom={2}>
+                        <ToggleInput
+                          label={formatMessage({
+                            id: getTrad('Common.signed-label'),
+                            defaultMessage: 'Signed Playback URL',
+                          })}
+                          name="Private"
+                          value={values.signed}
+                          onLabel="on"
+                          offLabel="off"
+                          checked={isSigned}
+                          onChange={(e: any) => {
+                            setIsSigned(e.target.checked);
+                            setFieldValue('signed', e.target.checked);
+                          }}
+                        />
+                      </Box>
+                    </GridItem>
+                    <GridItem col={8} xs={12} s={12}>
+                      <Box paddingTop={2} paddingBottom={2}>
                         <FileInput
                           name="file"
-                          label={
-                            formatMessage({
-                              id: getTrad('Common.file-label'),
-                              defaultMessage: 'File'
-                            })
-                          }
+                          label={formatMessage({
+                            id: getTrad('Common.file-label'),
+                            defaultMessage: 'File',
+                          })}
                           error={errors.file}
                           required
                           onFiles={(files: File[]) => setFieldValue('file', files)}
@@ -287,12 +306,10 @@ const ModalNewUpload = (props:Props) => {
                     <GridItem col={6} xs={12} s={12}>
                       <Box paddingTop={2} paddingBottom={2}>
                         <TextInput
-                          label={
-                            formatMessage({
-                              id: getTrad('Common.title-label'),
-                              defaultMessage: 'Title'
-                            })
-                          }
+                          label={formatMessage({
+                            id: getTrad('Common.title-label'),
+                            defaultMessage: 'Title',
+                          })}
                           name="from_url_title"
                           value={values.from_url_title}
                           error={errors.from_url_title}
@@ -304,12 +321,10 @@ const ModalNewUpload = (props:Props) => {
                     <GridItem col={8} xs={12} s={12}>
                       <Box paddingTop={2} paddingBottom={2}>
                         <TextInput
-                          label={
-                            formatMessage({
-                              id: getTrad('Common.url-label'),
-                              defaultMessage: 'Url'
-                            })
-                          }
+                          label={formatMessage({
+                            id: getTrad('Common.url-label'),
+                            defaultMessage: 'Url',
+                          })}
                           name="url"
                           value={values.url}
                           error={errors.url}
@@ -329,61 +344,57 @@ const ModalNewUpload = (props:Props) => {
   };
 
   const renderFooter = () => {
-    if(uploadError || isComplete) {
+    if (uploadError || isComplete) {
       return (
-        <ModalFooter endActions={
-          <>
-            <Button variant='secondary' startIcon={<Plus />} onClick={handleOnReset}>
-            {
-              formatMessage({
-                id: getTrad('Uploaded.upload-another-button'),
-                defaultMessage: 'Upload another asset'
-              })
-            }
-            </Button>
-            <Button onClick={handleOnModalFinish}>
-            {
-              formatMessage({
-                id: getTrad('Common.finish-button'),
-                defaultMessage: 'Finish'
-              })
-            }
-            </Button>
-          </>
-        } />
-      );
-    } else if(uploadPercent !== undefined) {
-      return (
-        <ModalFooter startActions={<Button onClick={handleOnAbort} variant="tertiary">
-          {
-            formatMessage({
-              id: getTrad('Common.cancel-button'),
-              defaultMessage: 'Cancel'
-            })
+        <ModalFooter
+          endActions={
+            <>
+              <Button variant="secondary" startIcon={<Plus />} onClick={handleOnReset}>
+                {formatMessage({
+                  id: getTrad('Uploaded.upload-another-button'),
+                  defaultMessage: 'Upload another asset',
+                })}
+              </Button>
+              <Button onClick={handleOnModalFinish}>
+                {formatMessage({
+                  id: getTrad('Common.finish-button'),
+                  defaultMessage: 'Finish',
+                })}
+              </Button>
+            </>
           }
-        </Button>} />
+        />
+      );
+    } else if (uploadPercent !== undefined) {
+      return (
+        <ModalFooter
+          startActions={
+            <Button onClick={handleOnAbort} variant="tertiary">
+              {formatMessage({
+                id: getTrad('Common.cancel-button'),
+                defaultMessage: 'Cancel',
+              })}
+            </Button>
+          }
+        />
       );
     } else {
       return (
         <ModalFooter
           startActions={
             <Button onClick={handleOnModalClose} variant="tertiary">
-              {
-                formatMessage({
-                  id: getTrad('Common.cancel-button'),
-                  defaultMessage: 'Cancel'
-                })
-              }
+              {formatMessage({
+                id: getTrad('Common.cancel-button'),
+                defaultMessage: 'Cancel',
+              })}
             </Button>
           }
           endActions={
             <Button type="submit">
-              {
-                formatMessage({
-                  id: getTrad('Common.save-button'),
-                  defaultMessage: 'Save'
-                })
-              }
+              {formatMessage({
+                id: getTrad('Common.save-button'),
+                defaultMessage: 'Save',
+              })}
             </Button>
           }
         />
@@ -395,7 +406,7 @@ const ModalNewUpload = (props:Props) => {
     initialValues: INITIAL_VALUES,
     enableReinitialize: true,
     validateOnChange: false,
-    onSubmit: handleOnSubmit
+    onSubmit: handleOnSubmit,
   });
 
   const handleOnReset = () => {
@@ -404,19 +415,17 @@ const ModalNewUpload = (props:Props) => {
     setIsComplete(false);
     setUploadError(undefined);
     resetForm();
-  }
+  };
 
   return (
     <>
       <ModalBlocking isOpen={isOpen}>
         <ModalHeader>
           <Typography fontWeight="bold" textColor="neutral800" as="h2" id="title">
-            {
-              formatMessage({
-                id: getTrad('ModalNewUpload.header'),
-                defaultMessage: 'New upload'
-              })
-            }
+            {formatMessage({
+              id: getTrad('ModalNewUpload.header'),
+              defaultMessage: 'New upload',
+            })}
           </Typography>
           <IconButton
             onClick={handleOnModalClose}
@@ -425,18 +434,16 @@ const ModalNewUpload = (props:Props) => {
           />
         </ModalHeader>
         <form onSubmit={handleSubmit}>
-          <ModalBody>
-            {renderBody(errors, values, setFieldValue, handleChange)}
-          </ModalBody>
+          <ModalBody>{renderBody(errors, values, setFieldValue, handleChange)}</ModalBody>
           {renderFooter()}
         </form>
       </ModalBlocking>
     </>
-  )
-}
+  );
+};
 
 ModalNewUpload.defaultProps = {
-  onToggle: () => {}
+  onToggle: () => {},
 } as DefaultProps;
 
 export default ModalNewUpload;

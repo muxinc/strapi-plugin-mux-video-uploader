@@ -18,7 +18,7 @@ const pluginPermissions = {
   mainRead,
   mainCreate,
   mainUpdate,
-  mainDelete
+  mainDelete,
 };
 
 export default pluginPermissions;

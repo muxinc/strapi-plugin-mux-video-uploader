@@ -9,7 +9,7 @@ interface Props {
   name: string;
   required?: boolean;
   onFiles: (files: File[]) => void;
-};
+}
 
 export const FileInput = ({ name, error, label, required, onFiles }: Props) => {
   const handleOnChange = (e: any) => onFiles(e.target.files);
@@ -37,5 +37,5 @@ FileInput.defaultProps = {
   label: undefined,
   error: undefined,
   required: false,
-  onFiles: () => {}
+  onFiles: () => {},
 };
