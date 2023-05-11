@@ -320,6 +320,25 @@ const ModalNewUpload = (props: Props) => {
                     </GridItem>
                     <GridItem col={8} xs={12} s={12}>
                       <Box paddingTop={2} paddingBottom={2}>
+                        <ToggleInput
+                          label={formatMessage({
+                            id: getTrad('Common.signed-label'),
+                            defaultMessage: 'Signed Playback URL',
+                          })}
+                          name="Private"
+                          value={values.signed}
+                          onLabel="on"
+                          offLabel="off"
+                          checked={isSigned}
+                          onChange={(e: any) => {
+                            setIsSigned(e.target.checked);
+                            setFieldValue('signed', e.target.checked);
+                          }}
+                        />
+                      </Box>
+                    </GridItem>
+                    <GridItem col={8} xs={12} s={12}>
+                      <Box paddingTop={2} paddingBottom={2}>
                         <TextInput
                           label={formatMessage({
                             id: getTrad('Common.url-label'),
