@@ -111,20 +111,21 @@ const submitDirectUpload = async (ctx: Context) => {
 };
 
 const submitRemoteUpload = async (ctx: Context) => {
-  const { body } = ctx.request;
+  const { title, url, signed } = ctx.request.body;
 
-  if (!body.url) {
+  if (!url) {
     ctx.badRequest('ValidationError', { errors: { url: ['url cannot be empty'] } });
 
     return;
   }
 
-  const result = await getService('mux').createAsset(body.url);
+  const result = await getService('mux').createAsset(url, signed);
 
   const data = {
     asset_id: result.id,
-    title: body.title,
-    url: body.url,
+    title: title,
+    url: url,
+    signed: signed,
   };
 
   const response = await strapi.entityService.create(model, { data });

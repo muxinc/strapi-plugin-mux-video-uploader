@@ -9,7 +9,7 @@ export interface MuxService {
   getAssetById: (assetId: string) => Promise<Asset>;
   getAssetByUploadId: (uploadId: string) => Promise<Asset>;
   getDirectUploadUrl: (signed: string, corsOrigin?: string) => Promise<Upload>;
-  createAsset: (url: string) => Promise<Asset>;
+  createAsset: (url: string, signed: string) => Promise<Asset>;
   deleteAsset: (assetId: string) => Promise<boolean>;
   signPlaybackId: (playbackId: string, type: string) => Promise<string>;
 }
@@ -46,12 +46,12 @@ export default ({ strapi }: { strapi: any }) => ({
       },
     });
   },
-  async createAsset(url: string, signed: boolean): Promise<Asset> {
+  async createAsset(url: string, signed: string): Promise<Asset> {
     const { Video } = await getMuxClient();
 
     return Video.Assets.create({
       input: url,
-      playback_policy: [signed == true ? 'signed' : 'public'],
+      playback_policy: [signed == 'true' ? 'signed' : 'public'],
     });
   },
   async deleteAsset(assetId: string): Promise<boolean> {
