@@ -68,10 +68,12 @@ export default ({ strapi }: { strapi: any }) => ({
     let baseOptions = {
       keyId: playback_signing_id,
       keySecret: playback_signing_secret,
-      expiration: type == 'video' ? '1d' : '1h',
+      expiration: type == 'video' ? '1d' : '1m',
     };
 
-    const token = JWT.signPlaybackId(playbackId, { ...baseOptions, type: type });
+    let params = { width: type == 'thumbnail' ? '512' : '' };
+
+    const token = JWT.signPlaybackId(playbackId, { ...baseOptions, type: type, params });
 
     return { token: token };
   },

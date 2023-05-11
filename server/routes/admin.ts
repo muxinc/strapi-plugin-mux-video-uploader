@@ -50,7 +50,6 @@ const routes = [
     path: '/mux-video-uploader/sign/:playbackId',
     handler: 'mux.signMuxPlaybackId',
     config: {
-      auth: false,
       prefix: false,
     },
   },
