@@ -54,8 +54,6 @@ interface Props extends DefaultProps {
 const AssetCard = (props: Props) => {
   const { muxAsset, onClick } = props;
 
-  console.log(muxAsset);
-
   const [thumbnailImageUrl, setThumbnailImageUrl] = useState('');
 
   const { formatMessage } = useIntl();

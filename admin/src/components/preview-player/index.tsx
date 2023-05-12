@@ -16,8 +16,8 @@ const MuxPlayerStyled = styled(MuxPlayer)`
 
 const PreviewPlayer = (props: Props) => {
   const { muxAsset } = props;
-  const [playbackToken, setPlaybackToken] = useState('');
-  const [thumbnailToken, setThumbnailToken] = useState('');
+  const [playbackToken, setPlaybackToken] = useState<string>('');
+  const [thumbnailToken, setThumbnailToken] = useState<string>('');
 
   if (muxAsset === undefined || !muxAsset.playback_id) return null;
 
