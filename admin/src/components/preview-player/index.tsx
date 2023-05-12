@@ -18,6 +18,7 @@ const PreviewPlayer = (props: Props) => {
   const { muxAsset } = props;
   const [playbackToken, setPlaybackToken] = useState<string>('');
   const [thumbnailToken, setThumbnailToken] = useState<string>('');
+  const [storyboardToken, setStoryboardToken] = useState<string>('');
 
   if (muxAsset === undefined || !muxAsset.playback_id) return null;
 
@@ -25,6 +26,7 @@ const PreviewPlayer = (props: Props) => {
     if (muxAsset.signed) {
       getPlaybackToken(muxAsset.playback_id, 'video').then((data) => setPlaybackToken(data.token));
       getPlaybackToken(muxAsset.playback_id, 'thumbnail').then((data) => setThumbnailToken(data.token));
+      getPlaybackToken(muxAsset.playback_id, 'storyboard').then((data) => setStoryboardToken(data.token));
     }
   }, []);
 
@@ -33,6 +35,7 @@ const PreviewPlayer = (props: Props) => {
       playbackId={muxAsset.playback_id}
       playback-token={playbackToken}
       thumbnail-token={thumbnailToken}
+      storyboard-token={storyboardToken}
       metadata={{
         video_id: muxAsset.id,
         video_title: muxAsset.title,
