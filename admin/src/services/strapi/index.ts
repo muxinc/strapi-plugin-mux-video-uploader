@@ -127,9 +127,10 @@ const deleteMuxAsset = async (muxAsset: MuxAsset): Promise<any> => {
   return await response.json();
 };
 
-const getThumbnail = (playbackId: string | null) => {
+const getThumbnail = (playbackId: string | null, token?: string | null) => {
   if (!playbackId) return undefined;
-  return `${getServiceUri()}/${pluginId}/thumbnail/${playbackId}?width=512`;
+  const tokenOut = token ? `?token=${token}` : '';
+  return `${getServiceUri()}/${pluginId}/thumbnail/${playbackId}${tokenOut}`;
 };
 
 const getPlaybackToken = async (playbackId: string | null, type: string) => {

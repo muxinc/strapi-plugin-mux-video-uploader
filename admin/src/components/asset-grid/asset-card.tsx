@@ -20,13 +20,20 @@ import {
 import { Icon } from '@strapi/design-system/Icon';
 import { Loader } from '@strapi/design-system/Loader';
 
-import { getMuxThumbnail, getThumbnail } from '../../services/strapi';
+import { getThumbnail } from '../../services/strapi';
+import { getPlaybackToken } from '../../services/strapi';
 import getTrad from '../../utils/getTrad';
 import { secondsToFormattedString } from '../../utils/date-time';
 import { MuxAsset } from '../../../../server/content-types/mux-asset/types';
 
 const BoxStyled = styled(Box)`
   cursor: pointer;
+
+  svg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 `;
 
 const CardTitleStyled = styled(CardTitle)`
@@ -36,12 +43,6 @@ const CardTitleStyled = styled(CardTitle)`
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   min-height: 2.66em;
-
-  svg {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
 `;
 
 interface DefaultProps {
@@ -54,11 +55,25 @@ interface Props extends DefaultProps {
 const AssetCard = (props: Props) => {
   const { muxAsset, onClick } = props;
 
-  const [thumbnailImageUrl, setThumbnailImageUrl] = useState('');
+  const [thumbnailImageUrl, setThumbnailImageUrl] = useState<string>('');
 
   const { formatMessage } = useIntl();
 
   const isLoading = muxAsset.asset_id === null;
+
+  useEffect(() => {
+    if (muxAsset.playback_id !== null && muxAsset.signed) {
+      getPlaybackToken(muxAsset.playback_id, 'thumbnail')
+        .then((data) => getThumbnail(muxAsset.playback_id, data.token))
+        .then((image) => setThumbnailImageUrl(image as string));
+    } else if (muxAsset.playback_id !== null && !muxAsset.signed) {
+      setThumbnailImageUrl(getThumbnail(muxAsset.playback_id) as string);
+    } else {
+      setThumbnailImageUrl(
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+      );
+    }
+  }, []);
 
   const renderCardAssetStatus = React.useCallback(() => {
     if (muxAsset.error_message !== null) {
@@ -67,21 +82,6 @@ const AssetCard = (props: Props) => {
       return <Loader small>{formatMessage({ id: getTrad('AssetCard.loading'), defaultMessage: 'Loading' })}</Loader>;
     }
   }, [muxAsset]);
-
-  useEffect(() => {
-    if (muxAsset.playback_id !== null && muxAsset.signed) {
-      // If we have a playback_id and signed, construct a signed thumbnail url
-      getMuxThumbnail(muxAsset.playback_id).then((data) => setThumbnailImageUrl(data as string));
-    } else if (muxAsset.playback_id !== null && !muxAsset.signed) {
-      // If we have a playback_id and public, construct a public thumbnail url
-      setThumbnailImageUrl(getThumbnail(muxAsset.playback_id) as string);
-    } else {
-      // Else, we use a transparent single-pixel png data uri
-      setThumbnailImageUrl(
-        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
-      );
-    }
-  }, []);
 
   const handleOnClick = () => {
     onClick(muxAsset);
