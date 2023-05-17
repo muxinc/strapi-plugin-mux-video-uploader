@@ -74,17 +74,15 @@ const processWebhookEvent = async (webhookEvent: any) => {
 // Rage, rage against the dying of the light.
 const thumbnail = async (ctx: Context) => {
   const { playbackId } = ctx.params;
-  const { signed } = ctx.query;
+  const { token } = ctx.query;
 
   let imageUrl = `https://image.mux.com/${playbackId}/thumbnail.jpg`;
 
-  if (signed) {
-    const token = await getService('mux').signPlaybackId(playbackId, 'thumbnail');
+  if (token) {
     imageUrl += `?token=${token}`;
   }
 
   const response = await axios.get(imageUrl, {
-    params: ctx.query,
     responseType: 'stream',
   });
 

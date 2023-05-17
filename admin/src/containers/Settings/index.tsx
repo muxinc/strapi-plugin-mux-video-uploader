@@ -231,29 +231,6 @@ const Settings = () => {
               <Grid gap={6}>
                 <GridItem col={6} s={12}>
                   <SettingsField
-                    name="playback_signing_secret"
-                    label={formatMessage({
-                      id: getTrad('Settings.playback-signing-secret-label'),
-                      defaultMessage: 'Playback Signing Secret',
-                    })}
-                    value={values.playback_signing_secret}
-                    placeholder={formatMessage({
-                      id: getTrad('Settings.playback-signing-secret-placeholder'),
-                      defaultMessage: 'Mux Playback Signing Secret',
-                    })}
-                    description={formatMessage({
-                      id: getTrad('Settings.playback-signing-secret-description'),
-                      defaultMessage: 'Generated in the Mux Dashboard and used for signing Playback Ids',
-                    })}
-                    detailsLink="https://docs.mux.com/guides/video/verify-webhook-signatures"
-                    error={errors && errors.webhook_signing_secret}
-                    onChange={handleChange}
-                  />
-                </GridItem>
-              </Grid>
-              <Grid gap={6}>
-                <GridItem col={6} s={12}>
-                  <SettingsField
                     name="playback_signing_id"
                     label={formatMessage({
                       id: getTrad('Settings.playback-signing-id-label'),
@@ -266,6 +243,29 @@ const Settings = () => {
                     })}
                     description={formatMessage({
                       id: getTrad('Settings.playback-signing-id-description'),
+                      defaultMessage: 'Generated in the Mux Dashboard and used for signing Playback Ids',
+                    })}
+                    detailsLink="https://docs.mux.com/guides/video/verify-webhook-signatures"
+                    error={errors && errors.webhook_signing_secret}
+                    onChange={handleChange}
+                  />
+                </GridItem>
+              </Grid>
+              <Grid gap={6}>
+                <GridItem col={6} s={12}>
+                  <SettingsField
+                    name="playback_signing_secret"
+                    label={formatMessage({
+                      id: getTrad('Settings.playback-signing-secret-label'),
+                      defaultMessage: 'Playback Signing Secret',
+                    })}
+                    value={values.playback_signing_secret}
+                    placeholder={formatMessage({
+                      id: getTrad('Settings.playback-signing-secret-placeholder'),
+                      defaultMessage: 'Mux Playback Signing Secret',
+                    })}
+                    description={formatMessage({
+                      id: getTrad('Settings.playback-signing-secret-description'),
                       defaultMessage: 'Generated in the Mux Dashboard and used for signing Playback Ids',
                     })}
                     detailsLink="https://docs.mux.com/guides/video/verify-webhook-signatures"
