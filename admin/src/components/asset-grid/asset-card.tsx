@@ -66,7 +66,7 @@ const AssetCard = (props: Props) => {
       getPlaybackToken(muxAsset.playback_id, 'thumbnail')
         .then((data) => getThumbnail(muxAsset.playback_id, data.token))
         .then((image) => setThumbnailImageUrl(image as string));
-    } else if (muxAsset.playback_id !== null && !muxAsset.signed) {
+    } else if (muxAsset.playback_id !== null) {
       setThumbnailImageUrl(getThumbnail(muxAsset.playback_id) as string);
     } else {
       setThumbnailImageUrl(

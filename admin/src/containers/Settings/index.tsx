@@ -246,7 +246,7 @@ const Settings = () => {
                       defaultMessage: 'Generated in the Mux Dashboard and used for signing Playback Ids',
                     })}
                     detailsLink="https://docs.mux.com/guides/video/verify-webhook-signatures"
-                    error={errors && errors.webhook_signing_secret}
+                    error={errors && errors.playback_signing_id}
                     onChange={handleChange}
                   />
                 </GridItem>
@@ -269,8 +269,9 @@ const Settings = () => {
                       defaultMessage: 'Generated in the Mux Dashboard and used for signing Playback Ids',
                     })}
                     detailsLink="https://docs.mux.com/guides/video/verify-webhook-signatures"
-                    error={errors && errors.webhook_signing_secret}
+                    error={errors && errors.playback_signing_secret}
                     onChange={handleChange}
+                    isPassword
                   />
                 </GridItem>
               </Grid>
