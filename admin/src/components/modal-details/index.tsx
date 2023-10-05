@@ -273,55 +273,55 @@ const ModalDetails = (props: Props) => {
               </Button>
             }
           />
+          <Dialog
+            onClose={toggleDeleteWarning}
+            title={formatMessage({
+              id: getTrad('ModalDetails.delete-confirmation-header'),
+              defaultMessage: 'Delete confirmation',
+            })}
+            isOpen={showDeleteWarning}
+          >
+            <DialogBody icon={<ExclamationMarkCircle />}>
+              <Stack>
+                <Flex justifyContent="center">
+                  <Typography>
+                    {formatMessage({
+                      id: getTrad('ModalDetails.delete-confirmation-prompt'),
+                      defaultMessage: 'Are you sure you want to delete this item?',
+                    })}
+                  </Typography>
+                </Flex>
+                <Flex justifyContent="center">
+                  <Typography>
+                    {formatMessage({
+                      id: getTrad('ModalDetails.delete-confirmation-callout'),
+                      defaultMessage: 'This will also delete the Asset from Mux.',
+                    })}
+                  </Typography>
+                </Flex>
+              </Stack>
+            </DialogBody>
+            <DialogFooter
+              startAction={
+                <Button onClick={toggleDeleteWarning} variant="tertiary">
+                  {formatMessage({
+                    id: getTrad('Common.cancel-button'),
+                    defaultMessage: 'Cancel',
+                  })}
+                </Button>
+              }
+              endAction={
+                <Button variant="danger-light" startIcon={<Trash />} onClick={handleOnDeleteConfirm}>
+                  {formatMessage({
+                    id: getTrad('Common.confirm-button'),
+                    defaultMessage: 'Confirm',
+                  })}
+                </Button>
+              }
+            />
+          </Dialog>
         </form>
       </ModalLayout>
-      <Dialog
-        onClose={toggleDeleteWarning}
-        title={formatMessage({
-          id: getTrad('ModalDetails.delete-confirmation-header'),
-          defaultMessage: 'Delete confirmation',
-        })}
-        isOpen={showDeleteWarning}
-      >
-        <DialogBody icon={<ExclamationMarkCircle />}>
-          <Stack>
-            <Flex justifyContent="center">
-              <Typography>
-                {formatMessage({
-                  id: getTrad('ModalDetails.delete-confirmation-prompt'),
-                  defaultMessage: 'Are you sure you want to delete this item?',
-                })}
-              </Typography>
-            </Flex>
-            <Flex justifyContent="center">
-              <Typography>
-                {formatMessage({
-                  id: getTrad('ModalDetails.delete-confirmation-callout'),
-                  defaultMessage: 'This will also delete the Asset from Mux.',
-                })}
-              </Typography>
-            </Flex>
-          </Stack>
-        </DialogBody>
-        <DialogFooter
-          startAction={
-            <Button onClick={toggleDeleteWarning} variant="tertiary">
-              {formatMessage({
-                id: getTrad('Common.cancel-button'),
-                defaultMessage: 'Cancel',
-              })}
-            </Button>
-          }
-          endAction={
-            <Button variant="danger-light" startIcon={<Trash />} onClick={handleOnDeleteConfirm}>
-              {formatMessage({
-                id: getTrad('Common.confirm-button'),
-                defaultMessage: 'Confirm',
-              })}
-            </Button>
-          }
-        />
-      </Dialog>
     </>
   );
 };
