@@ -66,5 +66,8 @@ export = {
       type: 'string',
       required: false,
     },
+    asset_data: {
+      type: 'json',
+    },
   },
 };

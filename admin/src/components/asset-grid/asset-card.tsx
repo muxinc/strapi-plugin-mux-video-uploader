@@ -57,7 +57,7 @@ const AssetCard = (props: Props) => {
 
   const [thumbnailImageUrl, setThumbnailImageUrl] = useState<string>('');
 
-  const { formatMessage } = useIntl();
+  const { formatMessage, formatDate } = useIntl();
 
   const isLoading = muxAsset.asset_id === null;
 
@@ -101,6 +101,28 @@ const AssetCard = (props: Props) => {
       defaultMessage: 'Asset encountered an error',
     });
 
+  const aspect_ratio = muxAsset.aspect_ratio || muxAsset.asset_data?.aspect_ratio;
+  const statusLabel = (() => {
+    if (aspect_ratio) return aspect_ratio;
+
+    if (muxAsset.isReady)
+      return formatMessage({
+        id: getTrad('AssetCard.no-aspect-ratio'),
+        defaultMessage: 'No aspect ratio',
+      });
+
+    if (muxAsset.error_message !== null)
+      return formatMessage({
+        id: getTrad('AssetCard.processing-error'),
+        defaultMessage: 'Error',
+      });
+
+    return formatMessage({
+      id: getTrad('AssetCard.processing-pending'),
+      defaultMessage: 'Processing',
+    });
+  })();
+
   return (
     <BoxStyled onClick={handleOnClick} title={errorTitle || loadingTitle || undefined}>
       <Card>
@@ -112,11 +134,7 @@ const AssetCard = (props: Props) => {
           <CardContent>
             <CardTitleStyled title={muxAsset.title}>{muxAsset.title}</CardTitleStyled>
             <CardSubtitle>
-              {muxAsset.aspect_ratio ??
-                formatMessage({
-                  id: getTrad('AssetCard.no-aspect-ratio'),
-                  defaultMessage: 'No aspect ratio',
-                })}
+              {muxAsset.createdAt ? formatDate(muxAsset.createdAt) : null} - {statusLabel}
             </CardSubtitle>
           </CardContent>
           <CardBadge>

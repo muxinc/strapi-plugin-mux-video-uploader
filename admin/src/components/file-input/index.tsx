@@ -9,9 +9,10 @@ interface Props {
   name: string;
   required?: boolean;
   onFiles: (files: File[]) => void;
+  inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 }
 
-export const FileInput = ({ name, error, label, required, onFiles }: Props) => {
+export const FileInput = ({ name, error, label, required, onFiles, inputProps }: Props) => {
   const handleOnChange = (e: any) => onFiles(e.target.files);
 
   return (
@@ -23,7 +24,7 @@ export const FileInput = ({ name, error, label, required, onFiles }: Props) => {
               <FieldLabel required={required}>{label}</FieldLabel>
             </Flex>
           )}
-          <FieldInput type="file" onChange={handleOnChange} />
+          <FieldInput type="file" onChange={handleOnChange} {...(inputProps || {})} />
           <FieldError />
         </Stack>
       </Field>

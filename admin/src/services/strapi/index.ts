@@ -3,14 +3,11 @@ import { MuxAsset, MuxAssetUpdate } from '../../../../server/content-types/mux-a
 
 import pluginId from '../../pluginId';
 import { SearchVector, SortVector } from './types';
+import { RequestedUploadConfig, UploadConfig } from '../../../../types/shared-types';
 
-export type UploadOrigin = 'from_computer' | 'from_url';
-
-export interface UploadInfo {
+export interface UploadInfo extends RequestedUploadConfig {
   title: string;
   media: File[] | string;
-  origin: UploadOrigin;
-  signed: boolean;
 }
 
 function getServiceUri() {
@@ -38,26 +35,19 @@ const setMuxSettings = (body: FormData) => {
 };
 
 const submitUpload = async (uploadInfo: UploadInfo) => {
-  const body = new FormData();
-  body.append('title', uploadInfo.title);
-  body.append('signed', uploadInfo.signed as unknown as string);
+  const uploadConfig = UploadConfig.parse(uploadInfo);
+  const body = {
+    ...uploadConfig,
+    title: uploadInfo.title,
+    url: uploadConfig.upload_type === 'url' ? (uploadInfo.media as string) : undefined,
+  };
 
-  let submitUrl;
+  const submitEndpoint = uploadInfo.upload_type === 'url' ? 'submitRemoteUpload' : 'submitDirectUpload';
 
-  if (uploadInfo.origin === 'from_url') {
-    submitUrl = `${getServiceUri()}/${pluginId}/submitRemoteUpload`;
-
-    body.append('url', uploadInfo.media as string);
-  } else if (uploadInfo.origin === 'from_computer') {
-    submitUrl = `${getServiceUri()}/${pluginId}/submitDirectUpload`;
-  } else {
-    throw new Error('Unable to determine upload origin');
-  }
-
-  const response = await fetch(submitUrl, {
+  const response = await fetch(`${getServiceUri()}/${pluginId}/${submitEndpoint}`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${getJwtToken()}` },
-    body,
+    headers: { Authorization: `Bearer ${getJwtToken()}`, ContentType: 'application/json' },
+    body: JSON.stringify(body),
   });
 
   return await response.json();
