@@ -1,13 +1,14 @@
-import React from 'react';
-import { useIntl } from 'react-intl';
+import { Badge } from '@strapi/design-system';
 import { Box } from '@strapi/design-system/Box';
 import { Grid, GridItem } from '@strapi/design-system/Grid';
 import { Stack } from '@strapi/design-system/Stack';
 import { Typography } from '@strapi/design-system/Typography';
+import React from 'react';
+import { useIntl } from 'react-intl';
 
-import getTrad from '../../utils/getTrad';
 import styled from 'styled-components';
 import { MuxAsset } from '../../../../server/content-types/mux-asset/types';
+import getTrad from '../../utils/getTrad';
 
 const TypographyWrapped = styled(Typography)`
   overflow-wrap: break-word;
@@ -32,6 +33,35 @@ const Summary = (props: Props) => {
   return (
     <Box padding={4} background="neutral100" hasRadius>
       <Stack>
+        <Box paddingBottom={4}>
+          <Stack>
+            <Box paddingBottom={1}>
+              <Typography variant="sigma" fontWeight="bold" textColor="neutral600" textTransform="uppercase">
+                {formatMessage({
+                  id: getTrad('Common.isReady-label'),
+                  defaultMessage: 'State',
+                })}
+              </Typography>
+            </Box>
+            <TypographyWrapped variant="pi" textColor="neutral700">
+              {muxAsset.isReady ? (
+                <Badge active>
+                  {formatMessage({
+                    id: getTrad('Common.ready'),
+                    defaultMessage: 'Ready',
+                  })}
+                </Badge>
+              ) : (
+                <Badge>
+                  {formatMessage({
+                    id: getTrad('Common.preparing'),
+                    defaultMessage: 'Preparing',
+                  })}
+                </Badge>
+              )}
+            </TypographyWrapped>
+          </Stack>
+        </Box>
         <Box paddingBottom={4}>
           <Stack>
             <Box paddingBottom={1}>

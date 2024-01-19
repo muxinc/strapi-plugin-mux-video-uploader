@@ -15,7 +15,7 @@ import { getIsConfigured, getMuxAssets } from '../../services/strapi';
 import AssetGrid from '../../components/asset-grid';
 import { SearchField, SearchVector, SortVector } from '../../services/strapi/types';
 import ModalDetails from '../../components/modal-details';
-import ModalNewUpload from '../../components/modal-new-upload';
+import ModalNewUpload from '../../components/modal-new-upload/ModalNewUpload';
 import pluginPermissions from '../../permissions';
 import getTrad from '../../utils/getTrad';
 import ListPagination from '../../components/list-pagination';

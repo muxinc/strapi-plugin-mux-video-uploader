@@ -1,11 +1,3 @@
-import React from 'react';
-import { useIntl } from 'react-intl';
-import styled from 'styled-components';
-import { FormikHelpers, FormikTouched, useFormik } from 'formik';
-import { useNotification } from '@strapi/helper-plugin';
-import ExclamationMarkCircle from '@strapi/icons/ExclamationMarkCircle';
-import Duplicate from '@strapi/icons/Duplicate';
-import Trash from '@strapi/icons/Trash';
 import { Box } from '@strapi/design-system/Box';
 import { Button } from '@strapi/design-system/Button';
 import { Dialog, DialogBody, DialogFooter } from '@strapi/design-system/Dialog';
@@ -13,21 +5,28 @@ import { Flex } from '@strapi/design-system/Flex';
 import { Grid, GridItem } from '@strapi/design-system/Grid';
 import { IconButton } from '@strapi/design-system/IconButton';
 import { Link } from '@strapi/design-system/Link';
-import { ModalLayout, ModalBody, ModalHeader, ModalFooter } from '@strapi/design-system/ModalLayout';
+import { ModalBody, ModalFooter, ModalHeader, ModalLayout } from '@strapi/design-system/ModalLayout';
 import { Stack } from '@strapi/design-system/Stack';
 import { Status } from '@strapi/design-system/Status';
-import { Textarea } from '@strapi/design-system/Textarea';
 import { TextInput } from '@strapi/design-system/TextInput';
-import { ToggleInput } from '@strapi/design-system/ToggleInput';
+import { Textarea } from '@strapi/design-system/Textarea';
 import { Typography } from '@strapi/design-system/Typography';
+import { useNotification } from '@strapi/helper-plugin';
+import Duplicate from '@strapi/icons/Duplicate';
+import ExclamationMarkCircle from '@strapi/icons/ExclamationMarkCircle';
+import Trash from '@strapi/icons/Trash';
+import { FormikHelpers, FormikTouched, useFormik } from 'formik';
+import React from 'react';
+import { useIntl } from 'react-intl';
+import styled from 'styled-components';
 
-import PreviewPlayer from '../preview-player';
-import Summary from './summary';
-import { deleteMuxAsset, setMuxAsset } from '../../services/strapi';
-import getTrad from '../../utils/getTrad';
-import PlayerWrapper from './player-wrapper';
 import copy from 'copy-to-clipboard';
 import { MuxAsset } from '../../../../server/content-types/mux-asset/types';
+import { deleteMuxAsset, setMuxAsset } from '../../services/strapi';
+import getTrad from '../../utils/getTrad';
+import PreviewPlayer from '../preview-player';
+import TextTracks from './TextTracks';
+import Summary from './summary';
 
 const GridItemStyled = styled(GridItem)`
   position: sticky;
@@ -97,7 +96,9 @@ const ModalDetails = (props: Props) => {
     });
   };
 
-  const handleOnDeleteConfirm = async () => {
+  const handleOnDeleteConfirm = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setIsProcessing(true);
 
     await deleteMuxAsset(muxAsset);
@@ -163,26 +164,40 @@ const ModalDetails = (props: Props) => {
 
   if (!isOpen) return null;
 
+  const aspect_ratio = muxAsset.aspect_ratio || muxAsset.asset_data?.aspect_ratio;
   return (
     <>
-      <ModalLayout onClose={onToggle} labelledBy="title">
+      <ModalLayout
+        onClose={onToggle}
+        labelledBy="title"
+        style={{
+          width: 'min(90vw, 60rem)',
+        }}
+      >
         <ModalHeader>
           <Typography fontWeight="bold" textColor="neutral800" as="h2" id="title">
             {formatMessage({
               id: getTrad('ModalDetails.header'),
-              defaultMessage: 'Details',
+              defaultMessage: 'Video details',
             })}
           </Typography>
         </ModalHeader>
         <form onSubmit={handleSubmit}>
           <ModalBody>
-            <Grid gap={4}>
+            <Grid gap={4} style={{ alignItems: 'flex-start' }}>
               <GridItemStyled col={6} s={12}>
-                <PlayerWrapper disableDelete={!enableDelete} onDelete={toggleDeleteWarning}>
+                <Box
+                  background="neutral150"
+                  style={{
+                    aspectRatio: aspect_ratio ? aspect_ratio.replace(':', ' / ') : undefined,
+                    marginBottom: '1.5rem',
+                  }}
+                >
                   <PreviewPlayer muxAsset={muxAsset} />
-                </PlayerWrapper>
+                </Box>
+                <TextTracks muxAsset={muxAsset} />
               </GridItemStyled>
-              <GridItem col={6} s={12}>
+              <GridItemStyled col={6} s={12}>
                 <Stack>
                   {muxAsset.error_message ? (
                     <Box paddingBottom={4}>
@@ -191,9 +206,6 @@ const ModalDetails = (props: Props) => {
                       </Status>
                     </Box>
                   ) : null}
-                  <Box paddingBottom={4}>
-                    <Summary muxAsset={muxAsset} />
-                  </Box>
                   <Box paddingBottom={4}>
                     <TextInput
                       label={formatMessage({
@@ -212,22 +224,7 @@ const ModalDetails = (props: Props) => {
                     />
                   </Box>
                   <Box paddingBottom={4}>
-                    <ToggleInput
-                      label={formatMessage({
-                        id: getTrad('Common.isReady-label'),
-                        defaultMessage: 'Is ready',
-                      })}
-                      name="isReady"
-                      onLabel="on"
-                      offLabel="off"
-                      checked={values.isReady}
-                      error={errors.isReady}
-                      disabled={!enableUpdate}
-                      onChange={(e: any) => {
-                        setTouchedFields({ ...touchedFields, isReady: true });
-                        handleChange(e);
-                      }}
-                    />
+                    <Summary muxAsset={muxAsset} />
                   </Box>
                   <Box paddingBottom={4}>
                     <Textarea
@@ -250,7 +247,7 @@ const ModalDetails = (props: Props) => {
                     />
                   </Box>
                 </Stack>
-              </GridItem>
+              </GridItemStyled>
             </Grid>
           </ModalBody>
           <ModalFooter
@@ -265,12 +262,20 @@ const ModalDetails = (props: Props) => {
               </>
             }
             endActions={
-              <Button type="submit" variant="success" disabled={isProcessing || isSubmitting}>
-                {formatMessage({
-                  id: getTrad('Common.finish-button'),
-                  defaultMessage: 'Finish',
-                })}
-              </Button>
+              <>
+                <IconButton
+                  label={formatMessage({ id: getTrad('Common.delete-button'), defaultMessage: 'Delete' })}
+                  disableDelete={!enableDelete}
+                  onClick={toggleDeleteWarning}
+                  icon={<Trash />}
+                />
+                <Button type="submit" variant="success" disabled={isProcessing || isSubmitting}>
+                  {formatMessage({
+                    id: getTrad('Common.finish-button'),
+                    defaultMessage: 'Finish',
+                  })}
+                </Button>
+              </>
             }
           />
         </form>
@@ -305,7 +310,7 @@ const ModalDetails = (props: Props) => {
         </DialogBody>
         <DialogFooter
           startAction={
-            <Button onClick={toggleDeleteWarning} variant="tertiary">
+            <Button onClickCapture={toggleDeleteWarning} variant="tertiary">
               {formatMessage({
                 id: getTrad('Common.cancel-button'),
                 defaultMessage: 'Cancel',
@@ -313,7 +318,7 @@ const ModalDetails = (props: Props) => {
             </Button>
           }
           endAction={
-            <Button variant="danger-light" startIcon={<Trash />} onClick={handleOnDeleteConfirm}>
+            <Button variant="danger-light" startIcon={<Trash />} onClickCapture={handleOnDeleteConfirm}>
               {formatMessage({
                 id: getTrad('Common.confirm-button'),
                 defaultMessage: 'Confirm',

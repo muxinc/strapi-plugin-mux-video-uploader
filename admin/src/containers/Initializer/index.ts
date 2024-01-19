@@ -1,9 +1,8 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 
 import pluginId from '../../pluginId';
 
-const Initializer = ({ updatePlugin }: any) => {
+const Initializer = ({ updatePlugin }: { updatePlugin: Function }) => {
   const ref = React.useRef<any>();
 
   ref.current = updatePlugin;
@@ -13,10 +12,6 @@ const Initializer = ({ updatePlugin }: any) => {
   }, []);
 
   return null;
-};
-
-Initializer.propTypes = {
-  updatePlugin: PropTypes.func.isRequired,
 };
 
 export default Initializer;

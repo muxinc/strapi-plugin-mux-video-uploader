@@ -55,6 +55,16 @@ const routes = [
   },
   {
     method: 'GET',
+    path: '/mux-video-uploader/mux-text-tracks/:trackId',
+    handler: 'mux.textTrack',
+    config: {
+      policies: [],
+      prefix: false,
+      auth: false,
+    },
+  },
+  {
+    method: 'GET',
     path: '/mux-video-uploader/mux-asset',
     handler: 'mux-asset.find',
     config: {
