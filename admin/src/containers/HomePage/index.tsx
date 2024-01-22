@@ -1,26 +1,26 @@
+import { Button } from '@strapi/design-system/Button';
+import { Grid, GridItem } from '@strapi/design-system/Grid';
+import { ContentLayout, HeaderLayout, Layout } from '@strapi/design-system/Layout';
+import { Main } from '@strapi/design-system/Main';
+import { Searchbar } from '@strapi/design-system/Searchbar';
+import { Option, Select } from '@strapi/design-system/Select';
+import { CheckPagePermissions, useRBAC } from '@strapi/helper-plugin';
+import Plus from '@strapi/icons/Plus';
 import React from 'react';
 import { useIntl } from 'react-intl';
 import { useHistory, useLocation } from 'react-router-dom';
-import { CheckPagePermissions, useRBAC } from '@strapi/helper-plugin';
-import Plus from '@strapi/icons/Plus';
-import { Button } from '@strapi/design-system/Button';
-import { Grid, GridItem } from '@strapi/design-system/Grid';
-import { HeaderLayout, Layout, ContentLayout } from '@strapi/design-system/Layout';
-import { Main } from '@strapi/design-system/Main';
-import { Searchbar } from '@strapi/design-system/Searchbar';
-import { Select, Option } from '@strapi/design-system/Select';
 
-import SetupNeeded from '../../components/setup-needed';
-import { getIsConfigured, getMuxAssets } from '../../services/strapi';
-import AssetGrid from '../../components/asset-grid';
-import { SearchField, SearchVector, SortVector } from '../../services/strapi/types';
-import ModalDetails from '../../components/modal-details';
-import ModalNewUpload from '../../components/modal-new-upload/ModalNewUpload';
-import pluginPermissions from '../../permissions';
-import getTrad from '../../utils/getTrad';
-import ListPagination from '../../components/list-pagination';
-import { appendQueryParameter } from '../../utils/url';
 import { GetMuxAssetsResponse, MuxAsset } from '../../../../server/content-types/mux-asset/types';
+import AssetGrid from '../../components/asset-grid';
+import ListPagination from '../../components/list-pagination';
+import ModalDetails from '../../components/modal-details/ModalDetails';
+import ModalNewUpload from '../../components/modal-new-upload/ModalNewUpload';
+import SetupNeeded from '../../components/setup-needed';
+import pluginPermissions from '../../permissions';
+import { getIsConfigured, getMuxAssets } from '../../services/strapi';
+import { SearchField, SearchVector, SortVector } from '../../services/strapi/types';
+import getTrad from '../../utils/getTrad';
+import { appendQueryParameter } from '../../utils/url';
 
 const ProtectedHomePage = () => (
   <CheckPagePermissions permissions={pluginPermissions.mainRead}>
@@ -210,13 +210,15 @@ const HomePage = () => {
         </Main>
       </Layout>
       <ModalNewUpload isOpen={isNewUploadOpen} onToggle={handleOnNewUploadClose} />
-      <ModalDetails
-        isOpen={selectedAsset !== undefined}
-        muxAsset={selectedAsset}
-        enableUpdate={canUpdate}
-        enableDelete={canDelete}
-        onToggle={handleOnDetailsClose}
-      />
+      {selectedAsset !== undefined && (
+        <ModalDetails
+          isOpen={true}
+          muxAsset={selectedAsset}
+          enableUpdate={canUpdate}
+          enableDelete={canDelete}
+          onToggle={handleOnDetailsClose}
+        />
+      )}
     </>
   );
 };

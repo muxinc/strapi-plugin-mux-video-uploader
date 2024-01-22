@@ -1,8 +1,10 @@
 import axios from 'axios';
 import { Context } from 'koa';
+import { z } from 'zod';
 
-import { RequestedUploadConfig, StoredTextTrack, UploadConfig } from '../../types/shared-types';
+import { StoredTextTrack, UploadConfig } from '../../types/shared-types';
 import { Config, getService } from '../utils';
+import { parseJSONBody } from '../utils/parseJSONBody';
 import pluginId from './../../admin/src/pluginId';
 
 interface MuxAssetFilter {
@@ -58,6 +60,7 @@ const processWebhookEvent = async (webhookEvent: any) => {
             duration: data.duration,
             aspect_ratio: data.aspect_ratio,
             isReady: true,
+            asset_data: data,
           },
         },
       ] as const;
@@ -100,17 +103,15 @@ const thumbnail = async (ctx: Context) => {
 };
 
 async function parseUploadRequest(ctx: Context) {
-  const body = (() => {
-    try {
-      return JSON.parse(ctx.request.body) as RequestedUploadConfig & {
-        title?: string;
-        url?: string;
-      };
-    } catch (error) {
-      ctx.badRequest({ errors: { body: 'invalid body' } });
-      throw new Error('invalid-body');
-    }
-  })();
+  const body = parseJSONBody(
+    ctx,
+    UploadConfig.and(
+      z.object({
+        title: z.string().optional(),
+        url: z.string().url().optional(),
+      })
+    )
+  );
 
   const config = UploadConfig.safeParse(body);
 
@@ -180,22 +181,10 @@ const submitRemoteUpload = async (ctx: Context) => {
 };
 
 const deleteMuxAsset = async (ctx: Context) => {
-  const { id, delete_on_mux } = (() => {
-    try {
-      return JSON.parse(ctx.request.body) as { id: string; delete_on_mux: boolean };
-    } catch (error) {
-      // @ts-expect-error
-      ctx.badRequest('ValidationError', { errors: { body: 'invalid body' } });
-      throw new Error('invalid-body');
-    }
-  })();
-
-  if (!id) {
-    // @ts-expect-error
-    ctx.badRequest('ValidationError', { errors: { id: ['id needs to be defined'] } });
-
-    return;
-  }
+  const { id, delete_on_mux } = parseJSONBody(
+    ctx,
+    z.object({ id: z.string().or(z.number()), delete_on_mux: z.boolean().default(true) })
+  );
 
   // Ensure that the mux-asset entry exists for the id
   const muxAsset = await strapi.entityService.findOne(ASSET_MODEL, id);
