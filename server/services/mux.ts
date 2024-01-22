@@ -1,6 +1,5 @@
-import Mux from '@mux/mux-node';
+import Mux, { CreateTrackParams, Upload } from '@mux/mux-node';
 import { RequestOptions } from '@mux/mux-node/dist/RequestOptions';
-import { Asset, Upload } from '@mux/mux-node/dist/video/domain';
 
 import { ParsedUploadConfig, StoredTextTrack, uploadConfigToNewAssetInput } from '../../types/shared-types';
 import pluginPkg from './../../package.json';
@@ -31,23 +30,6 @@ export interface UploadRequestConfig {
   signed?: 'true' | 'false';
 }
 
-export interface MuxService {
-  getAssetById: (assetId: string) => Promise<Asset>;
-  getAssetByUploadId: (uploadId: string) => Promise<Asset>;
-  getDirectUploadUrl: (props: {
-    config: ParsedUploadConfig;
-    storedTextTracks: StoredTextTrack[];
-    corsOrigin?: string;
-  }) => Promise<Upload>;
-  createRemoteAsset: (props: {
-    url: string;
-    storedTextTracks: StoredTextTrack[];
-    config: ParsedUploadConfig;
-  }) => Promise<Asset>;
-  deleteAsset: (assetId: string) => Promise<boolean>;
-  signPlaybackId: (playbackId: string, type: string) => Promise<{ token: string }>;
-}
-
 const getMuxClient = async () => {
   const { access_token, secret_key } = await Config.getConfig('general');
   const options: RequestOptions = { platform: { name: 'Strapi CMS', version: pluginPkg.version } };
@@ -55,14 +37,14 @@ const getMuxClient = async () => {
   return new Mux(access_token, secret_key, options);
 };
 
-export default ({ strapi }: { strapi: any }): MuxService => ({
-  async getAssetById(assetId) {
+const muxService = () => ({
+  async getAssetById(assetId: string) {
     const { Video } = await getMuxClient();
 
     return await Video.Assets.get(assetId);
   },
 
-  async getAssetByUploadId(uploadId) {
+  async getAssetByUploadId(uploadId: string) {
     const { Video } = await getMuxClient();
 
     const assets = await Video.Assets.list({ upload_id: uploadId });
@@ -70,7 +52,15 @@ export default ({ strapi }: { strapi: any }): MuxService => ({
     return assets[0];
   },
 
-  async getDirectUploadUrl({ config, storedTextTracks = [], corsOrigin = '*' }): Promise<Upload> {
+  async getDirectUploadUrl({
+    config,
+    storedTextTracks = [],
+    corsOrigin = '*',
+  }: {
+    config: ParsedUploadConfig;
+    storedTextTracks: StoredTextTrack[];
+    corsOrigin?: string;
+  }): Promise<Upload> {
     const { Video } = await getMuxClient();
 
     return Video.Uploads.create({
@@ -85,7 +75,15 @@ export default ({ strapi }: { strapi: any }): MuxService => ({
     });
   },
 
-  async createRemoteAsset({ url, config, storedTextTracks }) {
+  async createRemoteAsset({
+    url,
+    config,
+    storedTextTracks,
+  }: {
+    url: string;
+    storedTextTracks: StoredTextTrack[];
+    config: ParsedUploadConfig;
+  }) {
     const { Video } = await getMuxClient();
 
     return Video.Assets.create({
@@ -97,7 +95,7 @@ export default ({ strapi }: { strapi: any }): MuxService => ({
     });
   },
 
-  async deleteAsset(assetId) {
+  async deleteAsset(assetId: string) {
     const { Video } = await getMuxClient();
 
     await Video.Assets.del(assetId);
@@ -105,20 +103,36 @@ export default ({ strapi }: { strapi: any }): MuxService => ({
     return true;
   },
 
-  async signPlaybackId(playbackId, type) {
+  async signPlaybackId(playbackId: string, type: string) {
     const { JWT } = Mux;
     const { playback_signing_secret, playback_signing_id } = await Config.getConfig('general');
 
     let baseOptions = {
       keyId: playback_signing_id,
       keySecret: playback_signing_secret,
-      expiration: type == 'video' ? '1d' : '1m',
+      expiration: type === 'video' ? '1d' : '1m',
     };
 
-    let params = { width: type == 'thumbnail' ? '512' : '' };
+    let params = { width: type === 'thumbnail' ? '512' : '' };
 
     const token = JWT.signPlaybackId(playbackId, { ...baseOptions, type: type, params });
 
     return { token: token };
   },
+
+  async createAssetTextTracks(assetId: string, tracks: CreateTrackParams[]) {
+    const { Video } = await getMuxClient();
+
+    return await Promise.all(tracks.map((track) => Video.Assets.createTrack(assetId, track)));
+  },
+
+  async deleteAssetTextTracks(assetId: string, trackIds: string[]) {
+    const { Video } = await getMuxClient();
+
+    return await Promise.all(trackIds.map((id) => Video.Assets.deleteTrack(assetId, id)));
+  },
 });
+
+export default muxService;
+
+export type MuxService = ReturnType<typeof muxService>;

@@ -1,41 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
 import MuxPlayer from '@mux/mux-player-react';
+import React from 'react';
+import styled from 'styled-components';
 
-import pluginPkg from './../../../../package.json';
-import { getPlaybackToken } from '../../services/strapi';
 import { MuxAsset } from '../../../../server/content-types/mux-asset/types';
-
-interface Props {
-  muxAsset?: MuxAsset;
-}
+import { useSignedTokens } from '../SignedTokensProvider';
+import pluginPkg from './../../../../package.json';
 
 const MuxPlayerStyled = styled(MuxPlayer)`
   width: 100%;
 `;
 
-const PreviewPlayer = (props: Props) => {
+const PreviewPlayer = (props: { muxAsset?: MuxAsset }) => {
   const { muxAsset } = props;
-  const [playbackToken, setPlaybackToken] = useState<string>('');
-  const [thumbnailToken, setThumbnailToken] = useState<string>('');
-  const [storyboardToken, setStoryboardToken] = useState<string>('');
+  const tokens = useSignedTokens();
 
-  if (muxAsset === undefined || !muxAsset.playback_id) return null;
-
-  useEffect(() => {
-    if (muxAsset.signed) {
-      getPlaybackToken(muxAsset.playback_id, 'video').then((data) => setPlaybackToken(data.token));
-      getPlaybackToken(muxAsset.playback_id, 'thumbnail').then((data) => setThumbnailToken(data.token));
-      getPlaybackToken(muxAsset.playback_id, 'storyboard').then((data) => setStoryboardToken(data.token));
-    }
-  }, []);
+  if (!muxAsset?.playback_id || (muxAsset.signed && !tokens.video)) return null;
 
   return (
     <MuxPlayerStyled
       playbackId={muxAsset.playback_id}
-      playback-token={playbackToken}
-      thumbnail-token={thumbnailToken}
-      storyboard-token={storyboardToken}
+      playback-token={tokens.video}
+      thumbnail-token={tokens.thumbnail}
+      storyboard-token={tokens.storyboard}
       metadata={{
         video_id: muxAsset.id,
         video_title: muxAsset.title,

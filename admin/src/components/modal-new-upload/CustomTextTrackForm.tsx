@@ -1,22 +1,28 @@
-import { Button, Card, CardBody, CardContent, Checkbox, Combobox, ComboboxOption } from '@strapi/design-system';
-import { Plus, Trash } from '@strapi/icons';
+import { Button, Card, CardBody, CardContent, Checkbox, Combobox, ComboboxOption, Flex } from '@strapi/design-system';
+import { Pencil, Plus, Trash } from '@strapi/icons';
 import LanguagesList, { LanguageCode } from 'iso-639-1';
 import React from 'react';
 import { useIntl } from 'react-intl';
+import type { MuxAsset } from '../../../../server/content-types/mux-asset/types';
+import { getMuxTextTrackUrl } from '../../../../server/utils/textTracks';
 import { ParsedCustomTextTrack, TextTrackFile } from '../../../../types/shared-types';
 import getTrad from '../../utils/getTrad';
+import { useSignedTokens } from '../SignedTokensProvider';
 import { FileInput } from '../file-input';
-import { NewUploadFormValues } from './newUpload';
 
 function TrackForm({
   track,
   modifyTrack,
   deleteTrack,
+  muxAsset,
 }: {
   track: Partial<ParsedCustomTextTrack>;
   modifyTrack: (newValues: Partial<ParsedCustomTextTrack>) => void;
   deleteTrack: () => void;
+  muxAsset?: MuxAsset;
 }) {
+  const { video } = useSignedTokens();
+  const [editable, setEditable] = React.useState(track.stored_track?.id ? false : true);
   const { formatMessage } = useIntl();
 
   async function handleFiles(files: File[]) {
@@ -39,50 +45,70 @@ function TrackForm({
               gap: '1rem',
             }}
           >
-            <Combobox
-              placeholder="Language"
-              label="Language"
-              value={track.language_code}
-              onChange={(newValue: LanguageCode) => {
-                modifyTrack({ language_code: newValue, name: LanguagesList.getNativeName(newValue) });
-              }}
-              required
-            >
-              {LanguagesList.getAllCodes().map((code) => (
-                <ComboboxOption key={code} value={code}>
-                  {LanguagesList.getNativeName(code)}
-                </ComboboxOption>
-              ))}
-            </Combobox>
-            <FileInput
-              name="file"
-              label={formatMessage({
-                id: getTrad('Common.file-label'),
-                defaultMessage: 'Subtitles file (.vtt or .srt)',
-              })}
-              required
-              onFiles={handleFiles}
-              inputProps={{
-                accept: '.vtt,.srt',
-              }}
-            />
+            <Flex alignItems="start">
+              <Combobox
+                placeholder="Language"
+                label="Language"
+                value={track.language_code}
+                onChange={(newValue: LanguageCode) => {
+                  modifyTrack({ language_code: newValue, name: LanguagesList.getNativeName(newValue) });
+                }}
+                required
+                disabled={!editable}
+              >
+                {LanguagesList.getAllCodes().map((code) => (
+                  <ComboboxOption key={code} value={code}>
+                    {LanguagesList.getNativeName(code)}
+                  </ComboboxOption>
+                ))}
+              </Combobox>
+              {track.stored_track?.id && muxAsset?.playback_id && (
+                <a
+                  href={getMuxTextTrackUrl({
+                    playback_id: muxAsset.playback_id,
+                    track: track.stored_track,
+                    signedToken: video || undefined,
+                  })}
+                  download
+                >
+                  Download
+                </a>
+              )}
+            </Flex>
+            {editable && (
+              <FileInput
+                name="file"
+                label={formatMessage({
+                  id: getTrad('Common.file-label'),
+                  defaultMessage: 'Subtitles file (.vtt or .srt)',
+                })}
+                required
+                onFiles={handleFiles}
+                inputProps={{
+                  accept: '.vtt,.srt',
+                }}
+              />
+            )}
             <Checkbox
               checked={track.closed_captions}
               value={track.closed_captions}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 modifyTrack({ closed_captions: e.currentTarget.checked });
               }}
+              disabled={!editable}
             >
               Closed captions
             </Checkbox>
-            <Button
-              startIcon={<Trash />}
-              onClick={deleteTrack}
-              variant="danger-light"
-              style={{ justifySelf: 'flex-start' }}
-            >
-              Delete
-            </Button>
+            <Flex alignItems="center" justifyContent="between" gap={2}>
+              <Button startIcon={<Trash />} onClick={deleteTrack} variant="danger-light">
+                Delete
+              </Button>
+              {!editable && (
+                <Button onClick={() => setEditable(true)} startIcon={<Pencil />}>
+                  Update
+                </Button>
+              )}
+            </Flex>
           </div>
         </CardContent>
       </CardBody>
@@ -91,19 +117,17 @@ function TrackForm({
 }
 
 export default function CustomTextTrackForm({
-  values,
-  setFieldValue,
+  custom_text_tracks,
+  modifyCustomTextTracks,
+  muxAsset,
 }: {
-  values: NewUploadFormValues;
-  setFieldValue: <Field extends keyof NewUploadFormValues>(
-    field: Field,
-    value: NewUploadFormValues[Field],
-    shouldValidate?: boolean | undefined
-  ) => void;
+  custom_text_tracks: Partial<ParsedCustomTextTrack>[];
+  modifyCustomTextTracks: (newValues: Partial<ParsedCustomTextTrack>[]) => void;
+  muxAsset?: MuxAsset;
 }) {
   function handleNew() {
-    setFieldValue('custom_text_tracks', [
-      ...(values.custom_text_tracks || []),
+    modifyCustomTextTracks([
+      ...(custom_text_tracks || []),
       {
         file: undefined,
         language_code: '',
@@ -114,10 +138,9 @@ export default function CustomTextTrackForm({
   }
 
   function modifyTrack(index: number) {
-    return (newValues: Partial<Partial<ParsedCustomTextTrack>>) => {
-      setFieldValue(
-        'custom_text_tracks',
-        values.custom_text_tracks?.map((track, i) => {
+    return (newValues: Partial<ParsedCustomTextTrack>) => {
+      modifyCustomTextTracks(
+        custom_text_tracks?.map((track, i) => {
           if (i === index) {
             return {
               ...track,
@@ -125,17 +148,14 @@ export default function CustomTextTrackForm({
             };
           }
           return track;
-        })
+        }) || [newValues]
       );
     };
   }
 
   function deleteTrack(index: number) {
     return () => {
-      setFieldValue(
-        'custom_text_tracks',
-        values.custom_text_tracks?.filter((_, i) => i !== index)
-      );
+      modifyCustomTextTracks(custom_text_tracks?.filter((_, i) => i !== index) || []);
     };
   }
 
@@ -146,12 +166,13 @@ export default function CustomTextTrackForm({
         gap: '1rem',
       }}
     >
-      {values.custom_text_tracks?.map((track, index) => (
+      {custom_text_tracks?.map((track, index) => (
         <TrackForm
-          key={`${index}-${track.name}`}
+          key={track.stored_track?.id || `${index}-${track.language_code}`}
           track={track}
           modifyTrack={modifyTrack(index)}
           deleteTrack={deleteTrack(index)}
+          muxAsset={muxAsset}
         />
       ))}
       <Button startIcon={<Plus />} onClick={handleNew} style={{ justifyContent: 'center' }}>

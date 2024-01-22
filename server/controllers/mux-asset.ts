@@ -1,8 +1,9 @@
 import { Context } from 'koa';
 
-import pluginId from './../../admin/src/pluginId';
-
-const model = `plugin::${pluginId}.mux-asset`;
+import { MuxAssetUpdate } from '../content-types/mux-asset/types';
+import { resolveMuxAsset } from '../utils/resolveMuxAssets';
+import { updateTextTracks } from '../utils/textTracks';
+import { ASSET_MODEL } from '../utils/types';
 
 const search = (ctx: Context) => {
   const params = ctx.query;
@@ -15,7 +16,7 @@ const search = (ctx: Context) => {
     params.order = 'desc';
   }
 
-  return strapi.entityService.findMany(model, params);
+  return strapi.entityService.findMany(ASSET_MODEL, params);
 };
 
 const find = async (ctx: Context) => {
@@ -30,33 +31,39 @@ const find = async (ctx: Context) => {
 const findOne = async (ctx: Context) => {
   const { id } = ctx.params;
 
-  return await strapi.entityService.findOne(model, id, ctx.query);
+  return await strapi.entityService.findOne(ASSET_MODEL, id, ctx.query);
 };
 
 const count = (ctx: Context) => {
   const params = ctx.query;
 
-  return strapi.entityService.count(model, params);
+  return strapi.entityService.count(ASSET_MODEL, params);
 };
 
 const create = async (ctx: Context) => {
   const { body } = ctx.request.body;
 
-  return await strapi.entityService.create(model, { data: body });
+  return await strapi.entityService.create(ASSET_MODEL, { data: body });
 };
 
 const update = async (ctx: Context) => {
   const { id } = ctx.params;
-  const { title, isReady, duration, aspect_ratio, signed, error_message } = <MuxAssetUpdateRequest>ctx.request.body;
-  const data: MuxAssetUpdateRequest = { title, isReady, duration, aspect_ratio, signed, error_message };
+  const muxAsset = await resolveMuxAsset({ id });
 
-  return await strapi.entityService.update(model, id, { data });
+  const { title, custom_text_tracks } = <MuxAssetUpdate>ctx.request.body;
+
+  /** Let Mux's webhook handlers notify us of track changes */
+  await updateTextTracks(muxAsset, custom_text_tracks);
+
+  return await strapi.entityService.update(ASSET_MODEL, id, {
+    data: { title },
+  });
 };
 
 const del = async (ctx: Context) => {
   const { id } = ctx.params;
 
-  return await strapi.entityService.delete(model, id);
+  return await strapi.entityService.delete(ASSET_MODEL, id);
 };
 
 export = {

@@ -1,8 +1,8 @@
+import type { TextTrack as MuxTextTrack } from '@mux/mux-node';
 import { InputSettings } from '@mux/mux-node';
-import { z } from 'zod';
-import LanguagesList, { LanguageCode } from 'iso-639-1';
-import pluginId from '../admin/src/pluginId';
 import { Entity } from '@strapi/strapi';
+import { z } from 'zod';
+import { storedTextTrackToMuxTrack } from '../server/utils/textTracks';
 
 export const SUPPORTED_MUX_LANGUAGES = [
   { label: 'English', code: 'en', state: 'Stable' },
@@ -45,8 +45,9 @@ export const TextTrackFile = z.object({
 export const CustomTextTrack = z.object({
   file: TextTrackFile,
   name: z.string(),
-  language_code: z.enum(LanguagesList.getAllCodes() as [LanguageCode, ...LanguageCode[]]),
+  language_code: z.string(),
   closed_captions: z.boolean().default(false),
+  stored_track: z.custom<MuxTextTrack>((value) => typeof value === 'object' && value && 'id' in value).optional(),
 });
 
 export type ParsedCustomTextTrack = z.infer<typeof CustomTextTrack>;
@@ -138,14 +139,7 @@ export function uploadConfigToNewAssetInput(
   }
 
   if (config.text_tracks_type === 'uploaded' && storedTextTracks.length > 0) {
-    return storedTextTracks.map((track) => ({
-      type: 'text',
-      text_type: 'subtitles',
-      closed_captions: track.closed_captions,
-      language_code: track.language_code,
-      name: track.closed_captions ? `${track.name} (CC)` : track.name,
-      url: getTextTrackUrl(track.id),
-    }));
+    return storedTextTracks.map(storedTextTrackToMuxTrack);
   }
 
   if (url) {
@@ -153,10 +147,4 @@ export function uploadConfigToNewAssetInput(
   }
 
   return undefined;
-}
-
-const BASE_URL = (strapi as any).backendURL;
-
-function getTextTrackUrl(id: StoredTextTrack['id']) {
-  return `${BASE_URL}/${pluginId}/mux-text-tracks/${id}`;
 }
