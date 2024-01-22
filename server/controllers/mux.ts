@@ -5,35 +5,16 @@ import { z } from 'zod';
 import { StoredTextTrack, UploadConfig } from '../../types/shared-types';
 import { Config, getService } from '../utils';
 import { parseJSONBody } from '../utils/parseJSONBody';
-import pluginId from './../../admin/src/pluginId';
-
-interface MuxAssetFilter {
-  upload_id?: string;
-  asset_id?: string;
-}
-
-const ASSET_MODEL = `plugin::${pluginId}.mux-asset` as const;
-const TEXT_TRACK_MODEL = `plugin::${pluginId}.mux-text-track` as const;
-
-const resolveMuxAssets = async (filtersRaw: MuxAssetFilter) => {
-  const filters = Object.fromEntries(Object.entries(filtersRaw).filter(([, value]) => value !== undefined));
-
-  if (Object.keys(filters).length === 0) throw new Error('Unable to resolve mux-asset');
-
-  const muxAssets = await strapi.entityService.findMany(ASSET_MODEL, { filters: filters as any });
-
-  const asset = muxAssets ? (Array.isArray(muxAssets) ? muxAssets[0] : muxAssets) : undefined;
-  if (!asset) throw new Error('Unable to resolve mux-asset');
-
-  return asset;
-};
+import { resolveMuxAsset } from '../utils/resolveMuxAssets';
+import { storeTextTracks } from '../utils/textTracks';
+import { ASSET_MODEL, TEXT_TRACK_MODEL } from '../utils/types';
 
 const processWebhookEvent = async (webhookEvent: any) => {
   const { type, data } = webhookEvent;
 
   switch (type) {
     case 'video.asset.updated': {
-      const muxAsset = await resolveMuxAssets({ upload_id: data.upload_id, asset_id: data.id });
+      const muxAsset = await resolveMuxAsset({ upload_id: data.upload_id, asset_id: data.object?.id || data.id });
       return [
         muxAsset.id,
         {
@@ -42,7 +23,7 @@ const processWebhookEvent = async (webhookEvent: any) => {
       ] as const;
     }
     case 'video.upload.asset_created': {
-      const muxAsset = await resolveMuxAssets({ upload_id: data.id });
+      const muxAsset = await resolveMuxAsset({ upload_id: data.id });
       return [
         muxAsset.id,
         {
@@ -51,7 +32,7 @@ const processWebhookEvent = async (webhookEvent: any) => {
       ] as const;
     }
     case 'video.asset.ready': {
-      const muxAsset = await resolveMuxAssets({ asset_id: data.id });
+      const muxAsset = await resolveMuxAsset({ asset_id: data.id });
       return [
         muxAsset.id,
         {
@@ -66,7 +47,7 @@ const processWebhookEvent = async (webhookEvent: any) => {
       ] as const;
     }
     case 'video.asset.errored': {
-      const muxAsset = await resolveMuxAssets({ asset_id: data.id });
+      const muxAsset = await resolveMuxAsset({ asset_id: data.id });
       return [
         muxAsset.id,
         {
@@ -121,13 +102,7 @@ async function parseUploadRequest(ctx: Context) {
 
   const { custom_text_tracks = [] } = config.data;
 
-  const storedTextTracks = await Promise.all(
-    custom_text_tracks.map(async (track) => {
-      const { id } = await strapi.entityService.create(TEXT_TRACK_MODEL, { data: track });
-
-      return { ...track, id };
-    })
-  );
+  const storedTextTracks = await storeTextTracks(custom_text_tracks);
 
   return {
     storedTextTracks,

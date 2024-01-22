@@ -1,9 +1,8 @@
 import { getService } from '.';
 import { MuxAsset } from '../content-types/mux-asset/types';
-import pluginId from './../../admin/src/pluginId';
 import { forEachRateLimit } from './rate-limit';
+import { ASSET_MODEL } from './types';
 
-const model = `plugin::${pluginId}.mux-asset`;
 const ASSET_NO_LONGER_EXISTS = 'Asset does not exist on Mux';
 
 const sync = async () => {
@@ -24,7 +23,7 @@ const sync = async () => {
     ],
   };
 
-  const assets = await strapi.entityService.findMany(model, {
+  const assets = await strapi.entityService.findMany(ASSET_MODEL, {
     filters,
     limit: -1,
   });
@@ -70,7 +69,7 @@ const sync = async () => {
       params.data.isReady = false;
     }
 
-    await strapi.entityService.update(model, a.id, params);
+    await strapi.entityService.update(ASSET_MODEL, a.id, params);
 
     strapi.log.info(`[mux-video-uploader] Updated mux-asset with id: ${a.id}`);
   };

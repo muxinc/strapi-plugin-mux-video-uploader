@@ -10,8 +10,8 @@ import Plus from '@strapi/icons/Plus';
 import { FormikErrors, FormikHelpers, useFormik } from 'formik';
 import React, { PropsWithChildren } from 'react';
 import { useIntl } from 'react-intl';
-
 import styled from 'styled-components';
+
 import { SUPPORTED_MUX_LANGUAGES } from '../../../../types/shared-types';
 import { submitUpload, UploadInfo } from '../../services/strapi';
 import getTrad from '../../utils/getTrad';
@@ -462,7 +462,10 @@ function FormBody(props: {
 
           {values.text_tracks_type === 'uploaded' && (
             <div style={{ position: 'sticky', top: '1em' }}>
-              <CustomTextTrackForm values={values} setFieldValue={setFieldValue} />
+              <CustomTextTrackForm
+                custom_text_tracks={values.custom_text_tracks || []}
+                modifyCustomTextTracks={(tracks) => setFieldValue('custom_text_tracks', tracks as any)}
+              />
             </div>
           )}
         </div>
