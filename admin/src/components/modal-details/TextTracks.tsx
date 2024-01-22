@@ -1,8 +1,9 @@
 import { TextTrack } from '@mux/mux-node';
-import { Badge } from '@strapi/design-system';
+import { Badge, Link } from '@strapi/design-system';
 import { Box } from '@strapi/design-system/Box';
 import { Stack } from '@strapi/design-system/Stack';
 import { Typography } from '@strapi/design-system/Typography';
+import { Download } from '@strapi/icons';
 import React from 'react';
 import { useIntl } from 'react-intl';
 import styled from 'styled-components';
@@ -48,9 +49,25 @@ export default function TextTracks({ muxAsset }: { muxAsset: MuxAsset }) {
                     {track.name}
                   </Typography>
                 </Box>
-                <TypographyWrapped variant="pi" textColor="neutral700">
-                  <StatusBadge track={track} />
-                </TypographyWrapped>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <TypographyWrapped variant="pi" textColor="neutral700">
+                    <StatusBadge track={track} />
+                  </TypographyWrapped>
+                  {muxAsset.playback_id && track.id && (
+                    <Link
+                      href={`https://stream.mux.com/${muxAsset.playback_id}/text/${track.id}.vtt`}
+                      download
+                      startIcon={<Download />}
+                    >
+                      Download
+                    </Link>
+                  )}
+                </div>
               </Stack>
             </Box>
           );
