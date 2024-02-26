@@ -47,8 +47,14 @@ function TrackForm({
           >
             <Flex alignItems="start">
               <Combobox
-                placeholder="Language"
-                label="Language"
+                placeholder={formatMessage({
+                  id: getTrad('CustomTextTrackForm.language'),
+                  defaultMessage: 'Language',
+                })}
+                label={formatMessage({
+                  id: getTrad('CustomTextTrackForm.language'),
+                  defaultMessage: 'Language',
+                })}
                 value={track.language_code}
                 onChange={(newValue: LanguageCode) => {
                   modifyTrack({ language_code: newValue, name: LanguagesList.getNativeName(newValue) });
@@ -71,7 +77,10 @@ function TrackForm({
                   })}
                   download
                 >
-                  Download
+                  {formatMessage({
+                    id: getTrad('Common.download-button'),
+                    defaultMessage: 'Download',
+                  })}
                 </a>
               )}
             </Flex>
@@ -97,15 +106,24 @@ function TrackForm({
               }}
               disabled={!editable}
             >
-              Closed captions
+              {formatMessage({
+                id: getTrad('CustomTextTrackForm.closed-captions'),
+                defaultMessage: 'Closed captions',
+              })}
             </Checkbox>
             <Flex alignItems="center" justifyContent="between" gap={2}>
               <Button startIcon={<Trash />} onClick={deleteTrack} variant="danger-light">
-                Delete
+                {formatMessage({
+                  id: getTrad('Common.delete-button'),
+                  defaultMessage: 'Delete',
+                })}
               </Button>
               {!editable && (
                 <Button onClick={() => setEditable(true)} startIcon={<Pencil />}>
-                  Update
+                  {formatMessage({
+                    id: getTrad('Common.update-button'),
+                    defaultMessage: 'Update',
+                  })}
                 </Button>
               )}
             </Flex>
@@ -125,6 +143,8 @@ export default function CustomTextTrackForm({
   modifyCustomTextTracks: (newValues: Partial<ParsedCustomTextTrack>[]) => void;
   muxAsset?: MuxAsset;
 }) {
+  const { formatMessage } = useIntl();
+
   function handleNew() {
     modifyCustomTextTracks([
       ...(custom_text_tracks || []),
@@ -176,7 +196,10 @@ export default function CustomTextTrackForm({
         />
       ))}
       <Button startIcon={<Plus />} onClick={handleNew} style={{ justifyContent: 'center' }}>
-        New caption/subtitle
+        {formatMessage({
+          id: getTrad('CustomTextTrackForm.new-caption'),
+          defaultMessage: 'New caption/subtitle',
+        })}
       </Button>
     </div>
   );

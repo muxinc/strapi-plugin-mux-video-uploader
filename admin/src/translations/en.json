@@ -15,6 +15,8 @@
   "Common.delete-button": "Delete",
   "Common.finish-button": "Finish",
   "Common.confirm-button": "Confirm",
+  "Common.download-button": "Download",
+  "Common.update-button": "Update",
 
   "SettingsNav.section-label": "Mux Video Uploader",
   "SettingsNav.link.settings": "Settings",
@@ -85,6 +87,10 @@
   "ModalNewUpload.from-url-tab-label": "From url",
   "ModalNewUpload.unknown-error": "Unknown error encountered",
   "ModalNewUpload.unresolvable-upload-state": "Unable to resolve upload state",
+
+  "CustomTextTrackForm.closed-captions": "Closed captions",
+  "CustomTextTrackForm.new-caption": "New caption/subtitle",
+  "CustomTextTrackForm.language": "Language",
 
   "Uploading.uploading": "Uploading to Mux",
 
