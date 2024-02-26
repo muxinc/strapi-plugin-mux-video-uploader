@@ -1,8 +1,8 @@
 import { Context } from 'koa';
 
 import { MuxAssetUpdate } from '../content-types/mux-asset/types';
-import { resolveMuxAsset } from '../utils/resolveMuxAssets';
-import { updateTextTracks } from '../utils/textTracks';
+import { resolveMuxAsset } from '../utils/resolve-mux-asset';
+import { updateTextTracks } from '../utils/text-tracks';
 import { ASSET_MODEL } from '../utils/types';
 
 const search = (ctx: Context) => {

@@ -7,7 +7,7 @@ import { ProgressBar } from '@strapi/design-system/ProgressBar';
 import { Stack } from '@strapi/design-system/Stack';
 import { Typography } from '@strapi/design-system/Typography';
 
-import getTrad from '../../utils/getTrad';
+import getTrad from '../../utils/get-trad';
 
 const ProgressBarWrapper = styled.div`
   width: 60%;

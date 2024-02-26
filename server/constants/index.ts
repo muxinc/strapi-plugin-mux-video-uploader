@@ -1,4 +1,4 @@
-import pluginId from './../../admin/src/pluginId';
+import pluginId from '../../admin/src/plugin-id';
 
 export const PLUGIN_NAME = pluginId;
 export const CONFIG_NAME = 'mux';

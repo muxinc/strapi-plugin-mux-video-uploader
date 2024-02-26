@@ -8,8 +8,8 @@ import { Main } from '@strapi/design-system/Main';
 import { Typography } from '@strapi/design-system/Typography';
 import ArrowRight from '@strapi/icons/ArrowRight';
 
-import pluginId from '../../pluginId';
-import getTrad from '../../utils/getTrad';
+import pluginId from '../../plugin-id';
+import getTrad from '../../utils/get-trad';
 
 const SetupNeeded = () => {
   const history = useHistory();

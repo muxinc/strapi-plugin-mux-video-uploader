@@ -13,13 +13,13 @@ import { useHistory, useLocation } from 'react-router-dom';
 import { GetMuxAssetsResponse, MuxAsset } from '../../../../server/content-types/mux-asset/types';
 import AssetGrid from '../../components/asset-grid';
 import ListPagination from '../../components/list-pagination';
-import ModalDetails from '../../components/modal-details/ModalDetails';
-import ModalNewUpload from '../../components/modal-new-upload/ModalNewUpload';
+import ModalDetails from '../../components/modal-details/modal-details';
+import ModalNewUpload from '../../components/modal-new-upload/modal-new-upload';
 import SetupNeeded from '../../components/setup-needed';
 import pluginPermissions from '../../permissions';
 import { getIsConfigured, getMuxAssets } from '../../services/strapi';
 import { SearchField, SearchVector, SortVector } from '../../services/strapi/types';
-import getTrad from '../../utils/getTrad';
+import getTrad from '../../utils/get-trad';
 import { appendQueryParameter } from '../../utils/url';
 
 const ProtectedHomePage = () => (

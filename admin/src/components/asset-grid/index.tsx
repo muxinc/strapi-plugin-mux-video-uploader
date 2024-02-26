@@ -5,7 +5,7 @@ import React from 'react';
 
 import { MuxAsset } from '../../../../server/content-types/mux-asset/types';
 import AssetCard from './asset-card';
-import getTrad from '../../utils/getTrad';
+import getTrad from '../../utils/get-trad';
 import { useIntl } from 'react-intl';
 
 interface DefaultProps {

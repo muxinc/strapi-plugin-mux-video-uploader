@@ -3,7 +3,7 @@ import React from 'react';
 import styled from 'styled-components';
 
 import { MuxAsset } from '../../../../server/content-types/mux-asset/types';
-import { useSignedTokens } from '../SignedTokensProvider';
+import { useSignedTokens } from '../signed-tokens-provider';
 import pluginPkg from './../../../../package.json';
 
 const MuxPlayerStyled = styled(MuxPlayer)`

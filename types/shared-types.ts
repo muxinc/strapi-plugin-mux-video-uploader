@@ -2,7 +2,7 @@ import type { TextTrack as MuxTextTrack } from '@mux/mux-node';
 import { InputSettings } from '@mux/mux-node';
 import { Entity } from '@strapi/strapi';
 import { z } from 'zod';
-import { storedTextTrackToMuxTrack } from '../server/utils/textTracks';
+import { storedTextTrackToMuxTrack } from '../server/utils/text-tracks';
 
 export const SUPPORTED_MUX_LANGUAGES = [
   { label: 'English', code: 'en', state: 'Stable' },

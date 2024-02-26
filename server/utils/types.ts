@@ -1,4 +1,4 @@
-import pluginId from './../../admin/src/pluginId';
+import pluginId from '../../admin/src/plugin-id';
 import { MuxService } from './../services/mux';
 
 export type ServiceName = 'mux';

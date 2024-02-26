@@ -5,8 +5,8 @@ import { z } from 'zod';
 import { StoredTextTrack, UploadConfig } from '../../types/shared-types';
 import { Config, getService } from '../utils';
 import { parseJSONBody } from '../utils/parseJSONBody';
-import { resolveMuxAsset } from '../utils/resolveMuxAssets';
-import { storeTextTracks } from '../utils/textTracks';
+import { resolveMuxAsset } from '../utils/resolve-mux-asset';
+import { storeTextTracks } from '../utils/text-tracks';
 import { ASSET_MODEL, TEXT_TRACK_MODEL } from '../utils/types';
 
 const processWebhookEvent = async (webhookEvent: any) => {

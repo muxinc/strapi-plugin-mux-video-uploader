@@ -8,7 +8,7 @@ import { useIntl } from 'react-intl';
 
 import styled from 'styled-components';
 import { MuxAsset } from '../../../../server/content-types/mux-asset/types';
-import getTrad from '../../utils/getTrad';
+import getTrad from '../../utils/get-trad';
 
 const TypographyWrapped = styled(Typography)`
   overflow-wrap: break-word;

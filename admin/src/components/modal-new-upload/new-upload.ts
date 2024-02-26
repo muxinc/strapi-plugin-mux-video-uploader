@@ -2,7 +2,7 @@ import { FormikErrors } from 'formik';
 import { IntlShape } from 'react-intl';
 import { RequestedUploadConfig, UploadConfig } from '../../../../types/shared-types';
 import { UploadInfo } from '../../services/strapi';
-import getTrad from '../../utils/getTrad';
+import getTrad from '../../utils/get-trad';
 
 export type NewUploadFormValues = RequestedUploadConfig & {
   title: string;

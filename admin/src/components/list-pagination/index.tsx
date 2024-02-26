@@ -4,7 +4,7 @@ import { Grid, GridItem } from '@strapi/design-system/Grid';
 import { Dots, NextLink, PageLink, Pagination, PreviousLink } from '@strapi/design-system/Pagination';
 
 import { appendQueryParameter } from '../../utils/url';
-import getTrad from '../../utils/getTrad';
+import getTrad from '../../utils/get-trad';
 
 interface Props {
   page?: number;

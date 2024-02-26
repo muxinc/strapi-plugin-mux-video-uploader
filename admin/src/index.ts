@@ -1,10 +1,10 @@
 import { prefixPluginTranslations } from '@strapi/helper-plugin';
 
 import pluginPkg from '../../package.json';
-import pluginId from './pluginId';
+import pluginId from './plugin-id';
 import pluginPermissions from './permissions';
 import PluginIcon from './components/icons';
-import getTrad from './utils/getTrad';
+import getTrad from './utils/get-trad';
 
 const name = pluginPkg.strapi.name;
 const displayName = pluginPkg.strapi.displayName;
