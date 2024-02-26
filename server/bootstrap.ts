@@ -1,4 +1,4 @@
-import pluginId from './../admin/src/pluginId';
+import pluginId from '../admin/src/plugin-id';
 import { sync } from './utils/sync';
 
 export = async ({ strapi }: { strapi: any }) => {

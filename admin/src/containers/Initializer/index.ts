@@ -1,6 +1,6 @@
 import React from 'react';
 
-import pluginId from '../../pluginId';
+import pluginId from '../../plugin-id';
 
 const Initializer = ({ updatePlugin }: { updatePlugin: Function }) => {
   const ref = React.useRef<any>();

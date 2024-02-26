@@ -8,7 +8,7 @@ import { Icon } from '@strapi/design-system/Icon';
 import { Stack } from '@strapi/design-system/Stack';
 import { Typography } from '@strapi/design-system/Typography';
 
-import getTrad from '../../utils/getTrad';
+import getTrad from '../../utils/get-trad';
 
 const IconStyled = styled(Icon)`
   display: inline-block;

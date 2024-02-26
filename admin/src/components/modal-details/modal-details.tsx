@@ -24,11 +24,11 @@ import styled from 'styled-components';
 
 import { MuxAsset, MuxAssetUpdate } from '../../../../server/content-types/mux-asset/types';
 import { deleteMuxAsset, setMuxAsset } from '../../services/strapi';
-import getTrad from '../../utils/getTrad';
-import CustomTextTrackForm from '../modal-new-upload/CustomTextTrackForm';
+import getTrad from '../../utils/get-trad';
+import CustomTextTrackForm from '../modal-new-upload/custom-text-track-form';
 import PreviewPlayer from '../preview-player';
 import Summary from './summary';
-import SignedTokensProvider from '../SignedTokensProvider';
+import SignedTokensProvider from '../signed-tokens-provider';
 
 const GridItemStyled = styled(GridItem)`
   position: sticky;

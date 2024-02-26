@@ -1,9 +1,9 @@
 import { CreateTrackParams, TextTrack } from '@mux/mux-node';
 import { z } from 'zod';
-import pluginId from '../../admin/src/pluginId';
+import pluginId from '../../admin/src/plugin-id';
 import { ParsedCustomTextTrack, StoredTextTrack, TextTrackFile } from '../../types/shared-types';
 import { MuxAsset, MuxAssetUpdate } from '../content-types/mux-asset/types';
-import { getService } from '../utils';
+import { getService } from '.';
 import { TEXT_TRACK_MODEL } from './types';
 
 export async function storeTextTracks(custom_text_tracks: ParsedCustomTextTrack[]): Promise<StoredTextTrack[]> {

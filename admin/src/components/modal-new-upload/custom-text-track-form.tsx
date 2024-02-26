@@ -4,10 +4,10 @@ import LanguagesList, { LanguageCode } from 'iso-639-1';
 import React from 'react';
 import { useIntl } from 'react-intl';
 import type { MuxAsset } from '../../../../server/content-types/mux-asset/types';
-import { getMuxTextTrackUrl } from '../../../../server/utils/textTracks';
+import { getMuxTextTrackUrl } from '../../../../server/utils/text-tracks';
 import { ParsedCustomTextTrack, TextTrackFile } from '../../../../types/shared-types';
-import getTrad from '../../utils/getTrad';
-import { useSignedTokens } from '../SignedTokensProvider';
+import getTrad from '../../utils/get-trad';
+import { useSignedTokens } from '../signed-tokens-provider';
 import { FileInput } from '../file-input';
 
 function TrackForm({

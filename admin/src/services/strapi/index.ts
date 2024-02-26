@@ -1,7 +1,7 @@
 import { auth } from '@strapi/helper-plugin';
 import { MuxAsset, MuxAssetUpdate } from '../../../../server/content-types/mux-asset/types';
 
-import pluginId from '../../pluginId';
+import pluginId from '../../plugin-id';
 import { SearchVector, SortVector } from './types';
 import { RequestedUploadConfig, UploadConfig } from '../../../../types/shared-types';
 

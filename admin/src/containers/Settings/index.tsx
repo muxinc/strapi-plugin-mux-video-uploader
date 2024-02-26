@@ -19,7 +19,7 @@ import { Typography } from '@strapi/design-system/Typography';
 
 import { setMuxSettings } from '../../services/strapi';
 import pluginPermissions from './../../permissions';
-import getTrad from '../../utils/getTrad';
+import getTrad from '../../utils/get-trad';
 import SettingsField from './settings-field';
 
 interface FormValues {

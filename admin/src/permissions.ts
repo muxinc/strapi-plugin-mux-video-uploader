@@ -1,4 +1,4 @@
-import pluginId from './pluginId';
+import pluginId from './plugin-id';
 
 const settingsRead = [{ action: `plugin::${pluginId}.settings.read`, subject: null }];
 const settingsUpdate = [{ action: `plugin::${pluginId}.settings.update`, subject: null }];

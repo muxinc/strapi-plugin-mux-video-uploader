@@ -22,7 +22,7 @@ import { Loader } from '@strapi/design-system/Loader';
 
 import { getThumbnail } from '../../services/strapi';
 import { getPlaybackToken } from '../../services/strapi';
-import getTrad from '../../utils/getTrad';
+import getTrad from '../../utils/get-trad';
 import { secondsToFormattedString } from '../../utils/date-time';
 import { MuxAsset } from '../../../../server/content-types/mux-asset/types';
 

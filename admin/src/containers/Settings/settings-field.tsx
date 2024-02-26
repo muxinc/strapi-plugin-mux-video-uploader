@@ -10,7 +10,7 @@ import { Link } from '@strapi/design-system/Link';
 import { Stack } from '@strapi/design-system/Stack';
 import { Tooltip } from '@strapi/design-system/Tooltip';
 
-import getTrad from '../../utils/getTrad';
+import getTrad from '../../utils/get-trad';
 
 interface Props {
   name: string;
