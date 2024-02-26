@@ -1,4 +1,4 @@
-import { Asset } from '@mux/mux-node';
+import type Mux from '@mux/mux-node';
 import { ParsedCustomTextTrack } from '../../../types/shared-types';
 
 export interface MuxAsset extends MuxAssetUpdate {
@@ -15,7 +15,7 @@ export interface MuxAsset extends MuxAssetUpdate {
   updated_by_id: string | null;
   createdAt: string;
   updatedAt: string;
-  asset_data?: Asset;
+  asset_data?: Mux.Video.Assets.Asset;
 }
 
 export interface MuxAssetUpdate {

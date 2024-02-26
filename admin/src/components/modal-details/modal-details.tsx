@@ -1,4 +1,3 @@
-import { TextTrack } from '@mux/mux-node';
 import { Popover } from '@strapi/design-system';
 import { Box } from '@strapi/design-system/Box';
 import { Button } from '@strapi/design-system/Button';
@@ -27,8 +26,8 @@ import { deleteMuxAsset, setMuxAsset } from '../../services/strapi';
 import getTrad from '../../utils/get-trad';
 import CustomTextTrackForm from '../modal-new-upload/custom-text-track-form';
 import PreviewPlayer from '../preview-player';
-import Summary from './summary';
 import SignedTokensProvider from '../signed-tokens-provider';
+import Summary from './summary';
 
 const GridItemStyled = styled(GridItem)`
   position: sticky;
@@ -70,7 +69,7 @@ export default function ModalDetails(props: {
 
   const subtitles = (props.muxAsset.asset_data?.tracks ?? []).filter(
     (track) => track.type === 'text' && track.text_type === 'subtitles' && track.status !== 'errored'
-  ) as TextTrack[];
+  );
 
   const toggleDeleteWarning = () => setShowDeleteWarning((prevState) => !prevState);
 
@@ -118,6 +117,9 @@ export default function ModalDetails(props: {
   const initialValues: MuxAssetUpdate = {
     id: muxAsset.id,
     title: muxAsset.title || muxAsset.asset_id || muxAsset.createdAt,
+
+    // @ts-expect-error Due to changes in @mux/mux-node v8, where `TextTrack`, `VideoTrack` and `AudioTrack` were unified,
+    // properties required to subtitles as text tracks are showing as optional and breaking the `custom_text_tracks` type.
     custom_text_tracks: subtitles.map((s) => ({
       closed_captions: s.closed_captions,
       file: undefined,

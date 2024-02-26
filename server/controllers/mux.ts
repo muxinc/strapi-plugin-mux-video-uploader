@@ -135,7 +135,7 @@ const submitRemoteUpload = async (ctx: Context) => {
   const { config, storedTextTracks, body } = await parseUploadRequest(ctx);
 
   if (!body.url) {
-    // @ts-expect-error
+    // @ts-expect-error type seems to be off - we're following the official example: https://docs.strapi.io/dev-docs/error-handling#controllers-and-middlewares
     ctx.badRequest('ValidationError', { errors: { url: ['url cannot be empty'] } });
 
     return;

@@ -1,5 +1,4 @@
 import pluginId from '../admin/src/plugin-id';
-import { sync } from './utils/sync';
 
 export = async ({ strapi }: { strapi: any }) => {
   // @ts-ignore - No types for global strapi variable
