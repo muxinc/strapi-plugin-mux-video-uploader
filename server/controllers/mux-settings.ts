@@ -3,7 +3,7 @@ import { Context } from 'koa';
 
 import { Config } from '../utils';
 
-const isConfiged = async (ctx: Context) => {
+const isConfigured = async (ctx: Context) => {
   const config = await Config.getConfig('general');
 
   if (!config.access_token) ctx.send(false);
@@ -42,7 +42,7 @@ const saveConfig = async (ctx: Context) => {
 };
 
 export = {
-  isConfiged,
+  isConfigured,
   clearConfig,
   saveConfig,
 };

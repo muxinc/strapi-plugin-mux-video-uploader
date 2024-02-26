@@ -121,7 +121,7 @@ const routes = [
   {
     method: 'GET',
     path: '/mux-video-uploader/mux-settings',
-    handler: 'mux-settings.isConfiged',
+    handler: 'mux-settings.isConfigured',
     config: {
       policies: [],
       prefix: false,

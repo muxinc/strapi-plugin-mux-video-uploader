@@ -34,6 +34,7 @@
     "@mux/mux-player-react": "^2.3.3",
     "@mux/upchunk": "^3.3.2",
     "@strapi/utils": "^4.17.1",
+    "@strapi/icons": "^1.14.1",
     "axios": "^1.6.7",
     "copy-to-clipboard": "^3.3.3",
     "formik": "^2.4.5",

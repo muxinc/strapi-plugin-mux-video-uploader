@@ -281,56 +281,69 @@ function FormBody(props: {
         />
       </FieldWrapper>
       <FieldWrapper>
-        <Typography id="upload_type_label" variant="pi" fontWeight="bold">
-          {formatMessage({
-            id: getTrad('Common.upload_type_label-label'),
-            defaultMessage: 'Upload via',
-          })}
-        </Typography>
-        <RadioGroup
-          labelledBy="upload_type_label"
-          onChange={(e: any) => setFieldValue('upload_type', e.target.value)}
-          value={values.upload_type}
-          name="upload_type"
+        <div
           style={{
-            marginTop: '0.5rem',
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '1.5rem',
+            alignItems: 'flex-start',
           }}
         >
-          <Radio value="file">File</Radio>
-          <Radio value="url">URL</Radio>
-        </RadioGroup>
+          <div style={{ position: 'sticky', top: '1em' }}>
+            <Typography id="upload_type_label" variant="pi" fontWeight="bold">
+              {formatMessage({
+                id: getTrad('Common.upload_type_label-label'),
+                defaultMessage: 'Upload via',
+              })}
+            </Typography>
+            <RadioGroup
+              labelledBy="upload_type_label"
+              onChange={(e: any) => setFieldValue('upload_type', e.target.value)}
+              value={values.upload_type}
+              name="upload_type"
+              style={{
+                marginTop: '0.5rem',
+              }}
+            >
+              <Radio value="file">File</Radio>
+              <Radio value="url">URL</Radio>
+            </RadioGroup>
+          </div>
+
+          <div style={{ position: 'sticky', top: '1em' }}>
+            {values.upload_type === 'file' && (
+              <FieldWrapper>
+                <FileInput
+                  name="file"
+                  label={formatMessage({
+                    id: getTrad('Common.file-label'),
+                    defaultMessage: 'File',
+                  })}
+                  error={errors.file}
+                  required
+                  onFiles={(files: File[]) => setFieldValue('file', files)}
+                />
+              </FieldWrapper>
+            )}
+
+            {values.upload_type === 'url' && (
+              <FieldWrapper>
+                <TextInput
+                  label={formatMessage({
+                    id: getTrad('Common.url-label'),
+                    defaultMessage: 'Url',
+                  })}
+                  name="url"
+                  value={values.url}
+                  error={'url' in errors ? errors.url : undefined}
+                  required
+                  onChange={handleChange}
+                />
+              </FieldWrapper>
+            )}
+          </div>
+        </div>
       </FieldWrapper>
-
-      {values.upload_type === 'file' && (
-        <FieldWrapper>
-          <FileInput
-            name="file"
-            label={formatMessage({
-              id: getTrad('Common.file-label'),
-              defaultMessage: 'File',
-            })}
-            error={errors.file}
-            required
-            onFiles={(files: File[]) => setFieldValue('file', files)}
-          />
-        </FieldWrapper>
-      )}
-
-      {values.upload_type === 'url' && (
-        <FieldWrapper>
-          <TextInput
-            label={formatMessage({
-              id: getTrad('Common.url-label'),
-              defaultMessage: 'Url',
-            })}
-            name="url"
-            value={values.url}
-            error={'url' in errors ? errors.url : undefined}
-            required
-            onChange={handleChange}
-          />
-        </FieldWrapper>
-      )}
 
       <FieldWrapper>
         <ToggleInput
