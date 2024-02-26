@@ -27,8 +27,7 @@ export function storedTextTrackToMuxTrack(track: StoredTextTrack): Mux.Video.Ass
   };
 }
 
-const BASE_URL = 'https://nice-falcon-11.telebit.io';
-// const BASE_URL = (strapi as any).backendURL
+const BASE_URL = (strapi as any).backendURL;
 
 function getStrapiTextTrackUrl(id: StoredTextTrack['id']) {
   return `${BASE_URL}/${pluginId}/mux-text-tracks/${id}`;
