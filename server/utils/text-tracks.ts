@@ -1,9 +1,9 @@
-import { CreateTrackParams, TextTrack } from '@mux/mux-node';
+import type Mux from '@mux/mux-node';
 import { z } from 'zod';
+import { getService } from '.';
 import pluginId from '../../admin/src/plugin-id';
 import { ParsedCustomTextTrack, StoredTextTrack, TextTrackFile } from '../../types/shared-types';
 import { MuxAsset, MuxAssetUpdate } from '../content-types/mux-asset/types';
-import { getService } from '.';
 import { TEXT_TRACK_MODEL } from './types';
 
 export async function storeTextTracks(custom_text_tracks: ParsedCustomTextTrack[]): Promise<StoredTextTrack[]> {
@@ -16,7 +16,7 @@ export async function storeTextTracks(custom_text_tracks: ParsedCustomTextTrack[
   );
 }
 
-export function storedTextTrackToMuxTrack(track: StoredTextTrack): CreateTrackParams {
+export function storedTextTrackToMuxTrack(track: StoredTextTrack): Mux.Video.AssetCreateTrackParams {
   return {
     type: 'text',
     text_type: 'subtitles',
@@ -40,7 +40,7 @@ export function getMuxTextTrackUrl({
   signedToken,
 }: {
   playback_id: MuxAsset['playback_id'];
-  track: Pick<TextTrack, 'id'>;
+  track: Pick<Mux.Video.Track, 'id'>;
   signedToken?: string;
 }) {
   return `https://stream.mux.com/${playback_id}/text/${track.id}.vtt${signedToken ? `?token=${signedToken}` : ''}`;
@@ -73,11 +73,14 @@ export async function updateTextTracks(
         track.text_type === 'subtitles' &&
         !newTracks.find((t) => t.stored_track?.id === track.id)
     ) || [];
+
   const addedTracks = newTracks.filter((track) => !existingTracks.find((t) => t.id === track.stored_track?.id));
+
   const updatedTracks = newTracks.flatMap((track) => {
     const existingTrack = existingTracks.find(
       (t) => t.id === track.stored_track?.id && t.type === 'text' && t.text_type === 'subtitles'
-    ) as TextTrack;
+    );
+
     if (!existingTrack) return [];
 
     const isDifferent = [
@@ -156,8 +159,8 @@ export async function updateTextTracks(
   await (async () => {
     try {
       await getService('mux').deleteAssetTextTracks(asset_id, [
-        ...removedTracks.map((t) => t.id),
-        ...updatedTracks.map((t) => t.prevId),
+        ...removedTracks.flatMap((t) => t.id || []),
+        ...updatedTracks.flatMap((t) => t.prevId || []),
       ]);
     } catch (error) {
       console.error('\n\n[updateTextTracks / deleteAssetTextTracks]', error);

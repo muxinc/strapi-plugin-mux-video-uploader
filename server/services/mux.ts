@@ -1,5 +1,4 @@
-import Mux, { CreateTrackParams, Upload } from '@mux/mux-node';
-import { RequestOptions } from '@mux/mux-node/dist/RequestOptions';
+import Mux from '@mux/mux-node';
 
 import { ParsedUploadConfig, StoredTextTrack, uploadConfigToNewAssetInput } from '../../types/shared-types';
 import pluginPkg from './../../package.json';
@@ -32,24 +31,29 @@ export interface UploadRequestConfig {
 
 const getMuxClient = async () => {
   const { access_token, secret_key } = await Config.getConfig('general');
-  const options: RequestOptions = { platform: { name: 'Strapi CMS', version: pluginPkg.version } };
 
-  return new Mux(access_token, secret_key, options);
+  return new Mux({
+    tokenId: access_token,
+    tokenSecret: secret_key,
+    defaultHeaders: {
+      'x-source-platform': `Strapi CMS | ${pluginPkg.version}`,
+    },
+  });
 };
 
 const muxService = () => ({
   async getAssetById(assetId: string) {
-    const { Video } = await getMuxClient();
+    const { video } = await getMuxClient();
 
-    return await Video.Assets.get(assetId);
+    return await video.assets.retrieve(assetId);
   },
 
   async getAssetByUploadId(uploadId: string) {
-    const { Video } = await getMuxClient();
+    const { video } = await getMuxClient();
 
-    const assets = await Video.Assets.list({ upload_id: uploadId });
+    const assets = await video.assets.list({ upload_id: uploadId });
 
-    return assets[0];
+    return assets.data[0];
   },
 
   async getDirectUploadUrl({
@@ -60,14 +64,14 @@ const muxService = () => ({
     config: ParsedUploadConfig;
     storedTextTracks: StoredTextTrack[];
     corsOrigin?: string;
-  }): Promise<Upload> {
-    const { Video } = await getMuxClient();
+  }): Promise<Mux.Video.Uploads.Upload> {
+    const { video } = await getMuxClient();
 
-    return Video.Uploads.create({
+    return video.uploads.create({
       cors_origin: corsOrigin,
       new_asset_settings: {
         input: uploadConfigToNewAssetInput(config, storedTextTracks),
-        playback_policy: config.signed ? 'signed' : 'public',
+        playback_policy: [config.signed ? 'signed' : 'public'],
         mp4_support: config.mp4_support,
         encoding_tier: config.encoding_tier,
         max_resolution_tier: config.max_resolution_tier,
@@ -84,9 +88,9 @@ const muxService = () => ({
     storedTextTracks: StoredTextTrack[];
     config: ParsedUploadConfig;
   }) {
-    const { Video } = await getMuxClient();
+    const { video } = await getMuxClient();
 
-    return Video.Assets.create({
+    return video.assets.create({
       input: uploadConfigToNewAssetInput(config, storedTextTracks, url) || [],
       playback_policy: [config.signed ? 'signed' : 'public'],
       mp4_support: config.mp4_support,
@@ -96,15 +100,15 @@ const muxService = () => ({
   },
 
   async deleteAsset(assetId: string) {
-    const { Video } = await getMuxClient();
+    const { video } = await getMuxClient();
 
-    await Video.Assets.del(assetId);
+    await video.assets.delete(assetId);
 
     return true;
   },
 
   async signPlaybackId(playbackId: string, type: string) {
-    const { JWT } = Mux;
+    const { jwt } = await getMuxClient();
     const { playback_signing_secret, playback_signing_id } = await Config.getConfig('general');
 
     let baseOptions = {
@@ -115,21 +119,26 @@ const muxService = () => ({
 
     let params = { width: type === 'thumbnail' ? '512' : '' };
 
-    const token = JWT.signPlaybackId(playbackId, { ...baseOptions, type: type, params });
+    const token = await jwt.signPlaybackId(playbackId, {
+      ...baseOptions,
+      // @ts-expect-error This `type` type isn't properly exposed by the Mux SDK
+      type,
+      params,
+    });
 
-    return { token: token };
+    return { token };
   },
 
-  async createAssetTextTracks(assetId: string, tracks: CreateTrackParams[]) {
-    const { Video } = await getMuxClient();
+  async createAssetTextTracks(assetId: string, tracks: Mux.Video.Assets.AssetCreateTrackParams[]) {
+    const { video } = await getMuxClient();
 
-    return await Promise.all(tracks.map((track) => Video.Assets.createTrack(assetId, track)));
+    return await Promise.all(tracks.map((track) => video.assets.createTrack(assetId, track)));
   },
 
   async deleteAssetTextTracks(assetId: string, trackIds: string[]) {
-    const { Video } = await getMuxClient();
+    const { video } = await getMuxClient();
 
-    return await Promise.all(trackIds.map((id) => Video.Assets.deleteTrack(assetId, id)));
+    return await Promise.all(trackIds.map((id) => video.assets.deleteTrack(assetId, id)));
   },
 });
 
