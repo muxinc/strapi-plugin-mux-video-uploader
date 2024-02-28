@@ -41,7 +41,7 @@ const saveConfig = async (ctx: Context) => {
   }
 };
 
-export = {
+export default {
   isConfigured,
   clearConfig,
   saveConfig,
