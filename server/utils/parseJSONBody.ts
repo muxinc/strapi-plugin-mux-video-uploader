@@ -11,8 +11,8 @@ export function parseJSONBody<S extends Zod.Schema>(ctx: Context, bodySchema: S)
     try {
       return JSON.parse(body);
     } catch (error) {
-      // @ts-expect-error
-      ctx.badRequest('InvalidBody', { errors: { body: 'invalid body' } });
+      // ctx.badRequest's type seems to be off - we're following the official example: https://docs.strapi.io/dev-docs/error-handling#controllers-and-middlewares
+      (ctx as any).badRequest('InvalidBody', { errors: { body: 'invalid body' } });
       throw new Error('invalid-body');
     }
   })();
@@ -20,8 +20,7 @@ export function parseJSONBody<S extends Zod.Schema>(ctx: Context, bodySchema: S)
   const result = bodySchema.safeParse(bodyObject);
 
   if (!result.success) {
-    // @ts-expect-error
-    ctx.badRequest('ValidationError', { errors: { body: result.error.message } });
+    (ctx as any).badRequest('ValidationError', { errors: { body: result.error.message } });
     throw new Error(result.error.message);
   }
 

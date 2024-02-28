@@ -87,6 +87,9 @@
   "ModalNewUpload.from-url-tab-label": "From url",
   "ModalNewUpload.unknown-error": "Unknown error encountered",
   "ModalNewUpload.unresolvable-upload-state": "Unable to resolve upload state",
+  "ModalNewUpload.formErrors.url": "A valid URL is required",
+  "ModalNewUpload.formErrors.file": "A video or audio file is required",
+  "ModalNewUpload.formErrors.title": "Required",
 
   "CustomTextTrackForm.closed-captions": "Closed captions",
   "CustomTextTrackForm.new-caption": "New caption/subtitle",

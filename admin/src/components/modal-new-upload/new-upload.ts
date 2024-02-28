@@ -1,76 +1,35 @@
 import { FormikErrors } from 'formik';
-import { IntlShape } from 'react-intl';
-import { RequestedUploadConfig, UploadConfig } from '../../../../types/shared-types';
-import { UploadInfo } from '../../services/strapi';
-import getTrad from '../../utils/get-trad';
+import {
+  RequestedUploadConfig,
+  UploadConfig,
+  UploadData,
+  type RequestedUploadData,
+} from '../../../../types/shared-types';
+import type { FormatMessage, TranslationKey } from '../../utils/use-plugin-intl';
 
-export type NewUploadFormValues = RequestedUploadConfig & {
-  title: string;
-
-  file?: File[];
-  url?: string;
-};
-
-export const NEW_UPLOAD_INITIAL_VALUES: NewUploadFormValues = {
-  title: '',
-  file: undefined,
+export const NEW_UPLOAD_INITIAL_VALUES: RequestedUploadData = {
   ...UploadConfig.parse({} as RequestedUploadConfig),
+  title: '',
+  upload_type: 'file',
+  // @ts-expect-error initialize the form without a file. It'll be properly validated before submission
+  file: undefined,
 };
 
 export const generateUploadInfo = ({
   body,
   formatMessage,
 }: {
-  body: NewUploadFormValues;
-  formatMessage: IntlShape['formatMessage'];
-}): UploadInfo => {
-  const errors: FormikErrors<NewUploadFormValues> = {};
+  body: Partial<RequestedUploadData>;
+  formatMessage: FormatMessage;
+}): RequestedUploadData => {
+  const errors: FormikErrors<RequestedUploadData> = {};
+  const parsed = UploadData.safeParse(body);
 
-  let uploadInfo: UploadInfo | undefined;
-  const uploadConfig = UploadConfig.safeParse(body);
+  if (parsed.success) return parsed.data;
 
-  if (!uploadConfig.success) {
-    uploadConfig.error.issues.forEach((issue) => {
-      errors[(Array.isArray(issue.path) ? issue.path.join('.') : issue.path) as keyof typeof errors] = issue.message;
-    });
-    throw errors;
-  }
-
-  if (!body.title) {
-    errors.title = formatMessage({
-      id: getTrad('Common.title-required'),
-      defaultMessage: 'No title specified',
-    });
-  }
-
-  if (body.title.length < 3) {
-    errors.title = formatMessage({
-      id: getTrad('Common.title-length'),
-      defaultMessage: 'Needs to be at least 3 letters',
-    });
-  }
-
-  if (uploadConfig.data.upload_type === 'file' && !body.file) {
-    errors.file = formatMessage({
-      id: getTrad('Common.file-required'),
-      defaultMessage: 'File needs to be selected',
-    });
-  }
-
-  if (uploadConfig.data.upload_type === 'url' && !body.url) {
-    errors.url = formatMessage({
-      id: getTrad('Common.url-required'),
-      defaultMessage: 'No url specified',
-    });
-  }
-
-  if (Object.entries(errors).length > 0) {
-    throw errors;
-  }
-
-  return {
-    ...uploadConfig.data,
-    title: body.title,
-    media: (uploadConfig.data.upload_type === 'file' ? body.file : body.url) as UploadInfo['media'],
-  };
+  parsed.error.issues.forEach((issue) => {
+    const issuePath = (Array.isArray(issue.path) ? issue.path.join('.') : issue.path) as keyof typeof errors;
+    errors[issuePath] = formatMessage(`ModalNewUpload.formErrors.${issuePath}` as TranslationKey, issue.message);
+  });
+  throw errors;
 };

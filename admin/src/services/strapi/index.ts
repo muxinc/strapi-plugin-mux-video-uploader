@@ -1,14 +1,9 @@
 import { auth } from '@strapi/helper-plugin';
 import { MuxAsset, MuxAssetUpdate } from '../../../../server/content-types/mux-asset/types';
 
+import { type RequestedUploadData } from '../../../../types/shared-types';
 import pluginId from '../../plugin-id';
 import { SearchVector, SortVector } from './types';
-import { RequestedUploadConfig, UploadConfig } from '../../../../types/shared-types';
-
-export interface UploadInfo extends RequestedUploadConfig {
-  title: string;
-  media: File[] | string;
-}
 
 function getServiceUri() {
   // @ts-ignore
@@ -34,23 +29,22 @@ const setMuxSettings = (body: FormData) => {
   });
 };
 
-const submitUpload = async (uploadInfo: UploadInfo) => {
-  const uploadConfig = UploadConfig.parse(uploadInfo);
-  const body = {
-    ...uploadConfig,
-    title: uploadInfo.title,
-    url: uploadConfig.upload_type === 'url' ? (uploadInfo.media as string) : undefined,
-  };
-
+const submitUpload = async (uploadInfo: RequestedUploadData) => {
   const submitEndpoint = uploadInfo.upload_type === 'url' ? 'submitRemoteUpload' : 'submitDirectUpload';
 
   const response = await fetch(`${getServiceUri()}/${pluginId}/${submitEndpoint}`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${getJwtToken()}`, ContentType: 'application/json' },
-    body: JSON.stringify(body),
+    body: JSON.stringify(uploadInfo),
   });
 
-  return await response.json();
+  return (await response.json()) as {
+    statusCode: number;
+    data: {
+      errors?: any;
+    };
+    url?: string;
+  };
 };
 
 const getMuxAssets = (searchVector?: SearchVector, sortVector?: SortVector, start = 0, limit = 10) => {
@@ -144,13 +138,13 @@ const getMuxThumbnail = async (playbackId: string | null) => {
 };
 
 export {
-  getIsConfigured,
-  setMuxSettings,
-  submitUpload,
-  getMuxAssets,
-  setMuxAsset,
   deleteMuxAsset,
-  getThumbnail,
+  getIsConfigured,
+  getMuxAssets,
   getMuxThumbnail,
   getPlaybackToken,
+  getThumbnail,
+  setMuxAsset,
+  setMuxSettings,
+  submitUpload,
 };
