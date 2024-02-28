@@ -1,5 +1,5 @@
 import mux from './mux';
 
-export = {
+export default {
   mux,
 };

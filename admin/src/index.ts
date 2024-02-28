@@ -5,6 +5,7 @@ import pluginId from './plugin-id';
 import pluginPermissions from './permissions';
 import PluginIcon from './components/icons';
 import getTrad from './utils/get-trad';
+import translations from './translations';
 
 const name = pluginPkg.strapi.name;
 const displayName = pluginPkg.strapi.displayName;
@@ -60,25 +61,13 @@ export default {
     });
   },
   bootstrap() {},
-  async registerTrads({ locales }: { locales: string[] }) {
-    const importedTrads = await Promise.all(
-      locales.map((locale: string) => {
-        return import(/* webpackChunkName: "users-permissions-translation-[request]" */ `./translations/${locale}.json`)
-          .then(({ default: data }) => {
-            return {
-              data: prefixPluginTranslations(data, pluginId),
-              locale,
-            };
-          })
-          .catch(() => {
-            return {
-              data: {},
-              locale,
-            };
-          });
-      })
-    );
 
-    return Promise.resolve(importedTrads);
+  async registerTrads(app: any) {
+    const { locales } = app;
+
+    return locales.flatMap((locale: keyof typeof translations) => {
+      const localeTranslations = translations[locale];
+      return localeTranslations ? { data: prefixPluginTranslations(localeTranslations, pluginId), locale } : [];
+    });
   },
 };

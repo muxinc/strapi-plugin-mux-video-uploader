@@ -66,7 +66,7 @@ const del = async (ctx: Context) => {
   return await strapi.entityService.delete(ASSET_MODEL, id);
 };
 
-export = {
+export default {
   find,
   findOne,
   count,

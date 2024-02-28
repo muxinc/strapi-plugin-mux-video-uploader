@@ -6,7 +6,7 @@ import contentTypes from './content-types';
 // import register from './register';
 // import config from './config';
 
-export = () => ({
+export default () => ({
   // register,
   bootstrap,
   // config,

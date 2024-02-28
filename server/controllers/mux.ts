@@ -2,7 +2,7 @@ import axios from 'axios';
 import { Context } from 'koa';
 import { z } from 'zod';
 
-import { StoredTextTrack, UploadConfig } from '../../types/shared-types';
+import { StoredTextTrack, UploadConfig, UploadData } from '../../types/shared-types';
 import { Config, getService } from '../utils';
 import { parseJSONBody } from '../utils/parseJSONBody';
 import { resolveMuxAsset } from '../utils/resolve-mux-asset';
@@ -84,15 +84,7 @@ const thumbnail = async (ctx: Context) => {
 };
 
 async function parseUploadRequest(ctx: Context) {
-  const body = parseJSONBody(
-    ctx,
-    UploadConfig.and(
-      z.object({
-        title: z.string().optional(),
-        url: z.string().url().optional(),
-      })
-    )
-  );
+  const body = parseJSONBody(ctx, UploadData);
 
   const config = UploadConfig.safeParse(body);
 
@@ -134,9 +126,9 @@ const submitDirectUpload = async (ctx: Context) => {
 const submitRemoteUpload = async (ctx: Context) => {
   const { config, storedTextTracks, body } = await parseUploadRequest(ctx);
 
-  if (!body.url) {
-    // @ts-expect-error type seems to be off - we're following the official example: https://docs.strapi.io/dev-docs/error-handling#controllers-and-middlewares
-    ctx.badRequest('ValidationError', { errors: { url: ['url cannot be empty'] } });
+  if (body.upload_type !== 'url' || !body.url) {
+    // ctx.badRequest's type seems to be off - we're following the official example: https://docs.strapi.io/dev-docs/error-handling#controllers-and-middlewares
+    (ctx as any).badRequest('ValidationError', { errors: { url: ['url cannot be empty'] } });
 
     return;
   }
@@ -280,7 +272,7 @@ const textTrack = async (ctx: Context) => {
   ctx.body = track.file.contents;
 };
 
-export = {
+export default {
   submitDirectUpload,
   submitRemoteUpload,
   deleteMuxAsset,

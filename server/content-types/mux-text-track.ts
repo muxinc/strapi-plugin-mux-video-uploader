@@ -1,4 +1,4 @@
-export = {
+export default {
   kind: 'collectionType',
   collectionName: 'muxtexttracks',
   info: {

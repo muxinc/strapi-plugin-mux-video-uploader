@@ -2,7 +2,7 @@ import muxAsset from './mux-asset';
 import muxSettings from './mux-settings';
 import mux from './mux';
 
-export = {
+export default {
   'mux-asset': muxAsset,
   'mux-settings': muxSettings,
   mux,
