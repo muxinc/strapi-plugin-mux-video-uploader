@@ -116,6 +116,18 @@ export const UploadConfig = z
 export type RequestedUploadConfig = z.input<typeof UploadConfig>;
 export type ParsedUploadConfig = z.infer<typeof UploadConfig>;
 
+export const UploadData = z
+  .object({ title: z.string().min(1) })
+  .and(
+    z.discriminatedUnion('upload_type', [
+      z.object({ upload_type: z.literal('file'), file: z.custom<File>((value) => value instanceof File) }),
+      z.object({ upload_type: z.literal('url'), url: z.string().url() }),
+    ])
+  )
+  .and(UploadConfig);
+
+export type RequestedUploadData = z.input<typeof UploadData>;
+
 export function uploadConfigToNewAssetInput(
   config: ParsedUploadConfig,
   storedTextTracks: StoredTextTrack[] = [],
