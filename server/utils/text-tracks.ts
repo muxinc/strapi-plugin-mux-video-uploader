@@ -63,6 +63,9 @@ export async function updateTextTracks(
     return getService('mux').signPlaybackId(playback_id, 'video');
   })();
 
+  /**
+   * #1 PARSE EXISTING, REMOVED, ADDED AND UPDATED TRACKS
+   */
   const existingTracks = muxAsset.asset_data?.tracks || [];
 
   const removedTracks =
@@ -99,6 +102,8 @@ export async function updateTextTracks(
   });
 
   /**
+   * #2 DOWNLOAD FILES FOR TRACKS ALREADY IN MUX
+   *
    * For tracks that were updated but didn't include a new user-sent file,
    * we can't point to a stored track in Strapi. Instead, we need to point to the
    * track hosted in Mux itself.
@@ -106,6 +111,7 @@ export async function updateTextTracks(
   const alreadyInMuxWithoutFile = await Promise.all(
     updatedTracks.flatMap((t) => {
       const track_id = t.track.stored_track?.id;
+      // If not a stored track, ignore
       if (t.track.file || !track_id) return [];
 
       return new Promise<(typeof updatedTracks)[number]>(async (resolve, reject) => {
@@ -142,6 +148,11 @@ export async function updateTextTracks(
     })
   );
 
+  /**
+   * #3 STORE TRACKS IN STRAPI
+   *
+   * So Mux's services can fetch them via URL
+   */
   const newStoredForDownload = await (async () => {
     try {
       return await storeTextTracks(
@@ -155,6 +166,12 @@ export async function updateTextTracks(
     }
   })();
 
+  /**
+   * #4 DELETE EXISTING TRACKS IN MUX
+   *
+   * Although creating the new ones first would yield a better safety net,
+   * we delete first because Mux doesn't allow tracks with duplicate language codes.
+   */
   await (async () => {
     try {
       await getService('mux').deleteAssetTextTracks(asset_id, [
@@ -167,6 +184,11 @@ export async function updateTextTracks(
     }
   })();
 
+  /**
+   * #5 CREATE TRACKS IN MUX
+   *
+   * Provide an URL so Mux's services can fetch them remotely.
+   */
   await (async () => {
     try {
       await getService('mux').createAssetTextTracks(asset_id, newStoredForDownload.map(storedTextTrackToMuxTrack));
@@ -175,15 +197,4 @@ export async function updateTextTracks(
       throw new Error('Unable to create text tracks in Mux');
     }
   })();
-
-  // Give mux' servers enough time to download tracks before deleting them
-  if (alreadyInMuxWithoutFile.length > 0) {
-    await sleep(1000);
-  }
-}
-
-export function sleep(ms: number) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
 }
