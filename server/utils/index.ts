@@ -1,4 +1,4 @@
-import { CONFIG_NAME, PLUGIN_NAME } from './../constants';
+import { CONFIG_NAME, PLUGIN_NAME } from '../constants';
 import * as Config from './config';
 import { ServiceName, ServiceType } from './types';
 

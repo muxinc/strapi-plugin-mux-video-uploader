@@ -128,6 +128,20 @@ export const UploadData = z
 
 export type RequestedUploadData = z.input<typeof UploadData>;
 
+/**
+ * Used by `server/controllers/mux.ts` as that doesn't receive the file from the front-end.
+ * Users upload the file directly from the browser via the presigned URL generated in `parseUploadRequest`.
+ */
+export const UploadDataWithoutFile = z
+  .object({ title: z.string().min(1) })
+  .and(
+    z.discriminatedUnion('upload_type', [
+      z.object({ upload_type: z.literal('file') }),
+      z.object({ upload_type: z.literal('url'), url: z.string().url() }),
+    ])
+  )
+  .and(UploadConfig);
+
 export function uploadConfigToNewAssetInput(
   config: ParsedUploadConfig,
   storedTextTracks: StoredTextTrack[] = [],

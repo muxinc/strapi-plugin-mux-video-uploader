@@ -4,7 +4,7 @@ import styled from 'styled-components';
 
 import { MuxAsset } from '../../../../server/content-types/mux-asset/types';
 import { useSignedTokens } from '../signed-tokens-provider';
-import pluginPkg from './../../../../package.json';
+import pluginPkg from '../../../../package.json';
 
 const MuxPlayerStyled = styled(MuxPlayer)`
   width: 100%;

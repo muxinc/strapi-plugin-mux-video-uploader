@@ -1,5 +1,5 @@
 import { Button, Card, CardBody, CardContent, Checkbox, Combobox, ComboboxOption, Flex } from '@strapi/design-system';
-import { Pencil, Plus, Trash } from '@strapi/icons';
+import { Download, Pencil, Plus, Trash } from '@strapi/icons';
 import LanguagesList, { LanguageCode } from 'iso-639-1';
 import React from 'react';
 import { useIntl } from 'react-intl';
@@ -7,8 +7,8 @@ import type { MuxAsset } from '../../../../server/content-types/mux-asset/types'
 import { getMuxTextTrackUrl } from '../../../../server/utils/text-tracks';
 import { ParsedCustomTextTrack, TextTrackFile } from '../../../../types/shared-types';
 import getTrad from '../../utils/get-trad';
-import { useSignedTokens } from '../signed-tokens-provider';
 import { FileInput } from '../file-input';
+import { useSignedTokens } from '../signed-tokens-provider';
 
 function TrackForm({
   track,
@@ -35,17 +35,34 @@ function TrackForm({
     modifyTrack({ file: parsed.data });
   }
 
+  function downloadOnClick(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
+    e.preventDefault();
+    if (!muxAsset?.playback_id || !track.stored_track) return;
+
+    const trackUrl = getMuxTextTrackUrl({
+      playback_id: muxAsset.playback_id,
+      track: track.stored_track,
+      signedToken: video || undefined,
+    });
+
+    const anchor = document.createElement('a');
+    anchor.setAttribute('href', trackUrl);
+    anchor.setAttribute('download', 'true');
+    anchor.click();
+  }
+
   return (
     <Card>
       <CardBody>
-        <CardContent>
-          <div
-            style={{
-              display: 'grid',
-              gap: '1rem',
-            }}
-          >
-            <Flex alignItems="start">
+        <CardContent
+          style={{
+            display: 'grid',
+            gap: '1rem',
+            flex: 1,
+          }}
+        >
+          <Flex alignItems="start" gap={2}>
+            <div style={{ flex: 1 }}>
               <Combobox
                 placeholder={formatMessage({
                   id: getTrad('CustomTextTrackForm.language'),
@@ -68,66 +85,61 @@ function TrackForm({
                   </ComboboxOption>
                 ))}
               </Combobox>
-              {track.stored_track?.id && muxAsset?.playback_id && (
-                <a
-                  href={getMuxTextTrackUrl({
-                    playback_id: muxAsset.playback_id,
-                    track: track.stored_track,
-                    signedToken: video || undefined,
-                  })}
-                  download
-                >
+            </div>
+            {track.stored_track?.id && muxAsset?.playback_id && (
+              <div style={{ paddingTop: '1.5em' }}>
+                <Button variant="ghost" startIcon={<Download />} onClick={downloadOnClick}>
                   {formatMessage({
                     id: getTrad('Common.download-button'),
                     defaultMessage: 'Download',
                   })}
-                </a>
-              )}
-            </Flex>
-            {editable && (
-              <FileInput
-                name="file"
-                label={formatMessage({
-                  id: getTrad('Common.file-label'),
-                  defaultMessage: 'Subtitles file (.vtt or .srt)',
-                })}
-                required
-                onFiles={handleFiles}
-                inputProps={{
-                  accept: '.vtt,.srt',
-                }}
-              />
+                </Button>
+              </div>
             )}
-            <Checkbox
-              checked={track.closed_captions}
-              value={track.closed_captions}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                modifyTrack({ closed_captions: e.currentTarget.checked });
-              }}
-              disabled={!editable}
-            >
-              {formatMessage({
-                id: getTrad('CustomTextTrackForm.closed-captions'),
-                defaultMessage: 'Closed captions',
+          </Flex>
+          {editable && (
+            <FileInput
+              name="file"
+              label={formatMessage({
+                id: getTrad('Common.file-label'),
+                defaultMessage: 'Subtitles file (.vtt or .srt)',
               })}
-            </Checkbox>
-            <Flex alignItems="center" justifyContent="between" gap={2}>
-              <Button startIcon={<Trash />} onClick={deleteTrack} variant="danger-light">
+              required
+              onFiles={handleFiles}
+              inputProps={{
+                accept: '.vtt,.srt',
+              }}
+            />
+          )}
+          <Checkbox
+            checked={track.closed_captions}
+            value={track.closed_captions}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              modifyTrack({ closed_captions: e.currentTarget.checked });
+            }}
+            disabled={!editable}
+          >
+            {formatMessage({
+              id: getTrad('CustomTextTrackForm.closed-captions'),
+              defaultMessage: 'Closed captions',
+            })}
+          </Checkbox>
+          <Flex alignItems="center" justifyContent="between" gap={2}>
+            <Button startIcon={<Trash />} onClick={deleteTrack} variant="danger-light">
+              {formatMessage({
+                id: getTrad('Common.delete-button'),
+                defaultMessage: 'Delete',
+              })}
+            </Button>
+            {!editable && (
+              <Button onClick={() => setEditable(true)} startIcon={<Pencil />}>
                 {formatMessage({
-                  id: getTrad('Common.delete-button'),
-                  defaultMessage: 'Delete',
+                  id: getTrad('Common.update-button'),
+                  defaultMessage: 'Update',
                 })}
               </Button>
-              {!editable && (
-                <Button onClick={() => setEditable(true)} startIcon={<Pencil />}>
-                  {formatMessage({
-                    id: getTrad('Common.update-button'),
-                    defaultMessage: 'Update',
-                  })}
-                </Button>
-              )}
-            </Flex>
-          </div>
+            )}
+          </Flex>
         </CardContent>
       </CardBody>
     </Card>
