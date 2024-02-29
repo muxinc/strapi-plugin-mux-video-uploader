@@ -1,7 +1,7 @@
 import { isEqual, set } from 'lodash';
 
-import { CONFIG_KEY, CONFIG_NAME } from './../constants';
-import { getCoreStore } from './';
+import { CONFIG_KEY, CONFIG_NAME } from '../constants';
+import { getCoreStore } from '.';
 
 function configKey(key: string) {
   return `${CONFIG_KEY}_${key}`;

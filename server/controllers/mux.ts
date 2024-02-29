@@ -2,7 +2,7 @@ import axios from 'axios';
 import { Context } from 'koa';
 import { z } from 'zod';
 
-import { StoredTextTrack, UploadConfig, UploadData } from '../../types/shared-types';
+import { StoredTextTrack, UploadConfig, UploadDataWithoutFile } from '../../types/shared-types';
 import { Config, getService } from '../utils';
 import { parseJSONBody } from '../utils/parseJSONBody';
 import { resolveMuxAsset } from '../utils/resolve-mux-asset';
@@ -84,7 +84,7 @@ const thumbnail = async (ctx: Context) => {
 };
 
 async function parseUploadRequest(ctx: Context) {
-  const body = parseJSONBody(ctx, UploadData);
+  const body = parseJSONBody(ctx, UploadDataWithoutFile);
 
   const config = UploadConfig.safeParse(body);
 

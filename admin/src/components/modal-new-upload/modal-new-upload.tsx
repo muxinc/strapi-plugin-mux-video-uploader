@@ -72,14 +72,13 @@ const ModalNewUpload = ({ isOpen, onToggle = () => {} }: { isOpen: boolean; onTo
     let uploadInfo: RequestedUploadData;
     try {
       uploadInfo = generateUploadInfo({ body, formatMessage });
-      console.log({ uploadInfo });
     } catch (errors) {
       setErrors(errors as FormikErrors<RequestedUploadData>);
-      console.error({ errors });
       return;
     }
 
     const result = await submitUpload(uploadInfo).catch((error) => {
+      console.log({ error });
       switch (typeof error) {
         case 'string': {
           setUploadError(error);
