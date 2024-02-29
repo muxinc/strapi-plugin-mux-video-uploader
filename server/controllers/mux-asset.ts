@@ -55,9 +55,13 @@ const update = async (ctx: Context) => {
   /** Let Mux's webhook handlers notify us of track changes */
   await updateTextTracks(muxAsset, custom_text_tracks);
 
-  return await strapi.entityService.update(ASSET_MODEL, id, {
-    data: { title },
-  });
+  if (typeof title === 'string' && title) {
+    await strapi.entityService.update(ASSET_MODEL, id, {
+      data: { title },
+    });
+  }
+
+  return { ok: true };
 };
 
 const del = async (ctx: Context) => {
