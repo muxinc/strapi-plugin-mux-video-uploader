@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 import { StoredTextTrack, UploadConfig, UploadDataWithoutFile } from '../../types/shared-types';
 import { Config, getService } from '../utils';
-import { parseJSONBody } from '../utils/parseJSONBody';
+import { parseJSONBody } from '../utils/parse-json-body';
 import { resolveMuxAsset } from '../utils/resolve-mux-asset';
 import { storeTextTracks } from '../utils/text-tracks';
 import { ASSET_MODEL, TEXT_TRACK_MODEL } from '../utils/types';
