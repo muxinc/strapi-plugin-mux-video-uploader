@@ -18,12 +18,12 @@ import Trash from '@strapi/icons/Trash';
 import copy from 'copy-to-clipboard';
 import { FormikHelpers, FormikTouched, useFormik } from 'formik';
 import React from 'react';
-import { useIntl } from 'react-intl';
 import styled from 'styled-components';
 
 import { MuxAsset, MuxAssetUpdate } from '../../../../server/content-types/mux-asset/types';
 import { deleteMuxAsset, setMuxAsset } from '../../services/strapi';
 import getTrad from '../../utils/get-trad';
+import usePluginIntl from '../../utils/use-plugin-intl';
 import CustomTextTrackForm from '../modal-new-upload/custom-text-track-form';
 import PreviewPlayer from '../preview-player';
 import SignedTokensProvider from '../signed-tokens-provider';
@@ -51,7 +51,7 @@ export default function ModalDetails(props: {
 }) {
   const { isOpen, muxAsset, enableUpdate, enableDelete, onToggle = () => {} } = props;
 
-  const { formatMessage } = useIntl();
+  const { formatMessage } = usePluginIntl();
   const deleteButtonRef = React.useRef<HTMLButtonElement>(null);
 
   const [touchedFields, setTouchedFields] = React.useState<FormikTouched<MuxAssetUpdate>>({});
@@ -133,10 +133,7 @@ export default function ModalDetails(props: {
     values: MuxAssetUpdate,
     { setErrors, setSubmitting }: FormikHelpers<MuxAssetUpdate>
   ) => {
-    const title = formatMessage({
-      id: getTrad('Common.title-required'),
-      defaultMessage: 'No title specified',
-    });
+    const title = formatMessage('Common.title-required', 'No title specified');
 
     if (!values.title) {
       setErrors({ title });
@@ -173,15 +170,9 @@ export default function ModalDetails(props: {
 
   const codeSnippetHint = (
     <div>
-      {formatMessage({
-        id: getTrad('ModalDetails.powered-by-mux'),
-        defaultMessage: 'Powered by mux-player.',
-      })}{' '}
+      {formatMessage('ModalDetails.powered-by-mux', 'Powered by mux-player.')}{' '}
       <Link href="https://docs.mux.com/guides/video/mux-player" isExternal>
-        {formatMessage({
-          id: getTrad('ModalDetails.read-more'),
-          defaultMessage: 'Read more about it',
-        })}
+        {formatMessage('ModalDetails.read-more', 'Read more about it')}
       </Link>
     </div>
   );
@@ -198,10 +189,7 @@ export default function ModalDetails(props: {
       >
         <ModalHeader>
           <Typography fontWeight="bold" textColor="neutral800" as="h2" id="title">
-            {formatMessage({
-              id: getTrad('ModalDetails.header'),
-              defaultMessage: 'Video details',
-            })}
+            {formatMessage('ModalDetails.header', 'Video details')}
           </Typography>
         </ModalHeader>
         <form onSubmit={handleSubmit}>
@@ -209,10 +197,7 @@ export default function ModalDetails(props: {
             {deletingState === 'deleting' ? (
               <Flex justifyContent="center" padding={4}>
                 <Typography variant="omega" textColor="neutral700">
-                  {formatMessage({
-                    id: getTrad('ModalDetails.deleting'),
-                    defaultMessage: 'Deleting...',
-                  })}
+                  {formatMessage('ModalDetails.deleting', 'Deleting...')}
                 </Typography>
               </Flex>
             ) : (
@@ -223,17 +208,62 @@ export default function ModalDetails(props: {
                     style={{
                       aspectRatio: aspect_ratio ? aspect_ratio.replace(':', ' / ') : undefined,
                       marginBottom: '1.5rem',
+                      paddingTop: '3rem',
+                      position: 'relative',
                     }}
                   >
                     <PreviewPlayer muxAsset={muxAsset} />
+
+                    <IconButton
+                      label={formatMessage('Common.delete-button', 'Delete')}
+                      disableDelete={!enableDelete}
+                      onClick={toggleDeleteWarning}
+                      icon={<Trash />}
+                      ref={deleteButtonRef}
+                      style={{
+                        position: 'absolute',
+                        top: '0.5rem',
+                        right: '0.5rem',
+                      }}
+                    />
+                    {showDeleteWarning && (
+                      <Popover source={deleteButtonRef} onDismiss={toggleDeleteWarning}>
+                        <Flex padding={4} direction="column" gap={2}>
+                          <Box textAlign="center">
+                            <ExclamationMarkCircle />
+                          </Box>
+                          <Flex justifyContent="center">
+                            <Typography>
+                              {formatMessage(
+                                'ModalDetails.delete-confirmation-prompt',
+                                'Are you sure you want to delete this item?'
+                              )}
+                            </Typography>
+                          </Flex>
+                          <Flex justifyContent="center">
+                            <Typography>
+                              {formatMessage(
+                                'ModalDetails.delete-confirmation-callout',
+                                'This will also delete the Asset from Mux.'
+                              )}
+                            </Typography>
+                          </Flex>
+                          <Flex justifyContent="between" paddingTop={1} gap={2}>
+                            <Button onClickCapture={toggleDeleteWarning} variant="tertiary">
+                              {formatMessage('Common.cancel-button', 'Cancel')}
+                            </Button>
+                            <Button variant="danger-light" startIcon={<Trash />} onClickCapture={handleOnDeleteConfirm}>
+                              {formatMessage('Common.confirm-button', 'Confirm')}
+                            </Button>
+                          </Flex>
+                        </Flex>
+                      </Popover>
+                    )}
                   </Box>
 
                   <div>
                     <Typography variant="pi" fontWeight="bold">
-                      {formatMessage({
-                        id: getTrad('Captions.title'),
-                        defaultMessage: 'Captions / subtitles',
-                      })}
+                      {formatMessage('Captions.title', 'Captions / subtitles')}
                     </Typography>
                     <CustomTextTrackForm
                       custom_text_tracks={values.custom_text_tracks || []}
@@ -253,10 +283,7 @@ export default function ModalDetails(props: {
                     ) : null}
                     <Box paddingBottom={4}>
                       <TextInput
-                        label={formatMessage({
-                          id: getTrad('Common.title-label'),
-                          defaultMessage: 'Title',
-                        })}
+                        label={formatMessage('Common.title-label', 'Title')}
                         name="title"
                         value={values.title}
                         error={errors.title}
@@ -273,10 +300,7 @@ export default function ModalDetails(props: {
                     </Box>
                     <Box paddingBottom={4}>
                       <Textarea
-                        label={formatMessage({
-                          id: getTrad('ModalDetails.code-snippet'),
-                          defaultMessage: 'Code snippet',
-                        })}
+                        label={formatMessage('ModalDetails.code-snippet', 'Code snippet')}
                         name="codeSnippet"
                         value={codeSnippet}
                         hint={codeSnippetHint}
@@ -300,68 +324,14 @@ export default function ModalDetails(props: {
             startActions={
               <>
                 <Button variant="tertiary" onClick={onToggle} disabled={deletingState === 'deleting'}>
-                  {formatMessage({
-                    id: getTrad('Common.cancel-button'),
-                    defaultMessage: 'Cancel',
-                  })}
+                  {formatMessage('Common.cancel-button', 'Cancel')}
                 </Button>
               </>
             }
             endActions={
-              <>
-                <IconButton
-                  label={formatMessage({ id: getTrad('Common.delete-button'), defaultMessage: 'Delete' })}
-                  disableDelete={!enableDelete}
-                  onClick={toggleDeleteWarning}
-                  icon={<Trash />}
-                  ref={deleteButtonRef}
-                />
-                {showDeleteWarning && (
-                  <Popover source={deleteButtonRef} onDismiss={toggleDeleteWarning}>
-                    <Flex padding={4} direction="column" gap={2}>
-                      <Box textAlign="center">
-                        <ExclamationMarkCircle />
-                      </Box>
-                      <Flex justifyContent="center">
-                        <Typography>
-                          {formatMessage({
-                            id: getTrad('ModalDetails.delete-confirmation-prompt'),
-                            defaultMessage: 'Are you sure you want to delete this item?',
-                          })}
-                        </Typography>
-                      </Flex>
-                      <Flex justifyContent="center">
-                        <Typography>
-                          {formatMessage({
-                            id: getTrad('ModalDetails.delete-confirmation-callout'),
-                            defaultMessage: 'This will also delete the Asset from Mux.',
-                          })}
-                        </Typography>
-                      </Flex>
-                      <Flex justifyContent="between" paddingTop={1}>
-                        <Button onClickCapture={toggleDeleteWarning} variant="tertiary">
-                          {formatMessage({
-                            id: getTrad('Common.cancel-button'),
-                            defaultMessage: 'Cancel',
-                          })}
-                        </Button>
-                        <Button variant="danger-light" startIcon={<Trash />} onClickCapture={handleOnDeleteConfirm}>
-                          {formatMessage({
-                            id: getTrad('Common.confirm-button'),
-                            defaultMessage: 'Confirm',
-                          })}
-                        </Button>
-                      </Flex>
-                    </Flex>
-                  </Popover>
-                )}
-                <Button type="submit" variant="success" disabled={deletingState === 'deleting' || isSubmitting}>
-                  {formatMessage({
-                    id: getTrad('Common.finish-button'),
-                    defaultMessage: 'Finish',
-                  })}
-                </Button>
-              </>
+              <Button type="submit" variant="success" disabled={deletingState === 'deleting' || isSubmitting}>
+                {formatMessage('Common.finish-button', 'Finish')}
+              </Button>
             }
           />
         </form>

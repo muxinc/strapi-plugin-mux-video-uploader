@@ -20,10 +20,18 @@ export function parseJSONBody<S extends Zod.Schema>(ctx: Context, bodySchema: S)
   const result = bodySchema.safeParse(bodyObject);
 
   if (!result.success || 'error' in result) {
+    const errorMsg =
+      'error' in result && typeof result.error === 'object' && result.error && 'message' in result.error
+        ? (result.error.message as string)
+        : 'invalid-body';
+
     (ctx as any).badRequest('ValidationError', {
-      errors: { body: 'error' in result ? result.error.message : 'invalid-body' },
+      errors: {
+        body: errorMsg,
+      },
     });
-    throw new Error('error' in result ? result.error.message : 'invalid-body');
+
+    throw new Error(errorMsg);
   }
 
   return result.data;

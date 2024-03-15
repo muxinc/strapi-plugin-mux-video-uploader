@@ -61,6 +61,7 @@ const SettingsField = (props: Props) => {
           <Box paddingLeft={2}>
             {tooltip && (
               <Tooltip description={tooltip}>
+                {/* @ts-expect-error styled-components typings are off */}
                 <TooltipButtonStyled
                   type="button"
                   aria-label={formatMessage({

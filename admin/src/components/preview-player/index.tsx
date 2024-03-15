@@ -6,6 +6,7 @@ import { MuxAsset } from '../../../../server/content-types/mux-asset/types';
 import { useSignedTokens } from '../signed-tokens-provider';
 import pluginPkg from '../../../../package.json';
 
+// @ts-expect-error styled-components typings are off
 const MuxPlayerStyled = styled(MuxPlayer)`
   width: 100%;
 `;
