@@ -61,15 +61,15 @@ Where `{STRAPI_BASE_URL}` is the publicly accessible hostname of your [Strapi](h
 
 ## 🧑‍⚖️ Permissions
 
-Currently, anyone with "Super Admin" access to your [Strapi](https://strapi.io/) instance will be able to utilize the plugin for uploading and managing content within the [Strapi](https://strapi.io/) CE version.  More sophisticated permissions can be defined for [Strapi](https://strapi.io/) Enterprise users using [RBAC](https://docs.strapi.io/developer-docs/latest/setup-deployment-guides/configurations/optional/rbac.html#declaring-new-conditions).
+Currently, anyone with "Super Admin" access to your [Strapi](https://strapi.io/) instance will be able to utilize the plugin for uploading and managing content within the [Strapi](https://strapi.io/) CE version. More sophisticated permissions can be defined for [Strapi](https://strapi.io/) Enterprise users using [RBAC](https://docs.strapi.io/developer-docs/latest/setup-deployment-guides/configurations/optional/rbac.html#declaring-new-conditions).
 
-**Please note**: End Users can only have read operation permissions (`find`, `findOne` and `count`).  Write operations are not supported due to potential security reasons. 
+**Please note**: End Users can only have read operation permissions (`find`, `findOne` and `count`). Write operations are not supported due to potential security reasons.
 
 ## 🤝 Contributing
 
 Contributions, issues and feature requests are welcome!
 
-Developers for this plugin should take a look at the `README_INTERNAL.md` document for details on setting up dev environments. 
+Developers for this plugin should take a look at the `README_INTERNAL.md` document for details on setting up dev environments.
 
 If you encounter an error or have questions, please feel free to file inquiries on the [Issues](https://github.com/muxinc/strapi-plugin-mux-video-uploader/issues) page for `strapi-plugin-mux-video-uploader`.
 
@@ -88,6 +88,12 @@ Here is an example of how to do this on a unix-based operating system from withi
 ```
 % rm -rf ./.cache ./build
 ```
+
+### Custom subtitles and captions aren't working
+
+When uploading a video with custom text tracks, Mux asks for an URL pointing to these files. This feature currently works only on deployed Strapi installations.
+
+When developing locally with Strapi, we don't have a globally reachable URL. Unlike webhooks with which we can use a local tunnel, the plugin currently offers no way to configure a base URL to receive Mux's caption download requests. You'll still be able to upload videos, but the tracks won't be properly parsed by Mux.
 
 ## ❤️ Thanks
 
