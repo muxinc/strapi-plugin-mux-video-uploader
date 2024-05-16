@@ -33,6 +33,7 @@
     "@mux/mux-node": "^8.2.0",
     "@mux/mux-player-react": "^2.3.3",
     "@mux/upchunk": "^3.3.2",
+    "@mux/videojs-kit": "^0.12.0",
     "@strapi/icons": "^1.16.0",
     "@strapi/utils": "^4.20.5",
     "axios": "^1.6.7",
