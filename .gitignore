@@ -13,3 +13,4 @@ npm-debug.log
 *.js
 .env
 dist/
+install-state.gz
