@@ -9,11 +9,8 @@ import HomePage from '../HomePage';
 const App = () => {
   return (
     <Main>
-      {/* @ts-expect-error issue with react-router-dom typings */}
       <Switch>
-        {/* @ts-expect-error issue with react-router-dom typings */}
         <Route path={`/plugins/${pluginId}`} component={HomePage} exact />
-        {/* @ts-expect-error issue with react-router-dom typings */}
         <Route component={NotFound} />
       </Switch>
     </Main>
