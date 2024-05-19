@@ -26,15 +26,7 @@ interface Props {
 }
 
 const FieldLabelStyled = styled(FieldLabel)`
-  & > div {
-    width: max-content;
-  }
-`;
-
-const TooltipButtonStyled = styled.button`
-  border: none;
-  padding: 0;
-  background: transparent;
+  white-space: nowrap;
 `;
 
 const SettingsField = (props: Props) => {
@@ -57,22 +49,28 @@ const SettingsField = (props: Props) => {
     <Field name={name} hint={description} error={error}>
       <Stack spacing={1}>
         <Flex>
-          <FieldLabelStyled>{label}</FieldLabelStyled>
           <Box paddingLeft={2}>
-            {tooltip && (
-              <Tooltip description={tooltip}>
-                {/* @ts-expect-error styled-components typings are off */}
-                <TooltipButtonStyled
-                  type="button"
-                  aria-label={formatMessage({
-                    id: getTrad('SettingsField.tooltip-label'),
-                    defaultMessage: 'Information about the field',
-                  })}
-                >
-                  <Icon as={Information} color="neutral800" aria-hidden={true} />
-                </TooltipButtonStyled>
-              </Tooltip>
-            )}
+            <Flex>
+              <Box>
+                <FieldLabelStyled>{label}</FieldLabelStyled>
+              </Box>
+              <Box paddingLeft={2}>
+                {tooltip && (
+                  <Tooltip description={tooltip}>
+                    <button
+                      type="button"
+                      style={{ border: 'none', padding: 0, background: 'transparent' }}
+                      aria-label={formatMessage({
+                        id: getTrad('SettingsField.tooltip-label'),
+                        defaultMessage: 'Information about the field',
+                      })}
+                    >
+                      <Icon as={Information} color="neutral800" aria-hidden={true} />
+                    </button>
+                  </Tooltip>
+                )}
+              </Box>
+            </Flex>
           </Box>
           {detailsLink && (
             <Flex width="100%" justifyContent="flex-end">
