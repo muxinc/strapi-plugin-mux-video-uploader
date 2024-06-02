@@ -35,7 +35,7 @@ const AssetGrid = (props: Props) => {
     );
 
   const assets = muxAssets.map((muxAsset) => (
-    <GridItem col={3} xs={12} s={6}>
+    <GridItem col={3} xs={12} s={6} key={muxAsset?.asset_id}>
       <AssetCard muxAsset={muxAsset} onClick={onMuxAssetClick} />
     </GridItem>
   ));
