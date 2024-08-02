@@ -30,7 +30,7 @@ export interface UploadRequestConfig {
 }
 
 const getMuxClient = async () => {
-  const { access_token, secret_key } = await Config.getConfig('general');
+  const { access_token, secret_key } = await Config.getConfig();
 
   return new Mux({
     tokenId: access_token,
@@ -109,7 +109,7 @@ const muxService = () => ({
 
   async signPlaybackId(playbackId: string, type: string) {
     const { jwt } = await getMuxClient();
-    const { playback_signing_secret, playback_signing_id } = await Config.getConfig('general');
+    const { playback_signing_secret, playback_signing_id } = await Config.getConfig();
 
     let baseOptions = {
       keyId: playback_signing_id,

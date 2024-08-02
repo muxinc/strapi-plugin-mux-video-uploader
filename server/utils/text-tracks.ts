@@ -1,10 +1,11 @@
 import type Mux from '@mux/mux-node';
 import { z } from 'zod';
 import { getService } from '.';
-import pluginId from '../../admin/src/plugin-id';
 import { ParsedCustomTextTrack, StoredTextTrack, TextTrackFile } from '../../types/shared-types';
 import { MuxAsset, MuxAssetUpdate } from '../content-types/mux-asset/types';
 import { TEXT_TRACK_MODEL } from './types';
+
+const pluginId = 'mux-video-uploader';
 
 export async function storeTextTracks(custom_text_tracks: ParsedCustomTextTrack[]): Promise<StoredTextTrack[]> {
   return await Promise.all(
