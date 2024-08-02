@@ -16,7 +16,7 @@ const search = (ctx: Context) => {
     params.order = 'desc';
   }
 
-  return strapi.entityService.findMany(ASSET_MODEL, params);
+  return strapi.documents(ASSET_MODEL).findMany(params);
 };
 
 const find = async (ctx: Context) => {
@@ -29,26 +29,26 @@ const find = async (ctx: Context) => {
 };
 
 const findOne = async (ctx: Context) => {
-  const { id } = ctx.params;
+  const { documentId } = ctx.params;
 
-  return await strapi.entityService.findOne(ASSET_MODEL, id, ctx.query);
+  return await strapi.documents(ASSET_MODEL).findOne(documentId, ctx.query);
 };
 
 const count = (ctx: Context) => {
   const params = ctx.query;
 
-  return strapi.entityService.count(ASSET_MODEL, params);
+  return strapi.documents(ASSET_MODEL).count(params);
 };
 
 const create = async (ctx: Context) => {
   const { body } = ctx.request.body;
 
-  return await strapi.entityService.create(ASSET_MODEL, { data: body });
+  return await strapi.documents(ASSET_MODEL).create({ data: body });
 };
 
 const update = async (ctx: Context) => {
-  const { id } = ctx.params;
-  const muxAsset = await resolveMuxAsset({ id });
+  const { documentId } = ctx.params;
+  const muxAsset = await resolveMuxAsset({ documentId });
 
   const { title, custom_text_tracks } = <MuxAssetUpdate>ctx.request.body;
 
@@ -56,7 +56,7 @@ const update = async (ctx: Context) => {
   await updateTextTracks(muxAsset, custom_text_tracks);
 
   if (typeof title === 'string' && title) {
-    await strapi.entityService.update(ASSET_MODEL, id, {
+    await strapi.documents(ASSET_MODEL).update(documentId, {
       data: { title },
     });
   }
@@ -65,9 +65,9 @@ const update = async (ctx: Context) => {
 };
 
 const del = async (ctx: Context) => {
-  const { id } = ctx.params;
+  const { documentId } = ctx.params;
 
-  return await strapi.entityService.delete(ASSET_MODEL, id);
+  return await strapi.documents(ASSET_MODEL).delete(documentId);
 };
 
 export default {

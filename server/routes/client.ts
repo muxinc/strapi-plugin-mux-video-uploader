@@ -19,10 +19,10 @@ const routes = [
   },
   {
     method: 'GET',
-    path: '/mux-asset/:id',
+    path: '/mux-asset/:documentId',
     handler: 'mux-asset.findOne',
     config: {
-      description: 'Returns a MuxAsset based on a supplied id',
+      description: 'Returns a MuxAsset based on a supplied document id',
       policies: [],
     },
   },

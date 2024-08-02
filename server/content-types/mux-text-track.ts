@@ -2,7 +2,6 @@ export default {
   kind: 'collectionType',
   collectionName: 'muxtexttracks',
   info: {
-    name: 'mux-text-track',
     description: 'Temporary storage for user-defined subtitles & captions sent to Mux during video uploads',
     displayName: 'Mux Text Track',
     singularName: 'mux-text-track',
@@ -17,8 +16,7 @@ export default {
     },
   },
   options: {
-    increments: true,
-    timestamps: true,
+    draftAndPublish: false,
   },
   attributes: {
     name: {

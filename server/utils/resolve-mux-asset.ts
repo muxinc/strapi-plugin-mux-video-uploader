@@ -19,5 +19,5 @@ export const resolveMuxAsset = async (filtersRaw: MuxAssetFilter): Promise<MuxAs
 export interface MuxAssetFilter {
   upload_id?: string;
   asset_id?: string;
-  id?: Entity.ID;
+  documentId?: Entity.ID;
 }
