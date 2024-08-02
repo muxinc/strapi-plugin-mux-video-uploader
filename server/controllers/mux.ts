@@ -66,10 +66,10 @@ const processWebhookEvent = async (webhookEvent: any) => {
 // Old age should burn and rave at close of day;
 // Rage, rage against the dying of the light.
 const thumbnail = async (ctx: Context) => {
-  const { playbackId } = ctx.params;
+  const { documentId } = ctx.params;
   const { token } = ctx.query;
 
-  let imageUrl = `https://image.mux.com/${playbackId}/thumbnail.jpg`;
+  let imageUrl = `https://image.mux.com/${documentId}/thumbnail.jpg`;
 
   if (token) {
     imageUrl += `?token=${token}`;
@@ -118,7 +118,7 @@ const submitDirectUpload = async (ctx: Context) => {
     ...config,
   };
 
-  await strapi.entityService.create(ASSET_MODEL, { data });
+  await strapi.documents(ASSET_MODEL).create({ data });
 
   ctx.send(result);
 };
@@ -142,19 +142,19 @@ const submitRemoteUpload = async (ctx: Context) => {
     ...config,
   };
 
-  await strapi.entityService.create(ASSET_MODEL, { data });
+  await strapi.documents(ASSET_MODEL).create({ data });
 
   ctx.send(result);
 };
 
 const deleteMuxAsset = async (ctx: Context) => {
-  const { id, delete_on_mux } = parseJSONBody(
+  const { documentId, delete_on_mux } = parseJSONBody(
     ctx,
-    z.object({ id: z.string().or(z.number()), delete_on_mux: z.boolean().default(true) })
+    z.object({ documentId: z.string().or(z.number()), delete_on_mux: z.boolean().default(true) })
   );
 
   // Ensure that the mux-asset entry exists for the id
-  const muxAsset = await strapi.entityService.findOne(ASSET_MODEL, id);
+  const muxAsset = await strapi.documents(ASSET_MODEL).findOne(documentId);
 
   if (!muxAsset) {
     ctx.notFound('mux-asset.notFound');
@@ -163,7 +163,7 @@ const deleteMuxAsset = async (ctx: Context) => {
   }
 
   // Delete mux-asset entry
-  const deleteRes = await strapi.entityService.delete(ASSET_MODEL, id);
+  const deleteRes = await strapi.documents(ASSET_MODEL).delete(documentId);
   if (!deleteRes) {
     ctx.send({ success: false });
     return;
@@ -234,18 +234,18 @@ const muxWebhookHandler = async (ctx: Context) => {
   if (outcome === undefined) {
     ctx.send('ignored');
   } else {
-    const [id, params] = outcome;
-    const result = await strapi.entityService.update(ASSET_MODEL, id, params as any);
+    const [documentId, params] = outcome;
+    const result = await strapi.documents(ASSET_MODEL).update(documentId, params as any);
 
     ctx.send(result);
   }
 };
 
 const signMuxPlaybackId = async (ctx: Context) => {
-  const { playbackId } = ctx.params;
+  const { documentId } = ctx.params;
   const { type } = ctx.query;
 
-  const result = await getService('mux').signPlaybackId(playbackId, type as string);
+  const result = await getService('mux').signPlaybackId(documentId, type as string);
 
   ctx.send(result);
 };
@@ -256,9 +256,9 @@ const signMuxPlaybackId = async (ctx: Context) => {
  * @docs https://docs.mux.com/guides/add-subtitles-to-your-videos
  **/
 const textTrack = async (ctx: Context) => {
-  const { trackId } = ctx.params;
+  const { documentId } = ctx.params;
 
-  const track = (await strapi.entityService.findOne(TEXT_TRACK_MODEL, trackId)) as StoredTextTrack | undefined;
+  const track = (await strapi.documents(TEXT_TRACK_MODEL).findOne(documentId)) as StoredTextTrack | undefined;
 
   if (!track) {
     ctx.notFound('mux-text-track.notFound');

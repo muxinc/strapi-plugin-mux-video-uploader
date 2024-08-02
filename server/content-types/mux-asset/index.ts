@@ -2,7 +2,6 @@ export default {
   kind: 'collectionType',
   collectionName: 'muxassets',
   info: {
-    name: 'mux-asset',
     description: 'Represents a Mux Asset item, including upload and playback details',
     displayName: 'Mux Asset',
     singularName: 'mux-asset',
@@ -17,8 +16,7 @@ export default {
     },
   },
   options: {
-    increments: true,
-    timestamps: true,
+    draftAndPublish: false,
   },
   attributes: {
     title: {
