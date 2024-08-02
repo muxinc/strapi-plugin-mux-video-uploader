@@ -4,12 +4,12 @@ import routes from './routes';
 import controllers from './controllers';
 import contentTypes from './content-types';
 // import register from './register';
-// import config from './config';
+import config from './config';
 
 export default () => ({
   // register,
   bootstrap,
-  // config,
+  config,
   routes,
   controllers,
   contentTypes,

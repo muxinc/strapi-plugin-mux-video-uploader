@@ -1,5 +1,6 @@
-import pluginId from '../../admin/src/plugin-id';
 import { MuxService } from '../services/mux';
+
+const pluginId = 'mux-video-uploader';
 
 export type ServiceName = 'mux';
 
