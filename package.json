@@ -70,9 +70,24 @@
   "peerDependencies": {
     "@strapi/strapi": "^4.20.2"
   },
-  "engines": {
-    "node": ">=10.0.0",
-    "npm": ">=6.0.0"
+  "exports": {
+    "./strapi-admin": {
+      "source": "./admin/src/index.ts",
+      "import": "./dist/admin/src/index.js",
+      "require": "./dist/admin/src/index.js",
+      "defaults": "./dist/admin/src/index.js"
+    },
+    "./strapi-server": {
+      "source": "./server/index.ts",
+      "import": "./dist/server/index.js",
+      "require": "./dist/server/index.js",
+      "default": "./dist/server/index.js"
+    },
+    "./package.json": "./package.json"
   },
+  "files": [
+    "dist/",
+    "strapi-server.js"
+  ],
   "license": "MIT"
 }
