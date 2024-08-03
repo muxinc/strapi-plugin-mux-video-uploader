@@ -1,5 +1,4 @@
 import type Mux from '@mux/mux-node';
-import { Entity } from '@strapi/strapi';
 import { z } from 'zod';
 import { storedTextTrackToMuxTrack } from '../server/utils/text-tracks';
 
@@ -51,7 +50,7 @@ export const CustomTextTrack = z.object({
 
 export type ParsedCustomTextTrack = z.infer<typeof CustomTextTrack>;
 
-export type StoredTextTrack = ParsedCustomTextTrack & { id: Entity.ID };
+export type StoredTextTrack = ParsedCustomTextTrack & { id: string };
 
 export const UploadConfig = z
   .object({
