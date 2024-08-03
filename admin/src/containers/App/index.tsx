@@ -1,6 +1,6 @@
 import React from 'react';
 import { Switch, Route } from 'react-router-dom';
-import { NotFound } from '@strapi/helper-plugin';
+// import { NotFound } from '@strapi/helper-plugin';
 import { Main } from '@strapi/design-system';
 
 import pluginId from '../../plugin-id';
@@ -11,7 +11,7 @@ const App = () => {
     <Main>
       <Switch>
         <Route path={`/plugins/${pluginId}`} component={HomePage} exact />
-        <Route component={NotFound} />
+        {/* <Route component={NotFound} /> */}
       </Switch>
     </Main>
   );
