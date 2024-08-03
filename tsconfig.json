@@ -2,11 +2,11 @@
   "extends": "@strapi/typescript-utils/tsconfigs/admin",
 
   "compilerOptions": {
-    "target": "ES2019",
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "target": "es2021",
+    "module": "Preserve",
+    // "moduleResolution": "node",
     "outDir": "./dist",
-    "noEmit": false
+    "noEmit": false,
   },
 
   "include": [

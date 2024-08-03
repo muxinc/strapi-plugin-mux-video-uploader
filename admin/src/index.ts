@@ -1,4 +1,4 @@
-import { prefixPluginTranslations } from '@strapi/helper-plugin';
+// import { prefixPluginTranslations } from '@strapi/helper-plugin';
 
 import pluginPkg from '../../package.json';
 import pluginId from './plugin-id';
@@ -9,6 +9,17 @@ import translations from './translations';
 
 const name = pluginPkg.strapi.name;
 const displayName = pluginPkg.strapi.displayName;
+
+const prefixPluginTranslations = (trad:any, pluginId:string) => {
+  if (!pluginId) {
+      throw new TypeError("pluginId can't be empty");
+  }
+
+  return Object.keys(trad).reduce((acc:any, current) => {
+      acc[`${pluginId}.${current}`] = trad[current];
+      return acc;
+  }, {});
+};
 
 export default {
   register(app: any) {
@@ -21,7 +32,8 @@ export default {
       },
       permissions: pluginPermissions.mainRead,
       Component: async () => {
-        const component = await import(/* webpackChunkName: "mux-video-uploader" */ './containers/App');
+        // const component = await import(/* webpackChunkName: "mux-video-uploader" */ './containers/App');
+        const component = await import(/* webpackChunkName: "mux-video-uploader" */ './containers/App/index.js');
 
         return component;
       },
@@ -46,7 +58,7 @@ export default {
           permissions: pluginPermissions.settingsRoles,
           Component: async () => {
             const component = await import(
-              /* webpackChunkName: "mux-video-uploader-settings-page" */ './containers/Settings'
+              /* webpackChunkName: "mux-video-uploader-settings-page" */ './containers/Settings/index.js'
             );
 
             return component;
