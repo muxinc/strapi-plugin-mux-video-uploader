@@ -1,4 +1,3 @@
-import { Entity } from '@strapi/strapi';
 import { MuxAsset } from '../content-types/mux-asset/types';
 import { ASSET_MODEL } from './types';
 
@@ -19,5 +18,5 @@ export const resolveMuxAsset = async (filtersRaw: MuxAssetFilter): Promise<MuxAs
 export interface MuxAssetFilter {
   upload_id?: string;
   asset_id?: string;
-  documentId?: Entity.ID;
+  documentId?: string;
 }
