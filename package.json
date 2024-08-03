@@ -50,8 +50,8 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@strapi/design-system": "^1.16.0",
-    "@strapi/strapi": "^4.20.5",
+    "@strapi/design-system": "2.0.0-beta.6",
+    "@strapi/strapi": "5.0.0-rc.8",
     "@types/koa": "^2.15.0",
     "@types/lodash": "^4.17.0",
     "@types/luxon": "^3.4.2",
@@ -68,14 +68,14 @@
     "typescript": "^5.4.2"
   },
   "peerDependencies": {
-    "@strapi/strapi": "^4.20.2"
+    "@strapi/strapi": "5.0.0-rc.8"
   },
   "exports": {
     "./strapi-admin": {
       "source": "./admin/src/index.ts",
       "import": "./dist/admin/src/index.js",
       "require": "./dist/admin/src/index.js",
-      "defaults": "./dist/admin/src/index.js"
+      "default": "./dist/admin/src/index.js"
     },
     "./strapi-server": {
       "source": "./server/index.ts",
