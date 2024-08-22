@@ -1,29 +1,23 @@
+import React from 'react';
 import { createUpload, UpChunk } from '@mux/upchunk';
+import { useFetchClient } from '@strapi/strapi/admin';
 import {
-  ModalHeader,
-  ModalLayout,
+  Box,
+  Button,
+  Field,
+  Modal,
   Radio,
-  RadioGroup,
-  Tab,
-  TabGroup,
-  TabPanel,
-  TabPanels,
   Tabs,
+  TextInput,
+  Toggle,
+  Typography
 } from '@strapi/design-system';
-import { Box } from '@strapi/design-system/Box';
-import { Button } from '@strapi/design-system/Button';
-import { ModalBody, ModalFooter } from '@strapi/design-system/ModalLayout';
-import { TextInput } from '@strapi/design-system/TextInput';
-import { ToggleInput } from '@strapi/design-system/ToggleInput';
-import { Typography } from '@strapi/design-system/Typography';
-import Plus from '@strapi/icons/Plus';
+import { Plus } from '@strapi/icons';
 import { FormikErrors, FormikHelpers, useFormik } from 'formik';
-import React, { PropsWithChildren } from 'react';
 import { useIntl } from 'react-intl';
 import styled from 'styled-components';
 
 import { SUPPORTED_MUX_LANGUAGES, type RequestedUploadData } from '../../../../types/shared-types';
-import { submitUpload } from '../../services/strapi';
 import getTrad from '../../utils/get-trad';
 import usePluginIntl from '../../utils/use-plugin-intl';
 import { FileInput } from '../file-input';
@@ -33,13 +27,7 @@ import { generateUploadInfo, NEW_UPLOAD_INITIAL_VALUES } from './new-upload';
 import UploadError from './upload-error';
 import Uploaded from './uploaded';
 import Uploading from './uploading';
-
-// Hide the close button - that should be done via the "Cancel" or "Finish" buttons
-const HeaderWrapper = styled.div`
-  button {
-    display: none;
-  }
-`;
+import pluginId from '../../plugin-id';
 
 const ModalNewUpload = ({ isOpen, onToggle = () => {} }: { isOpen: boolean; onToggle: (refresh: boolean) => void }) => {
   const [uploadPercent, setUploadPercent] = React.useState<number>();
@@ -48,6 +36,7 @@ const ModalNewUpload = ({ isOpen, onToggle = () => {} }: { isOpen: boolean; onTo
 
   const uploadRef = React.useRef<UpChunk | undefined>();
 
+  const { post } = useFetchClient();
   const { formatMessage } = usePluginIntl();
 
   const uploadFile = (endpoint: string, file: File) => {
@@ -77,7 +66,9 @@ const ModalNewUpload = ({ isOpen, onToggle = () => {} }: { isOpen: boolean; onTo
       return;
     }
 
-    const result = await submitUpload(uploadInfo).catch((error) => {
+    const url = `${pluginId}/${uploadInfo.upload_type === 'url' ? 'submitRemoteUpload' : 'submitDirectUpload'}`;
+
+    const result = await post(url, uploadInfo).catch((error) => {
       console.log({ error });
       switch (typeof error) {
         case 'string': {
@@ -100,14 +91,14 @@ const ModalNewUpload = ({ isOpen, onToggle = () => {} }: { isOpen: boolean; onTo
 
     if (!result) return;
 
-    const { statusCode, data } = result;
+    const { status, data } = result;
 
-    if ((statusCode && statusCode !== 200) || data?.errors) {
+    if ((status && status !== 200) || data?.errors) {
       return data?.errors;
     } else if (uploadInfo.upload_type === 'file') {
-      if (!result.url) return setUploadError(formatMessage('ModalNewUpload.unknown-error', 'No upload URL returned'));
+      if (!data.url) return setUploadError(formatMessage('ModalNewUpload.unknown-error', 'No upload URL returned'));
 
-      uploadFile(result.url, uploadInfo.file);
+      uploadFile(data.url, uploadInfo.file);
     } else if (uploadInfo.upload_type === 'url') {
       setUploadPercent(100);
       setIsComplete(true);
@@ -133,40 +124,32 @@ const ModalNewUpload = ({ isOpen, onToggle = () => {} }: { isOpen: boolean; onTo
   const renderFooter = () => {
     if (uploadError || isComplete) {
       return (
-        <ModalFooter
-          endActions={
-            <>
-              <Button variant="secondary" startIcon={<Plus />} onClick={handleOnReset}>
-                {formatMessage('Uploaded.upload-another-button', 'Upload another asset')}
-              </Button>
-              <Button onClick={handleOnModalFinish}>{formatMessage('Common.finish-button', 'Finish')}</Button>
-            </>
-          }
-        />
+        <Modal.Footer>
+          <Button variant="secondary" startIcon={<Plus />} onClick={handleOnReset}>
+            {formatMessage('Uploaded.upload-another-button', 'Upload another asset')}
+          </Button>
+          <Button onClick={handleOnModalFinish}>{formatMessage('Common.finish-button', 'Finish')}</Button>
+        </Modal.Footer>
       );
     }
 
     if (uploadPercent !== undefined) {
       return (
-        <ModalFooter
-          startActions={
-            <Button onClick={handleOnAbort} variant="tertiary">
-              {formatMessage('Common.cancel-button', 'Cancel')}
-            </Button>
-          }
-        />
+        <Modal.Footer>
+          <Button onClick={handleOnAbort} variant="tertiary">
+            {formatMessage('Common.cancel-button', 'Cancel')}
+          </Button>
+        </Modal.Footer>
       );
     }
 
     return (
-      <ModalFooter
-        startActions={
-          <Button onClick={handleOnModalClose} variant="tertiary">
-            {formatMessage('Common.cancel-button', 'Cancel')}
-          </Button>
-        }
-        endActions={<Button type="submit">{formatMessage('Common.save-button', 'Save')}</Button>}
-      />
+      <Modal.Footer>
+        <Button onClick={() => handleOnModalClose()} variant="tertiary">
+          {formatMessage('Common.cancel-button', 'Cancel')}
+        </Button>
+        <Button type="submit">{formatMessage('Common.save-button', 'Save')}</Button>
+      </Modal.Footer>
     );
   };
 
@@ -187,29 +170,27 @@ const ModalNewUpload = ({ isOpen, onToggle = () => {} }: { isOpen: boolean; onTo
   if (!isOpen) return null;
 
   return (
-    <ModalLayout isOpen={isOpen}>
-      <HeaderWrapper>
-        <ModalHeader>
-          <Typography fontWeight="bold" textColor="neutral800" as="h2" id="title">
-            {formatMessage('ModalNewUpload.header', 'New upload')}
-          </Typography>
-        </ModalHeader>
-      </HeaderWrapper>
-      <form onSubmit={handleSubmit}>
-        <ModalBody>
-          <FormBody
-            errors={errors}
-            values={values}
-            setFieldValue={setFieldValue}
-            handleChange={handleChange}
-            isComplete={isComplete}
-            uploadError={uploadError}
-            uploadPercent={uploadPercent}
-          />
-        </ModalBody>
-        {renderFooter()}
-      </form>
-    </ModalLayout>
+    <Modal.Root open={isOpen}>
+      <Modal.Content>
+        <Modal.Header>
+          <Modal.Title>{formatMessage('ModalNewUpload.header', 'New upload')}</Modal.Title>
+        </Modal.Header>
+        <form onSubmit={handleSubmit}>
+          <Modal.Body>
+            <FormBody
+              errors={errors}
+              values={values}
+              setFieldValue={setFieldValue}
+              handleChange={handleChange}
+              isComplete={isComplete}
+              uploadError={uploadError}
+              uploadPercent={uploadPercent}
+            />
+          </Modal.Body>
+          {renderFooter()}
+        </form>
+      </Modal.Content>
+    </Modal.Root>
   );
 };
 
@@ -246,37 +227,32 @@ function FormBody(props: {
   return (
     <Box padding={1} background="neutral0">
       <FieldWrapper>
-        <TextInput
-          label={formatMessage({
+        <Field.Root error={errors.title}>
+          <Field.Label>{formatMessage({
             id: getTrad('Common.title-label'),
             defaultMessage: 'Title',
-          })}
-          name="title"
-          value={values.title}
-          error={errors.title}
-          required
-          onChange={handleChange}
-        />
+          })}</Field.Label>
+          <TextInput name="title" value={values.title} hasError={errors.title !== undefined} required onChange={handleChange} />
+          <Field.Error />
+          <Field.Hint />
+        </Field.Root>
       </FieldWrapper>
 
-      <TabGroup
-        label={formatMessage({
+      <Field.Root>
+        <Field.Label>{formatMessage({
           id: getTrad('Common.upload_type_label-label'),
           defaultMessage: 'Upload via',
-        })}
-        id="upload_type"
-        variant="simple"
-        onTabChange={(idx: number) => {
-          setFieldValue('upload_type', idx === 0 ? 'file' : 'url');
-        }}
-        initialSelectedTabIndex={0} // `file`
-      >
-        <Tabs>
-          <Tab>File</Tab>
-          <Tab>URL</Tab>
-        </Tabs>
-        <TabPanels>
-          <TabPanel>
+        })}</Field.Label>
+        <Tabs.Root
+          id="upload_type"
+          defaultValue="file"
+          variant='simple'
+        >
+          <Tabs.List aria-label="Manage your attribute">
+            <Tabs.Trigger value="file" onClick={() => setFieldValue('upload_type', 'file')}>File</Tabs.Trigger>
+            <Tabs.Trigger value="url" onClick={() => setFieldValue('upload_type', 'url')}>URL</Tabs.Trigger>
+          </Tabs.List>
+          <Tabs.Content value="file">
             <FieldWrapper>
               <FileInput
                 name="file"
@@ -299,40 +275,44 @@ function FormBody(props: {
                 }
               />
             </FieldWrapper>
-          </TabPanel>
-          <TabPanel>
+          </Tabs.Content>
+          <Tabs.Content value="url">
             <FieldWrapper>
-              <TextInput
-                label={formatMessage({
+              <Field.Root>
+                <Field.Label>label={formatMessage({
                   id: getTrad('Common.url-label'),
                   defaultMessage: 'Url',
-                })}
+                })}</Field.Label>
+              </Field.Root>
+              <TextInput
                 name="url"
                 value={'url' in values ? values.url : ''}
-                error={'url' in errors ? errors.url : undefined}
+                hasError={'url' in errors ? true : false}
                 required
                 onChange={handleChange}
               />
             </FieldWrapper>
-          </TabPanel>
-        </TabPanels>
-      </TabGroup>
+          </Tabs.Content>
+        </Tabs.Root>
+      </Field.Root>
 
       <FieldWrapper>
-        <ToggleInput
-          label={formatMessage({
+        <Field.Root>
+          <Field.Label>{formatMessage({
             id: getTrad('Common.signed-label'),
             defaultMessage: 'Signed Playback URL',
-          })}
-          name="Private"
-          value={values.signed}
-          onLabel="on"
-          offLabel="off"
-          checked={values.signed}
-          onChange={(e: any) => {
-            setFieldValue('signed', e.target.checked);
-          }}
-        />
+          })}</Field.Label>
+          <Toggle
+            name="Private"
+            value={values.signed ? 'on' : 'off'}
+            onLabel="on"
+            offLabel="off"
+            checked={values.signed}
+            onChange={(e: any) => {
+              setFieldValue('signed', e.target.checked);
+            }}
+          />
+        </Field.Root>
       </FieldWrapper>
 
       <FieldWrapper>
@@ -345,41 +325,45 @@ function FormBody(props: {
           }}
         >
           <div style={{ position: 'sticky', top: '1em' }}>
-            <ToggleInput
-              label={formatMessage({
+            <Field.Root>
+              <Field.Label>{formatMessage({
                 id: getTrad('Common.encoding_tier-label'),
                 defaultMessage: 'Smart encoding',
-              })}
-              name="encoding_tier"
-              value={values.encoding_tier}
-              onLabel="on"
-              offLabel="off"
-              checked={values.encoding_tier === 'smart'}
-              onChange={(e: any) => {
-                setFieldValue(
-                  'encoding_tier',
-                  (e.target.checked ? 'smart' : 'baseline') as typeof values.encoding_tier
-                );
-              }}
-            />
+              })}</Field.Label>
+              <Toggle
+                name="encoding_tier"
+                value={values.encoding_tier}
+                onLabel="on"
+                offLabel="off"
+                checked={values.encoding_tier === 'smart'}
+                onChange={(e: any) => {
+                  setFieldValue(
+                    'encoding_tier',
+                    (e.target.checked ? 'smart' : 'baseline') as typeof values.encoding_tier
+                  );
+                }}
+              />
+            </Field.Root>
           </div>
           {values.encoding_tier === 'smart' && (
             <div style={{ position: 'sticky', top: '1em', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
-                <ToggleInput
-                  label={formatMessage({
+                <Field.Root>
+                  <Field.Label>{formatMessage({
                     id: getTrad('Common.mp4_support-label'),
                     defaultMessage: 'Allow downloading via MP4',
-                  })}
-                  name="mp4_support"
-                  value={values.mp4_support}
-                  onLabel="on"
-                  offLabel="off"
-                  checked={values.mp4_support === 'standard'}
-                  onChange={(e: any) => {
-                    setFieldValue('mp4_support', (e.target.checked ? 'standard' : 'none') as typeof values.mp4_support);
-                  }}
-                />
+                  })}</Field.Label>
+                  <Toggle
+                    name="mp4_support"
+                    value={values.mp4_support}
+                    onLabel="on"
+                    offLabel="off"
+                    checked={values.mp4_support === 'standard'}
+                    onChange={(e: any) => {
+                      setFieldValue('mp4_support', (e.target.checked ? 'standard' : 'none') as typeof values.mp4_support);
+                    }}
+                  />
+                </Field.Root>
               </div>
               <div>
                 <Typography id="max_resolution_tier_label" variant="pi" fontWeight="bold">
@@ -388,19 +372,16 @@ function FormBody(props: {
                     defaultMessage: 'Maximum stream resolution',
                   })}
                 </Typography>
-                <RadioGroup
-                  labelledBy="max_resolution_tier_label"
+                <Radio.Group
+                  aria-labelledby="max_resolution_tier_label"
                   onChange={(e: any) => setFieldValue('max_resolution_tier', e.target.value)}
                   value={values.max_resolution_tier}
-                  name="max_resolution_tier"
-                  style={{
-                    marginTop: '0.5rem',
-                  }}
+                  style={{ marginTop: '0.5rem' }}
                 >
-                  <Radio value="2160p">2160p (4k)</Radio>
-                  <Radio value="1440p">1440p (2k)</Radio>
-                  <Radio value="1080p">1080p</Radio>
-                </RadioGroup>
+                  <Radio.Item value="2160p">2160p (4k)</Radio.Item>
+                  <Radio.Item value="1440p">1440p (2k)</Radio.Item>
+                  <Radio.Item value="1080p">1080p</Radio.Item>
+                </Radio.Group>
               </div>
             </div>
           )}
@@ -423,19 +404,17 @@ function FormBody(props: {
                 defaultMessage: 'Captions',
               })}
             </Typography>
-            <RadioGroup
-              labelledBy="text_tracks_type_label"
+            <Radio.Group
+              name="text_tracks_type"
+              aria-labelledby="text_tracks_type_label"
               onChange={(e: any) => setFieldValue('text_tracks_type', e.target.value)}
               value={values.text_tracks_type}
-              name="text_tracks_type"
-              style={{
-                marginTop: '0.5rem',
-              }}
+              style={{ marginTop: '0.5rem' }}
             >
-              <Radio value="none">None</Radio>
-              <Radio value="autogenerated">Auto-generated</Radio>
-              <Radio value="uploaded">Custom</Radio>
-            </RadioGroup>
+              <Radio.Item value="none">None</Radio.Item>
+              <Radio.Item value="autogenerated">Auto-generated</Radio.Item>
+              <Radio.Item value="uploaded">Custom</Radio.Item>
+            </Radio.Group>
           </div>
 
           {values.text_tracks_type === 'autogenerated' && (
@@ -460,7 +439,7 @@ function FormBody(props: {
   );
 }
 
-function FieldWrapper(props: PropsWithChildren) {
+function FieldWrapper(props: React.PropsWithChildren) {
   return (
     <Box paddingTop={4} paddingBottom={4}>
       {props.children}

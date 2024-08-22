@@ -1,15 +1,14 @@
-import { Flex, Typography } from '@strapi/design-system';
-import { Box } from '@strapi/design-system/Box';
-import { Grid, GridItem } from '@strapi/design-system/Grid';
 import React from 'react';
+import { Box, Flex, Grid, Typography } from '@strapi/design-system';
+import { useIntl } from 'react-intl';
 
 import { MuxAsset } from '../../../../server/content-types/mux-asset/types';
 import AssetCard from './asset-card';
 import getTrad from '../../utils/get-trad';
-import { useIntl } from 'react-intl';
 
 interface DefaultProps {
   onMuxAssetClick: (muxAsset: MuxAsset) => void;
+  onInvalidate: () => void;
 }
 
 interface Props extends DefaultProps {
@@ -35,20 +34,21 @@ const AssetGrid = (props: Props) => {
     );
 
   const assets = muxAssets.map((muxAsset) => (
-    <GridItem col={3} xs={12} s={6}>
+    <Grid.Item col={3} xs={12} s={6}>
       <AssetCard muxAsset={muxAsset} onClick={onMuxAssetClick} />
-    </GridItem>
+    </Grid.Item>
   ));
 
   return (
     <Box paddingTop={6} paddingBottom={8}>
-      <Grid gap={4}>{assets}</Grid>
+      <Grid.Root gap={4}>{assets}</Grid.Root>
     </Box>
   );
 };
 
 AssetGrid.defaultProps = {
   onMuxAssetClick: () => {},
+  onInvalidate: () => {}
 } as DefaultProps;
 
 export default AssetGrid;

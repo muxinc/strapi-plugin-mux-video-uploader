@@ -1,11 +1,7 @@
 import React from 'react';
 import { useIntl } from 'react-intl';
 import styled from 'styled-components';
-import { Box } from '@strapi/design-system/Box';
-import { Flex } from '@strapi/design-system/Flex';
-import { ProgressBar } from '@strapi/design-system/ProgressBar';
-import { Stack } from '@strapi/design-system/Stack';
-import { Typography } from '@strapi/design-system/Typography';
+import { Box, Flex, ProgressBar, Typography } from '@strapi/design-system';
 
 import getTrad from '../../utils/get-trad';
 
@@ -25,7 +21,7 @@ const Uploading = (props: Props) => {
   const { formatMessage } = useIntl();
 
   return (
-    <Stack>
+    <>
       <Box paddingBottom={5}>
         <Flex justifyContent="center">
           <Typography variant="alpha">
@@ -43,7 +39,7 @@ const Uploading = (props: Props) => {
           </ProgressBarWrapper>
         </Flex>
       </Box>
-    </Stack>
+    </>
   );
 };
 

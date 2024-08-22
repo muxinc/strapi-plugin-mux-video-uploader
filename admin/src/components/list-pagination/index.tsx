@@ -1,7 +1,13 @@
 import React from 'react';
 import { useIntl } from 'react-intl';
-import { Grid, GridItem } from '@strapi/design-system/Grid';
-import { Dots, NextLink, PageLink, Pagination, PreviousLink } from '@strapi/design-system/Pagination';
+import { 
+  Dots,
+  Grid,
+  NextLink,
+  PageLink,
+  Pagination,
+  PreviousLink
+} from '@strapi/design-system';
 
 import { appendQueryParameter } from '../../utils/url';
 import getTrad from '../../utils/get-trad';
@@ -38,19 +44,23 @@ const ListPagination = (props: Props) => {
 
   if (page === undefined || pages === undefined) return null;
 
+  const { location } = window;
+
   const previous = page !== 1 && pages > 9 && (
-    <PreviousLink to={(l: Location) => appendQueryParameter(l, { page: (page - 1).toString() })}>
+    <PreviousLink href={appendQueryParameter(location, { page: (page - 1).toString() }).href}>
       {formatMessage(prevIntl)}
     </PreviousLink>
   );
 
   const next = page != pages && pages > 9 && (
-    <NextLink to={(l: Location) => appendQueryParameter(l, { page: (page + 1).toString() })}>
+    <NextLink href={appendQueryParameter(location, { page: (page + 1).toString() }).href}>
       {formatMessage(nextIntl)}
     </NextLink>
   );
 
   const resolvePageLinks = () => {
+    const { location } = window;
+
     // Example: 1 2 3 4 5 6 7 8 9
     if (pages <= 9) {
       const items = Array(pages)
@@ -59,7 +69,7 @@ const ListPagination = (props: Props) => {
           <PageLink
             key={index}
             number={index + 1}
-            to={(l: Location) => appendQueryParameter(l, { page: (index + 1).toString() })}
+            href={appendQueryParameter(location, { page: (index + 1).toString() }).href}
           >
             {formatMessage(gotoIntl, { pageNumber: index + 1 })}
           </PageLink>
@@ -71,17 +81,17 @@ const ListPagination = (props: Props) => {
     else if (page === 1 || page === pages) {
       return (
         <>
-          <PageLink number={1} to={(l: Location) => appendQueryParameter(l, { page: '1' })}>
+          <PageLink number={1} href={appendQueryParameter(location, { page: '1' }).href}>
             {formatMessage(gotoIntl, { pageNumber: 1 })}
           </PageLink>
-          <PageLink number={2} to={(l: Location) => appendQueryParameter(l, { page: '2' })}>
+          <PageLink number={2} href={appendQueryParameter(location, { page: '2' }).href}>
             {formatMessage(gotoIntl, { pageNumber: 2 })}
           </PageLink>
           <Dots>{formatMessage(dotsIntl, { more: pages - 4 })}</Dots>
-          <PageLink number={pages - 1} to={(l: Location) => appendQueryParameter(l, { page: (pages - 1).toString() })}>
+          <PageLink number={pages - 1} href={appendQueryParameter(location, { page: (pages - 1).toString() }).href}>
             {formatMessage(gotoIntl, { pageNumber: pages - 1 })}
           </PageLink>
-          <PageLink number={pages} to={(l: Location) => appendQueryParameter(l, { page: pages.toString() })}>
+          <PageLink number={pages} href={appendQueryParameter(location, { page: pages.toString() }).href}>
             {formatMessage(gotoIntl, { pageNumber: pages })}
           </PageLink>
         </>
@@ -91,23 +101,23 @@ const ListPagination = (props: Props) => {
     else if (page === 2 || page === 3) {
       return (
         <>
-          <PageLink number={1} to={(l: Location) => appendQueryParameter(l, { page: '1' })}>
+          <PageLink number={1} href={appendQueryParameter(location, { page: '1' }).href}>
             {formatMessage(gotoIntl, { pageNumber: 1 })}
           </PageLink>
-          <PageLink number={2} to={(l: Location) => appendQueryParameter(l, { page: '2' })}>
+          <PageLink number={2} href={appendQueryParameter(location, { page: '2' }).href}>
             {formatMessage(gotoIntl, { pageNumber: 2 })}
           </PageLink>
-          <PageLink number={3} to={(l: Location) => appendQueryParameter(l, { page: '3' })}>
+          <PageLink number={3} href={appendQueryParameter(location, { page: '3' }).href}>
             {formatMessage(gotoIntl, { pageNumber: 3 })}
           </PageLink>
-          <PageLink number={4} to={(l: Location) => appendQueryParameter(l, { page: '4' })}>
+          <PageLink number={4} href={appendQueryParameter(location, { page: '4' }).href}>
             {formatMessage(gotoIntl, { pageNumber: 4 })}
           </PageLink>
           <Dots>{formatMessage(dotsIntl, { more: pages - 6 })}</Dots>
-          <PageLink number={pages - 1} to={(l: Location) => appendQueryParameter(l, { page: (pages - 1).toString() })}>
+          <PageLink number={pages - 1} href={appendQueryParameter(location, { page: (pages - 1).toString() }).href}>
             {formatMessage(gotoIntl, { pageNumber: pages - 1 })}
           </PageLink>
-          <PageLink number={pages} to={(l: Location) => appendQueryParameter(l, { page: pages.toString() })}>
+          <PageLink number={pages} href={appendQueryParameter(location, { page: pages.toString() }).href}>
             {formatMessage(gotoIntl, { pageNumber: pages })}
           </PageLink>
         </>
@@ -117,23 +127,23 @@ const ListPagination = (props: Props) => {
     else if (page === pages - 1 || page === pages - 2) {
       return (
         <>
-          <PageLink number={1} to={(l: Location) => appendQueryParameter(l, { page: '1' })}>
+          <PageLink number={1} href={appendQueryParameter(location, { page: '1' }).href}>
             {formatMessage(gotoIntl, { pageNumber: 1 })}
           </PageLink>
-          <PageLink number={2} to={(l: Location) => appendQueryParameter(l, { page: '2' })}>
+          <PageLink number={2} href={appendQueryParameter(location, { page: '2' }).href}>
             {formatMessage(gotoIntl, { pageNumber: 2 })}
           </PageLink>
           <Dots>{formatMessage(dotsIntl, { more: pages - 6 })}</Dots>
-          <PageLink number={pages - 3} to={(l: Location) => appendQueryParameter(l, { page: (pages - 3).toString() })}>
+          <PageLink number={pages - 3} href={appendQueryParameter(location, { page: (pages - 3).toString() }).href}>
             {formatMessage(gotoIntl, { pageNumber: pages - 3 })}
           </PageLink>
-          <PageLink number={pages - 2} to={(l: Location) => appendQueryParameter(l, { page: (pages - 2).toString() })}>
+          <PageLink number={pages - 2} href={appendQueryParameter(location, { page: (pages - 2).toString() }).href}>
             {formatMessage(gotoIntl, { pageNumber: pages - 2 })}
           </PageLink>
-          <PageLink number={pages - 1} to={(l: Location) => appendQueryParameter(l, { page: (pages - 1).toString() })}>
+          <PageLink number={pages - 1} href={appendQueryParameter(location, { page: (pages - 1).toString() }).href}>
             {formatMessage(gotoIntl, { pageNumber: pages - 1 })}
           </PageLink>
-          <PageLink number={pages} to={(l: Location) => appendQueryParameter(l, { page: pages.toString() })}>
+          <PageLink number={pages} href={appendQueryParameter(location, { page: pages.toString() }).href}>
             {formatMessage(gotoIntl, { pageNumber: pages })}
           </PageLink>
         </>
@@ -143,21 +153,21 @@ const ListPagination = (props: Props) => {
     else {
       return (
         <>
-          <PageLink number={1} to={(l: Location) => appendQueryParameter(l, { page: '1' })}>
+          <PageLink number={1} href={appendQueryParameter(location, { page: '1' }).href}>
             {formatMessage(gotoIntl, { pageNumber: 1 })}
           </PageLink>
           <Dots>{formatMessage(dotsIntl, { more: page - 2 })}</Dots>
-          <PageLink number={page - 1} to={(l: Location) => appendQueryParameter(l, { page: (page - 1).toString() })}>
+          <PageLink number={page - 1} href={appendQueryParameter(location, { page: (page - 1).toString() }).href}>
             {formatMessage(gotoIntl, { pageNumber: page - 1 })}
           </PageLink>
-          <PageLink number={page} to={(l: Location) => appendQueryParameter(l, { page: page.toString() })}>
+          <PageLink number={page} href={appendQueryParameter(location, { page: page.toString() }).href}>
             {formatMessage(gotoIntl, { pageNumber: page })}
           </PageLink>
-          <PageLink number={page + 1} to={(l: Location) => appendQueryParameter(l, { page: (page + 1).toString() })}>
+          <PageLink number={page + 1} href={appendQueryParameter(location, { page: (page + 1).toString() }).href}>
             {formatMessage(gotoIntl, { pageNumber: page + 1 })}
           </PageLink>
           <Dots>{formatMessage(dotsIntl, { more: pages - (page + 2) })}</Dots>
-          <PageLink number={pages} to={(l: Location) => appendQueryParameter(l, { page: pages.toString() })}>
+          <PageLink number={pages} href={appendQueryParameter(location, { page: pages.toString() }).href}>
             {formatMessage(gotoIntl, { pageNumber: pages })}
           </PageLink>
         </>
@@ -166,15 +176,15 @@ const ListPagination = (props: Props) => {
   };
 
   return (
-    <Grid>
-      <GridItem>
+    <Grid.Root>
+      <Grid.Item>
         <Pagination activePage={page} pageCount={pages}>
           {previous}
           {resolvePageLinks()}
           {next}
         </Pagination>
-      </GridItem>
-    </Grid>
+      </Grid.Item>
+    </Grid.Root>
   );
 };
 

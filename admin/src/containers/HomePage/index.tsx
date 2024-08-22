@@ -1,14 +1,18 @@
-import { Button } from '@strapi/design-system/Button';
-import { Grid, GridItem } from '@strapi/design-system/Grid';
-import { ContentLayout, HeaderLayout, Layout } from '@strapi/design-system/Layout';
-import { Main } from '@strapi/design-system/Main';
-import { Searchbar } from '@strapi/design-system/Searchbar';
-import { Option, Select } from '@strapi/design-system/Select';
-import { CheckPagePermissions, useRBAC } from '@strapi/helper-plugin';
-import Plus from '@strapi/icons/Plus';
+import { 
+  Button,
+  Grid,
+  Flex,
+  Searchbar,
+  SingleSelect,
+  Typography,
+  SingleSelectOption,
+} from '@strapi/design-system';
+import { } from '@strapi/core'
+import { Page, useFetchClient, useRBAC } from '@strapi/strapi/admin';
+import { Plus } from '@strapi/icons';
 import React from 'react';
 import { useIntl } from 'react-intl';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 import { GetMuxAssetsResponse, MuxAsset } from '../../../../server/content-types/mux-asset/types';
 import AssetGrid from '../../components/asset-grid';
@@ -17,21 +21,22 @@ import ModalDetails from '../../components/modal-details/modal-details';
 import ModalNewUpload from '../../components/modal-new-upload/modal-new-upload';
 import SetupNeeded from '../../components/setup-needed';
 import pluginPermissions from '../../permissions';
-import { getIsConfigured, getMuxAssets } from '../../services/strapi';
-import { SearchField, SearchVector, SortVector } from '../../services/strapi/types';
 import getTrad from '../../utils/get-trad';
 import { appendQueryParameter } from '../../utils/url';
+import pluginId from '../../plugin-id';
+import { SearchField, SearchVector, SortVector } from '../../types';
 
 const ProtectedHomePage = () => (
-  <CheckPagePermissions permissions={pluginPermissions.mainRead}>
+  <Page.Protect permissions={pluginPermissions.mainRead}>
     <HomePage />
-  </CheckPagePermissions>
+  </Page.Protect>
 );
 
 const HomePage = () => {
   const location = useLocation();
-  const history = useHistory();
+  const history = useNavigate();
 
+  const { get } = useFetchClient();
   const { formatMessage } = useIntl();
 
   const SEARCH_FIELDS = [
@@ -78,7 +83,27 @@ const HomePage = () => {
 
     const start = (page - 1) * pageLimit;
 
-    const data = await getMuxAssets(searchVector, sortVector, start, pageLimit);
+    let search;
+
+    switch (searchVector?.field) {
+      case 'by_title': {
+        search = `&filters[title][$containsi]=${searchVector.value}`;
+
+        break;
+      }
+      case 'by_asset_id': {
+        search = `&filters[asset_id][$containsi]=${searchVector.value}`;
+
+        break;
+      }
+      default: {
+        search = '';
+      }
+    }
+
+    const sort = sortVector ? `&sort=${sortVector.field}&order=${sortVector.desc ? 'desc' : 'asc'}` : '';
+
+    const { data } = await get(`${pluginId}/mux-asset?start=${start}${sort}&limit=${pageLimit}${search}`);
 
     const pages = Math.ceil(data.totalCount / pageLimit);
 
@@ -87,7 +112,10 @@ const HomePage = () => {
   };
 
   React.useEffect(() => {
-    getIsConfigured().then((data) => {
+    get(`${pluginId}/mux-settings`)
+    .then(result => {
+      const { data } = result;
+
       setIsReady(data === true);
     });
   }, []);
@@ -121,7 +149,7 @@ const HomePage = () => {
     allowedActions: { canCreate, canUpdate, canDelete },
   } = useRBAC(permissions);
 
-  const handleOnSearchFieldChange = (field: SearchField) => {
+  const handleOnSearchFieldChange = (field: string) => {
     history.push(appendQueryParameter(location, { field }));
   };
 
@@ -130,12 +158,7 @@ const HomePage = () => {
   };
 
   const handleOnMuxAssetClick = (muxAsset: MuxAsset) => setSelectedAsset(muxAsset);
-
-  const handleOnDetailsClose = (refresh?: boolean) => {
-    setSelectedAsset(undefined);
-    if (!refresh) return;
-    loadMuxAssets();
-  };
+  const handleOnInvalidate = () => loadMuxAssets();
 
   const handleOnNewUploadClose = (refresh: boolean) => {
     setIsNewUploadOpen(false);
@@ -151,66 +174,63 @@ const HomePage = () => {
 
   return (
     <>
-      <Layout>
-        <Main>
-          <HeaderLayout
-            title={formatMessage({
-              id: getTrad('HomePage.section-label'),
-              defaultMessage: 'Mux Video Uploader',
+      <div>
+        <Flex justifyContent="space-between">
+          <Typography>{formatMessage({
+            id: getTrad('HomePage.section-label'),
+            defaultMessage: 'Mux Video Uploader',
+          })}</Typography>
+          <Button disabled={!canCreate} startIcon={<Plus />} size="L" onClick={handleOnNewUploadClick}>
+            {formatMessage({
+              id: getTrad('HomePage.new-upload-button'),
+              defaultMessage: 'Upload new assets',
             })}
-            primaryAction={
-              <Button disabled={!canCreate} startIcon={<Plus />} size="L" onClick={handleOnNewUploadClick}>
-                {formatMessage({
-                  id: getTrad('HomePage.new-upload-button'),
-                  defaultMessage: 'Upload new assets',
+          </Button>
+        </Flex>
+        <div>
+          <Grid.Root gap={4}>
+            <Grid.Item col={2} xs={12} s={12}>
+              <SingleSelect
+                aria-label={formatMessage({
+                  id: getTrad('HomePage.search-label'),
+                  defaultMessage: 'Choose the field to search',
                 })}
-              </Button>
-            }
-          />
-          <ContentLayout>
-            <Grid gap={4}>
-              <GridItem col={2} xs={12} s={12}>
-                <Select
-                  aria-label={formatMessage({
-                    id: getTrad('HomePage.search-label'),
-                    defaultMessage: 'Choose the field to search',
-                  })}
-                  placeholder={formatMessage({
-                    id: getTrad('HomePage.search-placeholder'),
-                    defaultMessage: 'Search field',
-                  })}
-                  value={searchField}
-                  onChange={handleOnSearchFieldChange}
-                >
-                  {SEARCH_FIELDS.map((searchField) => (
-                    <Option value={searchField.value}>{searchField.label}</Option>
-                  ))}
-                </Select>
-              </GridItem>
-              <GridItem col={6} xs={12} s={12}>
-                <Searchbar
-                  onClear={() => setSearchValue('')}
-                  value={searchValue}
-                  onChange={handleOnSearchValueChange}
-                  clearLabel={formatMessage({
-                    id: getTrad('HomePage.clear-label'),
-                    defaultMessage: 'Clear search',
-                  })}
-                >
-                  {formatMessage({
-                    id: getTrad('HomePage.searching'),
-                    defaultMessage: 'Searching for Mux assets',
-                  })}
-                </Searchbar>
-              </GridItem>
-            </Grid>
-            <AssetGrid muxAssets={muxAssets?.items} onMuxAssetClick={handleOnMuxAssetClick} />
-            <ListPagination page={page} pages={pages} />
-          </ContentLayout>
-        </Main>
-      </Layout>
+                placeholder={formatMessage({
+                  id: getTrad('HomePage.search-placeholder'),
+                  defaultMessage: 'Search field',
+                })}
+                value={searchField}
+                onChange={(value) => handleOnSearchFieldChange(value.toString())}
+              >
+                {SEARCH_FIELDS.map((searchField) => (
+                  <SingleSelectOption value={searchField.value}>{searchField.label}</SingleSelectOption>
+                ))}
+              </SingleSelect>
+            </Grid.Item>
+            <Grid.Item col={6} xs={12} s={12}>
+              <Searchbar
+                name="searchbar"
+                onClear={() => setSearchValue('')}
+                value={searchValue}
+                onChange={handleOnSearchValueChange}
+                clearLabel={formatMessage({
+                  id: getTrad('HomePage.clear-label'),
+                  defaultMessage: 'Clear search',
+                })}
+              >
+                {formatMessage({
+                  id: getTrad('HomePage.searching'),
+                  defaultMessage: 'Searching for Mux assets',
+                })}
+              </Searchbar>
+            </Grid.Item>
+          </Grid.Root>
+          <AssetGrid muxAssets={muxAssets?.items} onMuxAssetClick={handleOnMuxAssetClick} onInvalidate={handleOnInvalidate} />
+          <ListPagination page={page} pages={pages} />
+        </div>
+      </div>
       <ModalNewUpload isOpen={isNewUploadOpen} onToggle={handleOnNewUploadClose} />
-      {selectedAsset !== undefined && (
+      {/* {selectedAsset !== undefined && (
         <ModalDetails
           isOpen={true}
           muxAsset={selectedAsset}
@@ -218,7 +238,7 @@ const HomePage = () => {
           enableDelete={canDelete}
           onToggle={handleOnDetailsClose}
         />
-      )}
+      )} */}
     </>
   );
 };

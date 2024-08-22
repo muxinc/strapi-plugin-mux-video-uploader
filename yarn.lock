@@ -3403,13 +3403,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@strapi/icons@npm:^1.16.0":
-  version: 1.19.0
-  resolution: "@strapi/icons@npm:1.19.0"
+"@strapi/icons@npm:^2.0.0-rc.8":
+  version: 2.0.0-rc.8
+  resolution: "@strapi/icons@npm:2.0.0-rc.8"
   peerDependencies:
     react: ^17.0.0 || ^18.0.0
     react-dom: ^17.0.0 || ^18.0.0
-  checksum: 10c0/f62f5e844b33cd9adafe7fd00824e7ff14a3d12d8322634f6fdabbee08eea83f9f221cf77be1deac539660e05746363ab7bd2dac10bbf1302f23948e26a05cb3
+    styled-components: ^6.0.0
+  checksum: 10c0/b1f20484e930b7f5632a03ebd42ab61b51250621b2b6fc708fa2309f675162859fb3199c14d1eadfe1c87c848686477ebbfaa13ad0c7c7e22f2ada35f298d51c
   languageName: node
   linkType: hard
 
@@ -14311,7 +14312,7 @@ __metadata:
     "@mux/upchunk": "npm:^3.3.2"
     "@mux/videojs-kit": "npm:^0.12.0"
     "@strapi/design-system": "npm:2.0.0-beta.6"
-    "@strapi/icons": "npm:^1.16.0"
+    "@strapi/icons": "npm:^2.0.0-rc.8"
     "@strapi/strapi": "npm:5.0.0-rc.8"
     "@strapi/utils": "npm:^4.20.5"
     "@types/koa": "npm:^2.15.0"
