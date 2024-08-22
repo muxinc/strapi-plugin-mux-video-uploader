@@ -1,8 +1,6 @@
 import React from 'react';
 import { useIntl } from 'react-intl';
-import { Box } from '@strapi/design-system/Box';
-import { Stack } from '@strapi/design-system/Stack';
-import { Typography } from '@strapi/design-system/Typography';
+import { Box, Typography } from '@strapi/design-system';
 
 import getTrad from '../../utils/get-trad';
 
@@ -10,7 +8,7 @@ const Uploaded = () => {
   const { formatMessage } = useIntl();
 
   return (
-    <Stack>
+    <>
       <Box paddingTop={2}>
         <Typography variant="delta">
           {formatMessage({
@@ -28,7 +26,7 @@ const Uploaded = () => {
           })}
         </Typography>
       </Box>
-    </Stack>
+    </>
   );
 };
 

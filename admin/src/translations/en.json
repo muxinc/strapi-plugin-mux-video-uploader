@@ -70,6 +70,8 @@
   "ModalDetails.delete-confirmation-header": "Delete confirmation",
   "ModalDetails.delete-confirmation-prompt": "Are you sure you want to delete this item?",
   "ModalDetails.delete-confirmation-callout": "This will also delete the Asset from Mux.",
+  "ModalDetails.delete-success": "Video deleted successfully",
+  "ModalDetails.failed-to-delete": "Failed to delete video",
   "ModalDetails.code-snippet": "Code snippet",
   "ModalDetails.copied-to-clipboard": "Copied code snippet to clipboard",
   "ModalDetails.powered-by-mux": "Powered by mux-player.",

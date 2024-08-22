@@ -1,6 +1,8 @@
-import React, { PropsWithChildren } from 'react';
+import React from 'react';
+import { useFetchClient } from '@strapi/strapi/admin';
+
 import { MuxAsset } from '../../../server/content-types/mux-asset/types';
-import { getPlaybackToken } from '../services/strapi';
+import pluginId from '../plugin-id';
 
 export const SignedTokensContext = React.createContext<{
   video: string | null;
@@ -16,17 +18,27 @@ export function useSignedTokens() {
   return React.useContext(SignedTokensContext);
 }
 
-export default function SignedTokensProvider({ muxAsset, children }: PropsWithChildren<{ muxAsset?: MuxAsset }>) {
+export default function SignedTokensProvider({ muxAsset, children }: React.PropsWithChildren<{ muxAsset?: MuxAsset }>) {
   const [playbackToken, setPlaybackToken] = React.useState<string>('');
   const [thumbnailToken, setThumbnailToken] = React.useState<string>('');
   const [storyboardToken, setStoryboardToken] = React.useState<string>('');
 
+  const { get } = useFetchClient();
+
+  const init = async (muxAsset:MuxAsset) => {
+    const { data: videoData } = await get(`${pluginId}/sign/${muxAsset.playback_id}?type=video`);
+    const { data: thumbnailData } = await get(`${pluginId}/sign/${muxAsset.playback_id}?type=thumbnail`);
+    const { data: storyboardData } = await get(`${pluginId}/sign/${muxAsset.playback_id}?type=storyboard`);
+
+    setPlaybackToken(videoData.token);
+    setThumbnailToken(thumbnailData.token);
+    setStoryboardToken(storyboardData.token);
+  };
+
   React.useEffect(() => {
     if (!muxAsset?.signed || !muxAsset?.playback_id) return;
 
-    getPlaybackToken(muxAsset.playback_id, 'video').then((data) => setPlaybackToken(data.token));
-    getPlaybackToken(muxAsset.playback_id, 'thumbnail').then((data) => setThumbnailToken(data.token));
-    getPlaybackToken(muxAsset.playback_id, 'storyboard').then((data) => setStoryboardToken(data.token));
+    init(muxAsset);
   }, []);
 
   return (

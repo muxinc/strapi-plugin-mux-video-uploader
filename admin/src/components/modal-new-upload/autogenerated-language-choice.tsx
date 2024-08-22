@@ -1,6 +1,6 @@
-import { Badge, Checkbox } from '@strapi/design-system';
-import { Button } from '@strapi/design-system/Button';
 import React from 'react';
+import { Badge, Button, Checkbox } from '@strapi/design-system';
+
 import { SUPPORTED_MUX_LANGUAGES, type RequestedUploadData } from '../../../../types/shared-types';
 import LanguageIcon from './language-icon';
 

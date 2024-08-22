@@ -1,7 +1,5 @@
 import React from 'react';
-import { Field, FieldLabel, FieldError, FieldInput } from '@strapi/design-system/Field';
-import { Stack } from '@strapi/design-system/Stack';
-import { Flex } from '@strapi/design-system/Flex';
+import { Field } from '@strapi/design-system';
 
 interface Props {
   error?: string;
@@ -17,17 +15,11 @@ export const FileInput = ({ name, error, label, required, onFiles, inputProps }:
 
   return (
     <div>
-      <Field name={name} error={error}>
-        <Stack size={1}>
-          {label && (
-            <Flex>
-              <FieldLabel required={required}>{label}</FieldLabel>
-            </Flex>
-          )}
-          <FieldInput type="file" onChange={handleOnChange} {...(inputProps || {})} />
-          <FieldError />
-        </Stack>
-      </Field>
+      <Field.Root name={name} error={error}>
+        <Field.Label aria-required>{label}</Field.Label>
+        <Field.Input type="file" onChange={handleOnChange} />
+        <Field.Error />
+      </Field.Root>
     </div>
   );
 };

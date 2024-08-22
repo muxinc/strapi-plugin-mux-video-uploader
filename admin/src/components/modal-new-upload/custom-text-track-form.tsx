@@ -1,4 +1,4 @@
-import { Button, Card, CardBody, CardContent, Checkbox, Combobox, ComboboxOption, Flex } from '@strapi/design-system';
+import { Button, Card, CardBody, CardContent, Checkbox, Combobox, ComboboxOption, Field, Flex } from '@strapi/design-system';
 import { Download, Pencil, Plus, Trash } from '@strapi/icons';
 import LanguagesList, { LanguageCode } from 'iso-639-1';
 import React from 'react';
@@ -63,28 +63,35 @@ function TrackForm({
         >
           <Flex alignItems="start" gap={2}>
             <div style={{ flex: 1 }}>
-              <Combobox
-                placeholder={formatMessage({
+              <Field.Root
+                hint={formatMessage({
                   id: getTrad('CustomTextTrackForm.language'),
                   defaultMessage: 'Language',
                 })}
-                label={formatMessage({
-                  id: getTrad('CustomTextTrackForm.language'),
-                  defaultMessage: 'Language',
-                })}
-                value={track.language_code}
-                onChange={(newValue: LanguageCode) => {
-                  modifyTrack({ language_code: newValue, name: LanguagesList.getNativeName(newValue) });
-                }}
-                required
-                disabled={!editable}
               >
-                {LanguagesList.getAllCodes().map((code) => (
-                  <ComboboxOption key={code} value={code}>
-                    {LanguagesList.getNativeName(code)}
-                  </ComboboxOption>
-                ))}
-              </Combobox>
+                <Field.Label>{
+                  formatMessage({
+                    id: getTrad('CustomTextTrackForm.language'),
+                    defaultMessage: 'Language',
+                  })
+                }</Field.Label>
+                <Combobox
+                  value={track.language_code}
+                  onChange={(newValue: LanguageCode) => {
+                    modifyTrack({ language_code: newValue, name: LanguagesList.getNativeName(newValue) });
+                  }}
+                  required
+                  disabled={!editable}
+                >
+                  {LanguagesList.getAllCodes().map((code) => (
+                    <ComboboxOption key={code} value={code}>
+                      {LanguagesList.getNativeName(code)}
+                    </ComboboxOption>
+                  ))}
+                </Combobox>
+                <Field.Error />
+                <Field.Hint />
+              </Field.Root>
             </div>
             {track.stored_track?.id && muxAsset?.playback_id && (
               <div style={{ paddingTop: '1.5em' }}>
@@ -112,10 +119,9 @@ function TrackForm({
             />
           )}
           <Checkbox
-            checked={track.closed_captions}
-            value={track.closed_captions}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-              modifyTrack({ closed_captions: e.currentTarget.checked });
+            value={parseInt(track.closed_captions ? 'yes' : 'no')}
+            onChange={(e) => {
+              modifyTrack({ closed_captions: e.currentTarget.value === 'yes' ? true : false });
             }}
             disabled={!editable}
           >

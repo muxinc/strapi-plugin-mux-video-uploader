@@ -1,12 +1,8 @@
-import { Badge } from '@strapi/design-system';
-import { Box } from '@strapi/design-system/Box';
-import { Grid, GridItem } from '@strapi/design-system/Grid';
-import { Stack } from '@strapi/design-system/Stack';
-import { Typography } from '@strapi/design-system/Typography';
 import React from 'react';
+import styled from 'styled-components';
+import { Badge, Box, Grid, Typography } from '@strapi/design-system';
 import { useIntl } from 'react-intl';
 
-import styled from 'styled-components';
 import { MuxAsset } from '../../../../server/content-types/mux-asset/types';
 import getTrad from '../../utils/get-trad';
 
@@ -32,135 +28,119 @@ const Summary = (props: Props) => {
 
   return (
     <Box padding={4} background="neutral100" hasRadius>
-      <Stack>
-        <Box paddingBottom={4}>
-          <Stack>
-            <Box paddingBottom={1}>
-              <Typography variant="sigma" fontWeight="bold" textColor="neutral600" textTransform="uppercase">
-                {formatMessage({
-                  id: getTrad('Common.isReady-label'),
-                  defaultMessage: 'State',
-                })}
-              </Typography>
-            </Box>
-            <TypographyWrapped variant="pi" textColor="neutral700">
-              {muxAsset.isReady ? (
-                <Badge active>
+      <Box paddingBottom={4}>
+        <Box paddingBottom={1}>
+          <Typography variant="sigma" fontWeight="bold" textColor="neutral600" textTransform="uppercase">
+            {formatMessage({
+              id: getTrad('Common.isReady-label'),
+              defaultMessage: 'State',
+            })}
+          </Typography>
+        </Box>
+        <TypographyWrapped variant="pi" textColor="neutral700">
+          {muxAsset.isReady ? (
+            <Badge active>
+              {formatMessage({
+                id: getTrad('Common.ready'),
+                defaultMessage: 'Ready',
+              })}
+            </Badge>
+          ) : (
+            <Badge>
+              {formatMessage({
+                id: getTrad('Common.preparing'),
+                defaultMessage: 'Preparing',
+              })}
+            </Badge>
+          )}
+        </TypographyWrapped>
+      </Box>
+      <Box paddingBottom={4}>
+        <Box paddingBottom={1}>
+          <Typography variant="sigma" fontWeight="bold" textColor="neutral600" textTransform="uppercase">
+            {formatMessage({
+              id: getTrad('Summary.assetId'),
+              defaultMessage: 'Asset Id',
+            })}
+          </Typography>
+        </Box>
+        <TypographyWrapped variant="pi" textColor="neutral700">
+          {muxAsset.asset_id}
+        </TypographyWrapped>
+      </Box>
+      <Box paddingBottom={4}>
+        <Box paddingBottom={1}>
+          <Typography variant="sigma" fontWeight="bold" textColor="neutral600" textTransform="uppercase">
+            {formatMessage({
+              id: getTrad('Summary.uploadId'),
+              defaultMessage: 'Upload Id',
+            })}
+          </Typography>
+        </Box>
+        <TypographyWrapped variant="pi" textColor="neutral700">
+          {muxAsset.upload_id}
+        </TypographyWrapped>
+      </Box>
+      <Box paddingBottom={4}>
+        <Box paddingBottom={1}>
+          <Typography variant="sigma" fontWeight="bold" textColor="neutral600" textTransform="uppercase">
+            {formatMessage({
+              id: getTrad('Summary.playbackId'),
+              defaultMessage: 'Playback Id',
+            })}
+          </Typography>
+        </Box>
+        <TypographyWrapped variant="pi" textColor="neutral700">
+          {muxAsset.playback_id}
+        </TypographyWrapped>
+      </Box>
+      <Box paddingBottom={4}>
+        <Box paddingBottom={1}>
+          <Typography variant="sigma" fontWeight="bold" textColor="neutral600" textTransform="uppercase">
+            {formatMessage({
+              id: getTrad('Summary.playbackPolicy'),
+              defaultMessage: 'Playback Policy',
+            })}
+          </Typography>
+        </Box>
+        <TypographyWrapped variant="pi" textColor="neutral700">
+          {muxAsset.signed ? 'Signed' : 'Public'}
+        </TypographyWrapped>
+      </Box>
+      <Box>
+        <Grid.Root gap={4}>
+          <Grid.Item col={6} s={12}>
+            <Box>
+              <Box paddingBottom={1}>
+                <Typography variant="sigma" fontWeight="bold" textColor="neutral600" textTransform="uppercase">
                   {formatMessage({
-                    id: getTrad('Common.ready'),
-                    defaultMessage: 'Ready',
+                    id: getTrad('Summary.created'),
+                    defaultMessage: 'Created',
                   })}
-                </Badge>
-              ) : (
-                <Badge>
+                </Typography>
+              </Box>
+              <Typography variant="pi" textColor="neutral700">
+                {created_date} {created_time}
+              </Typography>
+            </Box>
+          </Grid.Item>
+          <Grid.Item col={6} s={12}>
+            <Box>
+              <Box paddingBottom={1}>
+                <Typography variant="sigma" fontWeight="bold" textColor="neutral600" textTransform="uppercase">
                   {formatMessage({
-                    id: getTrad('Common.preparing'),
-                    defaultMessage: 'Preparing',
+                    id: getTrad('Summary.updated'),
+                    defaultMessage: 'Updated',
                   })}
-                </Badge>
-              )}
-            </TypographyWrapped>
-          </Stack>
-        </Box>
-        <Box paddingBottom={4}>
-          <Stack>
-            <Box paddingBottom={1}>
-              <Typography variant="sigma" fontWeight="bold" textColor="neutral600" textTransform="uppercase">
-                {formatMessage({
-                  id: getTrad('Summary.assetId'),
-                  defaultMessage: 'Asset Id',
-                })}
-              </Typography>
-            </Box>
-            <TypographyWrapped variant="pi" textColor="neutral700">
-              {muxAsset.asset_id}
-            </TypographyWrapped>
-          </Stack>
-        </Box>
-        <Box paddingBottom={4}>
-          <Stack>
-            <Box paddingBottom={1}>
-              <Typography variant="sigma" fontWeight="bold" textColor="neutral600" textTransform="uppercase">
-                {formatMessage({
-                  id: getTrad('Summary.uploadId'),
-                  defaultMessage: 'Upload Id',
-                })}
-              </Typography>
-            </Box>
-            <TypographyWrapped variant="pi" textColor="neutral700">
-              {muxAsset.upload_id}
-            </TypographyWrapped>
-          </Stack>
-        </Box>
-        <Box paddingBottom={4}>
-          <Stack>
-            <Box paddingBottom={1}>
-              <Typography variant="sigma" fontWeight="bold" textColor="neutral600" textTransform="uppercase">
-                {formatMessage({
-                  id: getTrad('Summary.playbackId'),
-                  defaultMessage: 'Playback Id',
-                })}
-              </Typography>
-            </Box>
-            <TypographyWrapped variant="pi" textColor="neutral700">
-              {muxAsset.playback_id}
-            </TypographyWrapped>
-          </Stack>
-        </Box>
-        <Box paddingBottom={4}>
-          <Stack>
-            <Box paddingBottom={1}>
-              <Typography variant="sigma" fontWeight="bold" textColor="neutral600" textTransform="uppercase">
-                {formatMessage({
-                  id: getTrad('Summary.playbackPolicy'),
-                  defaultMessage: 'Playback Policy',
-                })}
-              </Typography>
-            </Box>
-            <TypographyWrapped variant="pi" textColor="neutral700">
-              {muxAsset.signed ? 'Signed' : 'Public'}
-            </TypographyWrapped>
-          </Stack>
-        </Box>
-        <Box>
-          <Grid gap={4}>
-            <GridItem col={6} s={12}>
-              <Box>
-                <Stack>
-                  <Box paddingBottom={1}>
-                    <Typography variant="sigma" fontWeight="bold" textColor="neutral600" textTransform="uppercase">
-                      {formatMessage({
-                        id: getTrad('Summary.created'),
-                        defaultMessage: 'Created',
-                      })}
-                    </Typography>
-                  </Box>
-                  <Typography variant="pi" textColor="neutral700">
-                    {created_date} {created_time}
-                  </Typography>
-                </Stack>
+                </Typography>
               </Box>
-            </GridItem>
-            <GridItem col={6} s={12}>
-              <Box>
-                <Stack>
-                  <Box paddingBottom={1}>
-                    <Typography variant="sigma" fontWeight="bold" textColor="neutral600" textTransform="uppercase">
-                      {formatMessage({
-                        id: getTrad('Summary.updated'),
-                        defaultMessage: 'Updated',
-                      })}
-                    </Typography>
-                  </Box>
-                  <Typography variant="pi" textColor="neutral700">
-                    {updated_date} {updated_time}
-                  </Typography>
-                </Stack>
-              </Box>
-            </GridItem>
-          </Grid>
-        </Box>
-      </Stack>
+              <Typography variant="pi" textColor="neutral700">
+                {updated_date} {updated_time}
+              </Typography>
+            </Box>
+          </Grid.Item>
+        </Grid.Root>
+      </Box>
     </Box>
   );
 };

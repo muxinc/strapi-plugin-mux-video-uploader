@@ -1,4 +1,5 @@
 import React from 'react';
+import { useFetchClient } from '@strapi/strapi/admin';
 import styled from 'styled-components';
 import MuxPlayer from '@mux/mux-player-react';
 // @ts-expect-error - No types provided
@@ -7,9 +8,9 @@ import videojs from '@mux/videojs-kit';
 import { MuxAsset } from '../../../../server/content-types/mux-asset/types';
 import { useSignedTokens } from '../signed-tokens-provider';
 import pluginPkg from '../../../../package.json';
+import pluginId from '../../plugin-id';
 
 import '@mux/videojs-kit/dist/index.css';
-import { getThumbnail } from '../../services/strapi';
 
 // THE FOLLOWING IS TEMPORARILY COMMENTED OUT DUE TO ISSUE WITH STRAPI
 // ts-expect-error styled-components typings are off
@@ -46,6 +47,7 @@ const PreviewPlayer = (props: { muxAsset?: MuxAsset }) => {
 
   const [posterUrl, setPosterUrl] = React.useState<string>();
 
+  const { get } = useFetchClient();
   const tokens = useSignedTokens();
 
   React.useEffect(() => {
@@ -73,8 +75,13 @@ const PreviewPlayer = (props: { muxAsset?: MuxAsset }) => {
   React.useEffect(() => {
     if (!muxAsset?.playback_id || !tokens) return;
 
-    const thumbnailUrl = getThumbnail(muxAsset.playback_id);
-    setPosterUrl(tokens.thumbnail ? `${thumbnailUrl}?token=${tokens.thumbnail}` : thumbnailUrl);
+    const { playback_id } = muxAsset;
+
+    get(`${pluginId}/thumbnail/${playback_id}`)
+    .then(result => {
+      const { data } = result;
+      setPosterUrl(tokens.thumbnail ? `${data}?token=${tokens.thumbnail}` : data);
+    });
   }, [muxAsset, tokens]);
 
   if (!muxAsset?.playback_id || (muxAsset.signed && !tokens.video)) return null;

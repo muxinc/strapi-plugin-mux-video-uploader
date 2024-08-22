@@ -1,12 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 import styled from 'styled-components';
-import ExclamationMarkCircle from '@strapi/icons/ExclamationMarkCircle';
-import Lock from '@strapi/icons/Lock';
-import Earth from '@strapi/icons/Earth';
-import { Box } from '@strapi/design-system/Box';
-import { Tooltip } from '@strapi/design-system';
+import { useFetchClient } from '@strapi/strapi/admin'
+import { Earth, Lock, WarningCircle } from '@strapi/icons';
 import {
+  Box,
   Card,
   CardHeader,
   CardBody,
@@ -16,15 +14,14 @@ import {
   CardBadge,
   CardTitle,
   CardSubtitle,
-} from '@strapi/design-system/Card';
-import { Icon } from '@strapi/design-system/Icon';
-import { Loader } from '@strapi/design-system/Loader';
+  Loader,
+  Tooltip
+} from '@strapi/design-system';
 
-import { getThumbnail } from '../../services/strapi';
-import { getPlaybackToken } from '../../services/strapi';
 import getTrad from '../../utils/get-trad';
 import { secondsToFormattedString } from '../../utils/date-time';
 import { MuxAsset } from '../../../../server/content-types/mux-asset/types';
+import pluginId from '../../plugin-id';
 
 const BoxStyled = styled(Box)`
   cursor: pointer;
@@ -47,37 +44,46 @@ const CardTitleStyled = styled(CardTitle)`
 
 interface DefaultProps {
   onClick: (muxAsset: MuxAsset) => void;
+  onInvalidate: () => void;
 }
 interface Props extends DefaultProps {
   muxAsset: MuxAsset;
 }
 
 const AssetCard = (props: Props) => {
-  const { muxAsset, onClick } = props;
+  const { muxAsset, onClick, onInvalidate } = props;
 
-  const [thumbnailImageUrl, setThumbnailImageUrl] = useState<string>('');
+  const [thumbnailImageUrl, setThumbnailImageUrl] = React.useState<string>('');
 
+  const { get } = useFetchClient();
   const { formatMessage, formatDate } = useIntl();
 
   const isLoading = muxAsset.asset_id === null;
 
-  useEffect(() => {
+  const init = async (muxAsset:MuxAsset) => {
+    const { playback_id } = muxAsset;
     if (muxAsset.playback_id !== null && muxAsset.signed) {
-      getPlaybackToken(muxAsset.playback_id, 'thumbnail')
-        .then((data) => getThumbnail(muxAsset.playback_id, data.token))
-        .then((image) => setThumbnailImageUrl(image as string));
+      const { data: sigData } = await get(`${pluginId}/sign/${playback_id}?type=thumbnail`);
+      const { data: imageData } = await get(`${pluginId}/thumbnail/${playback_id}?token=${sigData.token}`);
+      
+      setThumbnailImageUrl(imageData);
     } else if (muxAsset.playback_id !== null) {
-      setThumbnailImageUrl(getThumbnail(muxAsset.playback_id) as string);
+      const { data: imageData } = await get(`${pluginId}/thumbnail/${playback_id}`);
+      setThumbnailImageUrl(imageData);
     } else {
       setThumbnailImageUrl(
         'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
       );
     }
+  };
+
+  React.useEffect(() => {
+    init(muxAsset);
   }, []);
 
   const renderCardAssetStatus = React.useCallback(() => {
     if (muxAsset.error_message !== null) {
-      return <Icon color="danger500" as={ExclamationMarkCircle} />;
+      return <WarningCircle color="danger500" />;
     } else if (isLoading) {
       return <Loader small>{formatMessage({ id: getTrad('AssetCard.loading'), defaultMessage: 'Loading' })}</Loader>;
     }
@@ -139,10 +145,9 @@ const AssetCard = (props: Props) => {
           </CardContent>
           <CardBadge>
             <Tooltip description={muxAsset.signed ? 'Private Playback' : 'Public Playback'}>
-              <Icon as={muxAsset.signed ? Lock : Earth} />
+              { muxAsset.signed ? <Lock /> : <Earth />}
             </Tooltip>
           </CardBadge>
-          {/* <CardBadge>Video | Audio</CardBadge> */}
         </CardBody>
       </Card>
     </BoxStyled>
@@ -151,6 +156,7 @@ const AssetCard = (props: Props) => {
 
 AssetCard.defaultProps = {
   onClick: () => {},
+  onInvalidate: () => {}
 } as DefaultProps;
 
 export default AssetCard;
