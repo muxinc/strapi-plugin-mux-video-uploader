@@ -18,10 +18,10 @@ import {
   Tooltip
 } from '@strapi/design-system';
 
-import getTrad from '../../utils/get-trad';
+import { getTranslation } from '../../utils/getTranslation';
 import { secondsToFormattedString } from '../../utils/date-time';
-import { MuxAsset } from '../../../../server/content-types/mux-asset/types';
-import pluginId from '../../plugin-id';
+import { MuxAsset } from '../../../../server/src/content-types/mux-asset/types';
+import { PLUGIN_ID} from '../../pluginId';
 
 const BoxStyled = styled(Box)`
   cursor: pointer;
@@ -63,12 +63,12 @@ const AssetCard = (props: Props) => {
   const init = async (muxAsset:MuxAsset) => {
     const { playback_id } = muxAsset;
     if (muxAsset.playback_id !== null && muxAsset.signed) {
-      const { data: sigData } = await get(`${pluginId}/sign/${playback_id}?type=thumbnail`);
-      const { data: imageData } = await get(`${pluginId}/thumbnail/${playback_id}?token=${sigData.token}`);
+      const { data: sigData } = await get(`${PLUGIN_ID}/sign/${playback_id}?type=thumbnail`);
+      const { data: imageData } = await get(`${PLUGIN_ID}/thumbnail/${playback_id}?token=${sigData.token}`);
       
       setThumbnailImageUrl(imageData);
     } else if (muxAsset.playback_id !== null) {
-      const { data: imageData } = await get(`${pluginId}/thumbnail/${playback_id}`);
+      const { data: imageData } = await get(`${PLUGIN_ID}/thumbnail/${playback_id}`);
       setThumbnailImageUrl(imageData);
     } else {
       setThumbnailImageUrl(
@@ -85,7 +85,11 @@ const AssetCard = (props: Props) => {
     if (muxAsset.error_message !== null) {
       return <WarningCircle color="danger500" />;
     } else if (isLoading) {
-      return <Loader small>{formatMessage({ id: getTrad('AssetCard.loading'), defaultMessage: 'Loading' })}</Loader>;
+      return (
+        <Loader small>
+          {formatMessage({ id: getTranslation('AssetCard.loading'), defaultMessage: 'Loading' })}
+        </Loader>
+      );
     }
   }, [muxAsset]);
 
@@ -96,14 +100,14 @@ const AssetCard = (props: Props) => {
   const loadingTitle =
     isLoading &&
     formatMessage({
-      id: getTrad('AssetCard.is-loading'),
+      id: getTranslation('AssetCard.is-loading'),
       defaultMessage: 'Asset is being processed',
     });
 
   const errorTitle =
     isLoading &&
     formatMessage({
-      id: getTrad('AssetCard.is-error'),
+      id: getTranslation('AssetCard.is-error'),
       defaultMessage: 'Asset encountered an error',
     });
 
@@ -113,18 +117,18 @@ const AssetCard = (props: Props) => {
 
     if (muxAsset.isReady)
       return formatMessage({
-        id: getTrad('AssetCard.no-aspect-ratio'),
+        id: getTranslation('AssetCard.no-aspect-ratio'),
         defaultMessage: 'No aspect ratio',
       });
 
     if (muxAsset.error_message !== null)
       return formatMessage({
-        id: getTrad('AssetCard.processing-error'),
+        id: getTranslation('AssetCard.processing-error'),
         defaultMessage: 'Error',
       });
 
     return formatMessage({
-      id: getTrad('AssetCard.processing-pending'),
+      id: getTranslation('AssetCard.processing-pending'),
       defaultMessage: 'Processing',
     });
   })();

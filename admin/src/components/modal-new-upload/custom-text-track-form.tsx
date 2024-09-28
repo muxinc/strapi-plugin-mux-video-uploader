@@ -1,12 +1,12 @@
 import { Button, Card, CardBody, CardContent, Checkbox, Combobox, ComboboxOption, Field, Flex } from '@strapi/design-system';
 import { Download, Pencil, Plus, Trash } from '@strapi/icons';
 import LanguagesList, { LanguageCode } from 'iso-639-1';
-import React from 'react';
+import React, { ChangeEvent } from 'react';
 import { useIntl } from 'react-intl';
-import type { MuxAsset } from '../../../../server/content-types/mux-asset/types';
-import { getMuxTextTrackUrl } from '../../../../server/utils/text-tracks';
+import type { MuxAsset } from '../../../../server/src/content-types/mux-asset/types';
+import { getMuxTextTrackUrl } from '../../../../server/src/utils/text-tracks';
 import { ParsedCustomTextTrack, TextTrackFile } from '../../../../types/shared-types';
-import getTrad from '../../utils/get-trad';
+import { getTranslation } from '../../utils/getTranslation';
 import { FileInput } from '../file-input';
 import { useSignedTokens } from '../signed-tokens-provider';
 
@@ -65,13 +65,13 @@ function TrackForm({
             <div style={{ flex: 1 }}>
               <Field.Root
                 hint={formatMessage({
-                  id: getTrad('CustomTextTrackForm.language'),
+                  id: getTranslation('CustomTextTrackForm.language'),
                   defaultMessage: 'Language',
                 })}
               >
                 <Field.Label>{
                   formatMessage({
-                    id: getTrad('CustomTextTrackForm.language'),
+                    id: getTranslation('CustomTextTrackForm.language'),
                     defaultMessage: 'Language',
                   })
                 }</Field.Label>
@@ -97,7 +97,7 @@ function TrackForm({
               <div style={{ paddingTop: '1.5em' }}>
                 <Button variant="ghost" startIcon={<Download />} onClick={downloadOnClick}>
                   {formatMessage({
-                    id: getTrad('Common.download-button'),
+                    id: getTranslation('Common.download-button'),
                     defaultMessage: 'Download',
                   })}
                 </Button>
@@ -108,7 +108,7 @@ function TrackForm({
             <FileInput
               name="file"
               label={formatMessage({
-                id: getTrad('Common.file-label'),
+                id: getTranslation('Common.file-label'),
                 defaultMessage: 'Subtitles file (.vtt or .srt)',
               })}
               required
@@ -120,27 +120,27 @@ function TrackForm({
           )}
           <Checkbox
             value={parseInt(track.closed_captions ? 'yes' : 'no')}
-            onChange={(e) => {
+            onChange={(e:any) => {
               modifyTrack({ closed_captions: e.currentTarget.value === 'yes' ? true : false });
             }}
             disabled={!editable}
           >
             {formatMessage({
-              id: getTrad('CustomTextTrackForm.closed-captions'),
+              id: getTranslation('CustomTextTrackForm.closed-captions'),
               defaultMessage: 'Closed captions',
             })}
           </Checkbox>
           <Flex alignItems="center" justifyContent="between" gap={2}>
             <Button startIcon={<Trash />} onClick={deleteTrack} variant="danger-light">
               {formatMessage({
-                id: getTrad('Common.delete-button'),
+                id: getTranslation('Common.delete-button'),
                 defaultMessage: 'Delete',
               })}
             </Button>
             {!editable && (
               <Button onClick={() => setEditable(true)} startIcon={<Pencil />}>
                 {formatMessage({
-                  id: getTrad('Common.update-button'),
+                  id: getTranslation('Common.update-button'),
                   defaultMessage: 'Update',
                 })}
               </Button>
@@ -215,7 +215,7 @@ export default function CustomTextTrackForm({
       ))}
       <Button startIcon={<Plus />} onClick={handleNew} style={{ justifyContent: 'center' }}>
         {formatMessage({
-          id: getTrad('CustomTextTrackForm.new-caption'),
+          id: getTranslation('CustomTextTrackForm.new-caption'),
           defaultMessage: 'New caption/subtitle',
         })}
       </Button>

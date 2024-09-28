@@ -3,7 +3,7 @@ import { useIntl } from 'react-intl';
 import styled from 'styled-components';
 import { Box, Flex, ProgressBar, Typography } from '@strapi/design-system';
 
-import getTrad from '../../utils/get-trad';
+import { getTranslation } from '../../utils/getTranslation';
 
 const ProgressBarWrapper = styled.div`
   width: 60%;
@@ -26,7 +26,7 @@ const Uploading = (props: Props) => {
         <Flex justifyContent="center">
           <Typography variant="alpha">
             {formatMessage({
-              id: getTrad('Uploading.uploading'),
+              id: getTranslation('Uploading.uploading'),
               defaultMessage: 'Uploading to Mux',
             })}
           </Typography>

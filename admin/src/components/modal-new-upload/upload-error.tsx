@@ -3,7 +3,7 @@ import { useIntl } from 'react-intl';
 import { WarningCircle } from '@strapi/icons';
 import { Box, Flex, Typography } from '@strapi/design-system';
 
-import getTrad from '../../utils/get-trad';
+import { getTranslation } from '../../utils/getTranslation';
 
 interface Props {
   message: string;
@@ -20,7 +20,7 @@ const UploadError = (props: Props) => {
         <Flex justifyContent="center">
           <Typography variant="alpha">
             {formatMessage({
-              id: getTrad('UploadError.upload-error'),
+              id: getTranslation('UploadError.upload-error'),
               defaultMessage: 'Upload Error',
             })}
             &nbsp;
@@ -31,14 +31,14 @@ const UploadError = (props: Props) => {
       <Box paddingTop={5}>
         <Typography variant="omega">
           {formatMessage({
-            id: getTrad('UploadError.message'),
+            id: getTranslation('UploadError.message'),
             defaultMessage:
               'An error occurred while uploading the file.  Submit an issue with the following error message',
           })}
           &nbsp;-&nbsp;
           <a href="https://github.com/muxinc/strapi-plugin-mux-video-uploader/issues" target="_blank">
             {formatMessage({
-              id: getTrad('UploadError.issues'),
+              id: getTranslation('UploadError.issues'),
               defaultMessage: 'File issue',
             })}
           </a>
