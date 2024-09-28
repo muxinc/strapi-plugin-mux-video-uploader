@@ -5,20 +5,20 @@ import { } from '@strapi/core';
 import { Box, Button, Typography } from '@strapi/design-system';
 import { ArrowRight } from '@strapi/icons';
 
-import pluginId from '../../plugin-id';
-import getTrad from '../../utils/get-trad';
+import { PLUGIN_ID } from '../../pluginId';
+import { getTranslation } from '../../utils/getTranslation';
 
 const SetupNeeded = () => {
-  const history = useNavigate();
+  const navigate = useNavigate();
   const { formatMessage } = useIntl();
 
-  const onSettingsClick = () => history.push(`/settings/${pluginId}`);
+  const onSettingsClick = () => navigate(`/settings/${PLUGIN_ID}`);
 
   return (
     <>
       <Box background="neutral100">
         <Typography variant="alpha">
-        {formatMessage({ id: getTrad('SetupNeeded.page-title'), defaultMessage: 'Mux Video Uploader' })}
+        {formatMessage({ id: getTranslation('SetupNeeded.page-title'), defaultMessage: 'Mux Video Uploader' })}
         </Typography>
       </Box>
       <div>
@@ -33,19 +33,19 @@ const SetupNeeded = () => {
             paddingRight={6}
           >
             <Typography variant="delta">
-              {formatMessage({ id: getTrad('SetupNeeded.setup-needed'), defaultMessage: 'Setup Needed' })}
+              {formatMessage({ id: getTranslation('SetupNeeded.setup-needed'), defaultMessage: 'Setup Needed' })}
             </Typography>
             <Box paddingTop={3} paddingBottom={3}>
               <Typography variant="omega">
                 {formatMessage({
-                  id: getTrad('SetupNeeded.setup-instructions'),
+                  id: getTranslation('SetupNeeded.setup-instructions'),
                   defaultMessage:
                     'In order for uploads to function, an administrator will need to complete the setup of this plugin by visiting the settings page.  Click the button below to be taken there now.',
                 })}
               </Typography>
             </Box>
             <Button size="S" onClick={onSettingsClick} endIcon={<ArrowRight />}>
-              {formatMessage({ id: getTrad('SetupNeeded.settings'), defaultMessage: 'Go to settings' })}
+              {formatMessage({ id: getTranslation('SetupNeeded.settings'), defaultMessage: 'Go to settings' })}
             </Button>
           </Box>
         </Box>

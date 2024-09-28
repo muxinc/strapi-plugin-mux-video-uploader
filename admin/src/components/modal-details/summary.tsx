@@ -3,8 +3,8 @@ import styled from 'styled-components';
 import { Badge, Box, Grid, Typography } from '@strapi/design-system';
 import { useIntl } from 'react-intl';
 
-import { MuxAsset } from '../../../../server/content-types/mux-asset/types';
-import getTrad from '../../utils/get-trad';
+import { MuxAsset } from '../../../../server/src/content-types/mux-asset/types';
+import { getTranslation } from '../../utils/getTranslation';
 
 const TypographyWrapped = styled(Typography)`
   overflow-wrap: break-word;
@@ -32,7 +32,7 @@ const Summary = (props: Props) => {
         <Box paddingBottom={1}>
           <Typography variant="sigma" fontWeight="bold" textColor="neutral600" textTransform="uppercase">
             {formatMessage({
-              id: getTrad('Common.isReady-label'),
+              id: getTranslation('Common.isReady-label'),
               defaultMessage: 'State',
             })}
           </Typography>
@@ -41,14 +41,14 @@ const Summary = (props: Props) => {
           {muxAsset.isReady ? (
             <Badge active>
               {formatMessage({
-                id: getTrad('Common.ready'),
+                id: getTranslation('Common.ready'),
                 defaultMessage: 'Ready',
               })}
             </Badge>
           ) : (
             <Badge>
               {formatMessage({
-                id: getTrad('Common.preparing'),
+                id: getTranslation('Common.preparing'),
                 defaultMessage: 'Preparing',
               })}
             </Badge>
@@ -59,7 +59,7 @@ const Summary = (props: Props) => {
         <Box paddingBottom={1}>
           <Typography variant="sigma" fontWeight="bold" textColor="neutral600" textTransform="uppercase">
             {formatMessage({
-              id: getTrad('Summary.assetId'),
+              id: getTranslation('Summary.assetId'),
               defaultMessage: 'Asset Id',
             })}
           </Typography>
@@ -72,7 +72,7 @@ const Summary = (props: Props) => {
         <Box paddingBottom={1}>
           <Typography variant="sigma" fontWeight="bold" textColor="neutral600" textTransform="uppercase">
             {formatMessage({
-              id: getTrad('Summary.uploadId'),
+              id: getTranslation('Summary.uploadId'),
               defaultMessage: 'Upload Id',
             })}
           </Typography>
@@ -85,7 +85,7 @@ const Summary = (props: Props) => {
         <Box paddingBottom={1}>
           <Typography variant="sigma" fontWeight="bold" textColor="neutral600" textTransform="uppercase">
             {formatMessage({
-              id: getTrad('Summary.playbackId'),
+              id: getTranslation('Summary.playbackId'),
               defaultMessage: 'Playback Id',
             })}
           </Typography>
@@ -98,7 +98,7 @@ const Summary = (props: Props) => {
         <Box paddingBottom={1}>
           <Typography variant="sigma" fontWeight="bold" textColor="neutral600" textTransform="uppercase">
             {formatMessage({
-              id: getTrad('Summary.playbackPolicy'),
+              id: getTranslation('Summary.playbackPolicy'),
               defaultMessage: 'Playback Policy',
             })}
           </Typography>
@@ -114,7 +114,7 @@ const Summary = (props: Props) => {
               <Box paddingBottom={1}>
                 <Typography variant="sigma" fontWeight="bold" textColor="neutral600" textTransform="uppercase">
                   {formatMessage({
-                    id: getTrad('Summary.created'),
+                    id: getTranslation('Summary.created'),
                     defaultMessage: 'Created',
                   })}
                 </Typography>
@@ -129,7 +129,7 @@ const Summary = (props: Props) => {
               <Box paddingBottom={1}>
                 <Typography variant="sigma" fontWeight="bold" textColor="neutral600" textTransform="uppercase">
                   {formatMessage({
-                    id: getTrad('Summary.updated'),
+                    id: getTranslation('Summary.updated'),
                     defaultMessage: 'Updated',
                   })}
                 </Typography>

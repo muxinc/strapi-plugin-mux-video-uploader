@@ -10,7 +10,7 @@ import {
 } from '@strapi/design-system';
 
 import { appendQueryParameter } from '../../utils/url';
-import getTrad from '../../utils/get-trad';
+import { getTranslation } from '../../utils/getTranslation';
 
 interface Props {
   page?: number;
@@ -23,22 +23,22 @@ const ListPagination = (props: Props) => {
   const { formatMessage } = useIntl();
 
   const prevIntl = {
-    id: getTrad('ListPagination.previous-page'),
+    id: getTranslation('ListPagination.previous-page'),
     defaultMessage: 'Previous page',
   };
 
   const nextIntl = {
-    id: getTrad('ListPagination.next-page'),
+    id: getTranslation('ListPagination.next-page'),
     defaultMessage: 'Next page',
   };
 
   const gotoIntl = {
-    id: getTrad('ListPagination.goto-page-n'),
+    id: getTranslation('ListPagination.goto-page-n'),
     defaultMessage: 'Go to page {pageNumber}',
   };
 
   const dotsIntl = {
-    id: getTrad('ListPagination.dots'),
+    id: getTranslation('ListPagination.dots'),
     defaultMessage: 'And {more} other links',
   };
 

@@ -14,27 +14,28 @@ import React from 'react';
 import { useIntl } from 'react-intl';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-import { GetMuxAssetsResponse, MuxAsset } from '../../../../server/content-types/mux-asset/types';
-import AssetGrid from '../../components/asset-grid';
-import ListPagination from '../../components/list-pagination';
-import ModalDetails from '../../components/modal-details/modal-details';
-import ModalNewUpload from '../../components/modal-new-upload/modal-new-upload';
-import SetupNeeded from '../../components/setup-needed';
-import pluginPermissions from '../../permissions';
-import getTrad from '../../utils/get-trad';
-import { appendQueryParameter } from '../../utils/url';
-import pluginId from '../../plugin-id';
-import { SearchField, SearchVector, SortVector } from '../../types';
+// @todo - v5 migration this is goofy
+import { GetMuxAssetsResponse, MuxAsset } from '../../../server/src/content-types/mux-asset/types';
+import AssetGrid from '../components/asset-grid';
+import ListPagination from '../components/list-pagination';
+import ModalDetails from '../components/modal-details/modal-details';
+import ModalNewUpload from '../components/modal-new-upload/modal-new-upload';
+import SetupNeeded from '../components/setup-needed';
+import pluginPermissions from '../permissions';
+import { getTranslation } from '../utils/getTranslation';
+import { appendQueryParameter } from '../utils/url';
+import { PLUGIN_ID } from '../pluginId';
+import { SearchField, SearchVector, SortVector } from '../types';
 
 const ProtectedHomePage = () => (
-  <Page.Protect permissions={pluginPermissions.mainRead}>
+  <Page.Protect permissions={[pluginPermissions.mainRead]}>
     <HomePage />
   </Page.Protect>
 );
 
 const HomePage = () => {
   const location = useLocation();
-  const history = useNavigate();
+  const navigate = useNavigate();
 
   const { get } = useFetchClient();
   const { formatMessage } = useIntl();
@@ -42,14 +43,14 @@ const HomePage = () => {
   const SEARCH_FIELDS = [
     {
       label: formatMessage({
-        id: getTrad('Common.title-search-field'),
+        id: getTranslation('Common.title-search-field'),
         defaultMessage: 'By Title',
       }),
       value: SearchField.BY_TITLE,
     },
     {
       label: formatMessage({
-        id: getTrad('Common.assetId-search-field'),
+        id: getTranslation('Common.assetId-search-field'),
         defaultMessage: 'By Asset Id',
       }),
       value: SearchField.BY_ASSET_ID,
@@ -103,7 +104,7 @@ const HomePage = () => {
 
     const sort = sortVector ? `&sort=${sortVector.field}&order=${sortVector.desc ? 'desc' : 'asc'}` : '';
 
-    const { data } = await get(`${pluginId}/mux-asset?start=${start}${sort}&limit=${pageLimit}${search}`);
+    const { data } = await get(`${PLUGIN_ID}/mux-asset?start=${start}${sort}&limit=${pageLimit}${search}`);
 
     const pages = Math.ceil(data.totalCount / pageLimit);
 
@@ -112,7 +113,7 @@ const HomePage = () => {
   };
 
   React.useEffect(() => {
-    get(`${pluginId}/mux-settings`)
+    get(`${PLUGIN_ID}/mux-settings`)
     .then(result => {
       const { data } = result;
 
@@ -137,11 +138,11 @@ const HomePage = () => {
   }, [page, searchField, searchValue, pageLimit]);
 
   const permissions = React.useMemo(() => {
-    return {
-      create: pluginPermissions.mainCreate,
-      update: pluginPermissions.mainUpdate,
-      delete: pluginPermissions.mainDelete,
-    };
+    return [
+      pluginPermissions.mainCreate,
+      pluginPermissions.mainUpdate,
+      pluginPermissions.mainDelete,
+    ];
   }, []);
 
   const {
@@ -150,11 +151,11 @@ const HomePage = () => {
   } = useRBAC(permissions);
 
   const handleOnSearchFieldChange = (field: string) => {
-    history.push(appendQueryParameter(location, { field }));
+    navigate(appendQueryParameter(location, { field }));
   };
 
   const handleOnSearchValueChange = (event: any) => {
-    history.push(appendQueryParameter(location, { value: event?.target.value || '' }));
+    navigate(appendQueryParameter(location, { value: event?.target.value || '' }));
   };
 
   const handleOnMuxAssetClick = (muxAsset: MuxAsset) => setSelectedAsset(muxAsset);
@@ -177,12 +178,12 @@ const HomePage = () => {
       <div>
         <Flex justifyContent="space-between">
           <Typography>{formatMessage({
-            id: getTrad('HomePage.section-label'),
+            id: getTranslation('HomePage.section-label'),
             defaultMessage: 'Mux Video Uploader',
           })}</Typography>
           <Button disabled={!canCreate} startIcon={<Plus />} size="L" onClick={handleOnNewUploadClick}>
             {formatMessage({
-              id: getTrad('HomePage.new-upload-button'),
+              id: getTranslation('HomePage.new-upload-button'),
               defaultMessage: 'Upload new assets',
             })}
           </Button>
@@ -192,15 +193,15 @@ const HomePage = () => {
             <Grid.Item col={2} xs={12} s={12}>
               <SingleSelect
                 aria-label={formatMessage({
-                  id: getTrad('HomePage.search-label'),
+                  id: getTranslation('HomePage.search-label'),
                   defaultMessage: 'Choose the field to search',
                 })}
                 placeholder={formatMessage({
-                  id: getTrad('HomePage.search-placeholder'),
+                  id: getTranslation('HomePage.search-placeholder'),
                   defaultMessage: 'Search field',
                 })}
                 value={searchField}
-                onChange={(value) => handleOnSearchFieldChange(value.toString())}
+                onChange={(value:string) => handleOnSearchFieldChange(value.toString())}
               >
                 {SEARCH_FIELDS.map((searchField) => (
                   <SingleSelectOption value={searchField.value}>{searchField.label}</SingleSelectOption>
@@ -214,12 +215,12 @@ const HomePage = () => {
                 value={searchValue}
                 onChange={handleOnSearchValueChange}
                 clearLabel={formatMessage({
-                  id: getTrad('HomePage.clear-label'),
+                  id: getTranslation('HomePage.clear-label'),
                   defaultMessage: 'Clear search',
                 })}
               >
                 {formatMessage({
-                  id: getTrad('HomePage.searching'),
+                  id: getTranslation('HomePage.searching'),
                   defaultMessage: 'Searching for Mux assets',
                 })}
               </Searchbar>

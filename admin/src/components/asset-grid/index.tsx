@@ -2,9 +2,9 @@ import React from 'react';
 import { Box, Flex, Grid, Typography } from '@strapi/design-system';
 import { useIntl } from 'react-intl';
 
-import { MuxAsset } from '../../../../server/content-types/mux-asset/types';
+import { MuxAsset } from '../../../../server/src/content-types/mux-asset/types';
 import AssetCard from './asset-card';
-import getTrad from '../../utils/get-trad';
+import { getTranslation } from '../../utils/getTranslation';
 
 interface DefaultProps {
   onMuxAssetClick: (muxAsset: MuxAsset) => void;
@@ -26,7 +26,7 @@ const AssetGrid = (props: Props) => {
       <Flex justifyContent="center" padding={5}>
         <Typography variant="omega" textColor="neutral700">
           {formatMessage({
-            id: getTrad('HomePage.no-assets'),
+            id: getTranslation('HomePage.no-assets'),
             defaultMessage: 'No assets found',
           })}
         </Typography>

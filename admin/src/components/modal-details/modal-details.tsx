@@ -20,13 +20,13 @@ import {
 import { useFetchClient, useNotification } from '@strapi/strapi/admin';
 import { Duplicate, Trash, WarningCircle } from '@strapi/icons';
 
-import { MuxAsset, MuxAssetUpdate } from '../../../../server/content-types/mux-asset/types';
+import { MuxAsset, MuxAssetUpdate } from '../../../../server/src/content-types/mux-asset/types';
 import usePluginIntl from '../../utils/use-plugin-intl';
 import CustomTextTrackForm from '../modal-new-upload/custom-text-track-form';
 import PreviewPlayer from '../preview-player';
 import SignedTokensProvider from '../signed-tokens-provider';
 import Summary from './summary';
-import pluginId from '../../plugin-id';
+import { PLUGIN_ID } from '../../pluginId';
 
 const GridItemStyled = styled(Grid.Item)`
   position: sticky;
@@ -42,7 +42,7 @@ export default function ModalDetails(props: {
 }) {
   const { isOpen, muxAsset, enableUpdate, enableDelete, onToggle = () => {} } = props;
 
-  const { del, put } = useFetchClient();
+  const { post, put } = useFetchClient();
   const { formatMessage } = usePluginIntl();
   
   const deleteButtonRef = React.useRef<HTMLButtonElement>(null);
@@ -85,7 +85,13 @@ export default function ModalDetails(props: {
     toggleDeleteWarning();
 
     try {
-      await del(`${pluginId}/deleteMuxAsset?id=${muxAsset.id}&delete_on_mux=true`);
+      await post(
+        `${PLUGIN_ID}/deleteMuxAsset`,
+        {
+          documentId: muxAsset.id,
+          delete_on_mux: true
+        }
+      );
 
       setDeletingState('idle');
 
@@ -145,7 +151,7 @@ export default function ModalDetails(props: {
     };
 
     if (data.title || data.custom_text_tracks) {
-      await put(`${pluginId}/mux-asset/${muxAsset.id}`, data);
+      await put(`${PLUGIN_ID}/mux-asset/${muxAsset.id}`, data);
     }
 
     setSubmitting(false);

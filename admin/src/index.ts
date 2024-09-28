@@ -1,46 +1,51 @@
-// import { prefixPluginTranslations } from '@strapi/helper-plugin';
-
-import pluginPkg from '../../package.json';
-import pluginId from './plugin-id';
+import { getTranslation } from './utils/getTranslation';
+import { PLUGIN_ID } from './pluginId';
+import { Initializer } from './components/Initializer';
+import { PluginIcon } from './components/PluginIcon';
 import pluginPermissions from './permissions';
-import PluginIcon from './components/icons';
-import translations from './translations';
-import { prefixPluginTranslations } from './utils/prefix-plugin-translations';
-
-const name = pluginPkg.strapi.name;
-const displayName = pluginPkg.strapi.displayName;
 
 export default {
   register(app: any) {
     app.addMenuLink({
-      to: `/plugins/${pluginId}`,
+      to: `plugins/${PLUGIN_ID}`,
       icon: PluginIcon,
       intlLabel: {
-        id: `${pluginId}.plugin.name`,
-        defaultMessage: displayName,
+        id: `${PLUGIN_ID}.plugin.name`,
+        defaultMessage: PLUGIN_ID,
       },
-      permissions: pluginPermissions.mainRead,
-      Component: async () => {
-        // const component = await import(/* webpackChunkName: "mux-video-uploader" */ './containers/App');
-        const component = await import(/* webpackChunkName: "mux-video-uploader" */ './containers/App/index.js');
-
-        return component;
-      },
+      permissions: [pluginPermissions.mainRead],
+      Component: () => import('./pages/App')
     });
 
     app.registerPlugin({
-      id: pluginId,
-      name,
+      id: PLUGIN_ID,
+      initializer: Initializer,
+      isReady: false,
+      name: PLUGIN_ID,
     });
   },
-  bootstrap() {},
 
   async registerTrads(app: any) {
     const { locales } = app;
 
-    return locales.flatMap((locale: keyof typeof translations) => {
-      const localeTranslations = translations[locale];
-      return localeTranslations ? { data: prefixPluginTranslations(localeTranslations, pluginId), locale } : [];
-    });
+    const importedTranslations = await Promise.all(
+      (locales as string[]).map((locale) => {
+        return import(`./translations/${locale}.json`)
+          .then(({ default: data }) => {
+            return {
+              data: getTranslation(data),
+              locale,
+            };
+          })
+          .catch(() => {
+            return {
+              data: {},
+              locale,
+            };
+          });
+      })
+    );
+
+    return importedTranslations;
   },
 };

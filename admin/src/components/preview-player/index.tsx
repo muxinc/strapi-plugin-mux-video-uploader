@@ -5,10 +5,10 @@ import MuxPlayer from '@mux/mux-player-react';
 // @ts-expect-error - No types provided
 import videojs from '@mux/videojs-kit';
 
-import { MuxAsset } from '../../../../server/content-types/mux-asset/types';
+import { MuxAsset } from '../../../../server/src/content-types/mux-asset/types';
 import { useSignedTokens } from '../signed-tokens-provider';
 import pluginPkg from '../../../../package.json';
-import pluginId from '../../plugin-id';
+import { PLUGIN_ID } from '../../pluginId';
 
 import '@mux/videojs-kit/dist/index.css';
 
@@ -77,7 +77,7 @@ const PreviewPlayer = (props: { muxAsset?: MuxAsset }) => {
 
     const { playback_id } = muxAsset;
 
-    get(`${pluginId}/thumbnail/${playback_id}`)
+    get(`${PLUGIN_ID}/thumbnail/${playback_id}`)
     .then(result => {
       const { data } = result;
       setPosterUrl(tokens.thumbnail ? `${data}?token=${tokens.thumbnail}` : data);
