@@ -1,10 +1,20 @@
-import { useIntl } from 'react-intl';
+import { IntlShape, useIntl } from 'react-intl';
+
 import { PLUGIN_ID } from '../pluginId';
 import type translations from '../translations/en.json';
 
 const getTrad = (id: string) => `${PLUGIN_ID}.${id}`;
 
-export default function usePluginIntl() {
+export type TranslationKey = keyof typeof translations;
+export type FormatMessage = (id: string, defaultMessage?: string) => string;
+
+interface UsePluginIntlReturnType extends Omit<IntlShape, 'formatMessage'> {
+  formatMessage: FormatMessage;
+}
+
+type UsePluginIntlFunction = () => UsePluginIntlReturnType;
+
+const usePluginIntl: UsePluginIntlFunction = () => {
   const intl = useIntl();
 
   const formatMessage = (id: string, defaultMessage?: string) =>
@@ -17,7 +27,6 @@ export default function usePluginIntl() {
     ...intl,
     formatMessage,
   };
-}
+};
 
-export type TranslationKey = keyof typeof translations;
-export type FormatMessage = ReturnType<typeof usePluginIntl>['formatMessage'];
+export default usePluginIntl;

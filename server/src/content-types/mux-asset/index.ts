@@ -25,6 +25,7 @@ export default {
       required: true,
       maxLength: 255,
       minLength: 3,
+      configurable: true,
     },
     upload_id: {
       type: 'string',

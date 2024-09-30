@@ -1,13 +1,14 @@
 import type Mux from '@mux/mux-node';
 import { z } from 'zod';
 import { getService } from '.';
-import { ParsedCustomTextTrack, StoredTextTrack, TextTrackFile } from '../../types/shared-types';
+import { ParsedCustomTextTrack, StoredTextTrack, TextTrackFile } from '../../../types/shared-types';
 import { MuxAsset, MuxAssetUpdate } from '../content-types/mux-asset/types';
 import { TEXT_TRACK_MODEL } from './types';
 
 const pluginId = 'mux-video-uploader';
 
 export async function storeTextTracks(custom_text_tracks: ParsedCustomTextTrack[]): Promise<StoredTextTrack[]> {
+  // @ts-expect-error - v5 migration
   return await Promise.all(
     custom_text_tracks.map(async (track) => {
       const { id } = await strapi.entityService.create(TEXT_TRACK_MODEL, { data: track });

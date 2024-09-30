@@ -6,7 +6,7 @@ export const resolveMuxAsset = async (filtersRaw: MuxAssetFilter): Promise<MuxAs
 
   if (Object.keys(filters).length === 0) throw new Error('Unable to resolve mux-asset');
 
-  const muxAssets = await strapi.entityService.findMany(ASSET_MODEL, { filters: filters as any });
+  const muxAssets = (await strapi.entityService.findMany(ASSET_MODEL, { filters: filters as any })) as MuxAsset[];
 
   const asset = muxAssets ? (Array.isArray(muxAssets) ? muxAssets[0] : muxAssets) : undefined;
 
