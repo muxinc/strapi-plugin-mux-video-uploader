@@ -1,7 +1,7 @@
 import Mux from '@mux/mux-node';
 
-import { ParsedUploadConfig, StoredTextTrack, uploadConfigToNewAssetInput } from '../../types/shared-types';
-import pluginPkg from '../../package.json';
+import { ParsedUploadConfig, StoredTextTrack, uploadConfigToNewAssetInput } from '../../../types/shared-types';
+import pluginPkg from '../../../package.json';
 import { Config } from '../utils';
 
 export interface UploadRequestConfig {

@@ -2,7 +2,7 @@ import axios from 'axios';
 import { Context } from 'koa';
 import { z } from 'zod';
 
-import { StoredTextTrack, UploadConfig, UploadDataWithoutFile } from '../../types/shared-types';
+import { StoredTextTrack, UploadConfig, UploadDataWithoutFile } from '../../../types/shared-types';
 import { Config, getService } from '../utils';
 import { parseJSONBody } from '../utils/parse-json-body';
 import { resolveMuxAsset } from '../utils/resolve-mux-asset';
@@ -154,6 +154,7 @@ const deleteMuxAsset = async (ctx: Context) => {
   );
 
   // Ensure that the mux-asset entry exists for the id
+  // @ts-expect-error - v5 migration
   const muxAsset = await strapi.documents(ASSET_MODEL).findOne(documentId);
 
   if (!muxAsset) {
@@ -163,12 +164,14 @@ const deleteMuxAsset = async (ctx: Context) => {
   }
 
   // Delete mux-asset entry
+  // @ts-expect-error - v5 migration
   const deleteRes = await strapi.documents(ASSET_MODEL).delete(documentId);
   if (!deleteRes) {
     ctx.send({ success: false });
     return;
   }
 
+  // @ts-expect-error - v5 migration
   const { asset_id, upload_id } = deleteRes;
   const result = { success: true, deletedOnMux: false };
 
@@ -235,6 +238,7 @@ const muxWebhookHandler = async (ctx: Context) => {
     ctx.send('ignored');
   } else {
     const [documentId, params] = outcome;
+    // @ts-expect-error - v5 migration
     const result = await strapi.documents(ASSET_MODEL).update(documentId, params as any);
 
     ctx.send(result);
@@ -258,6 +262,7 @@ const signMuxPlaybackId = async (ctx: Context) => {
 const textTrack = async (ctx: Context) => {
   const { documentId } = ctx.params;
 
+  // @ts-expect-error - v5 migration
   const track = (await strapi.documents(TEXT_TRACK_MODEL).findOne(documentId)) as StoredTextTrack | undefined;
 
   if (!track) {

@@ -31,6 +31,7 @@ const find = async (ctx: Context) => {
 const findOne = async (ctx: Context) => {
   const { documentId } = ctx.params;
 
+  // @ts-expect-error - v5 migration
   return await strapi.documents(ASSET_MODEL).findOne(documentId, ctx.query);
 };
 
@@ -56,6 +57,7 @@ const update = async (ctx: Context) => {
   await updateTextTracks(muxAsset, custom_text_tracks);
 
   if (typeof title === 'string' && title) {
+    // @ts-expect-error - v5 migration
     await strapi.documents(ASSET_MODEL).update(documentId, {
       data: { title },
     });

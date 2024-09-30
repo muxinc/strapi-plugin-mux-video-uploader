@@ -23,10 +23,10 @@ const sync = async () => {
     ],
   };
 
-  const assets = await strapi.entityService.findMany(ASSET_MODEL, {
+  const assets = (await strapi.entityService.findMany(ASSET_MODEL, {
     filters,
     limit: -1,
-  });
+  })) as MuxAsset[];
 
   if (assets.length === 0) return;
 
