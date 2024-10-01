@@ -30,11 +30,11 @@ export interface UploadRequestConfig {
 }
 
 const getMuxClient = async () => {
-  const { access_token, secret_key } = await Config.getConfig();
+  const { accessTokenId, secretKey } = await Config.getConfig();
 
   return new Mux({
-    tokenId: access_token,
-    tokenSecret: secret_key,
+    tokenId: accessTokenId,
+    tokenSecret: secretKey,
     defaultHeaders: {
       'x-source-platform': `Strapi CMS | ${pluginPkg.version}`,
     },
@@ -109,11 +109,11 @@ const muxService = () => ({
 
   async signPlaybackId(playbackId: string, type: string) {
     const { jwt } = await getMuxClient();
-    const { playback_signing_secret, playback_signing_id } = await Config.getConfig();
+    const { playbackSigningSecret, playbackSigningId } = await Config.getConfig();
 
     let baseOptions = {
-      keyId: playback_signing_id,
-      keySecret: playback_signing_secret,
+      keyId: playbackSigningId,
+      keySecret: playbackSigningSecret,
       expiration: type === 'video' ? '1d' : '1m',
     };
 

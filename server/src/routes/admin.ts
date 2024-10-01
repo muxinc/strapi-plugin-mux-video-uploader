@@ -117,6 +117,15 @@ const routes = [
       prefix: false,
     },
   },
+  {
+    method: 'GET',
+    path: '/mux-video-uploader/mux-settings',
+    handler: 'mux-settings.isConfigured',
+    config: {
+      policies: [],
+      prefix: false,
+    },
+  },
 ];
 
 export default routes;
