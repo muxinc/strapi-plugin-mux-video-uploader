@@ -1,7 +1,7 @@
 import React from 'react';
 import { useIntl } from 'react-intl';
 import styled from 'styled-components';
-import { useFetchClient } from '@strapi/strapi/admin'
+import { useFetchClient } from '@strapi/strapi/admin';
 import { Earth, Lock, WarningCircle } from '@strapi/icons';
 import {
   Box,
@@ -15,13 +15,13 @@ import {
   CardTitle,
   CardSubtitle,
   Loader,
-  Tooltip
+  Tooltip,
 } from '@strapi/design-system';
 
 import { getTranslation } from '../../utils/getTranslation';
 import { secondsToFormattedString } from '../../utils/date-time';
 import { MuxAsset } from '../../../../server/src/content-types/mux-asset/types';
-import { PLUGIN_ID} from '../../pluginId';
+import { PLUGIN_ID } from '../../pluginId';
 
 const BoxStyled = styled(Box)`
   cursor: pointer;
@@ -60,12 +60,12 @@ const AssetCard = (props: Props) => {
 
   const isLoading = muxAsset.asset_id === null;
 
-  const init = async (muxAsset:MuxAsset) => {
+  const init = async (muxAsset: MuxAsset) => {
     const { playback_id } = muxAsset;
     if (muxAsset.playback_id !== null && muxAsset.signed) {
       const { data: sigData } = await get(`${PLUGIN_ID}/sign/${playback_id}?type=thumbnail`);
       const { data: imageData } = await get(`${PLUGIN_ID}/thumbnail/${playback_id}?token=${sigData.token}`);
-      
+
       setThumbnailImageUrl(imageData);
     } else if (muxAsset.playback_id !== null) {
       const { data: imageData } = await get(`${PLUGIN_ID}/thumbnail/${playback_id}`);
@@ -86,9 +86,7 @@ const AssetCard = (props: Props) => {
       return <WarningCircle color="danger500" />;
     } else if (isLoading) {
       return (
-        <Loader small>
-          {formatMessage({ id: getTranslation('AssetCard.loading'), defaultMessage: 'Loading' })}
-        </Loader>
+        <Loader small>{formatMessage({ id: getTranslation('AssetCard.loading'), defaultMessage: 'Loading' })}</Loader>
       );
     }
   }, [muxAsset]);
@@ -148,8 +146,8 @@ const AssetCard = (props: Props) => {
             </CardSubtitle>
           </CardContent>
           <CardBadge>
-            <Tooltip description={muxAsset.signed ? 'Private Playback' : 'Public Playback'}>
-              { muxAsset.signed ? <Lock /> : <Earth />}
+            <Tooltip label={muxAsset.signed ? 'Private Playback' : 'Public Playback'}>
+              {muxAsset.signed ? <Lock /> : <Earth />}
             </Tooltip>
           </CardBadge>
         </CardBody>
@@ -160,7 +158,7 @@ const AssetCard = (props: Props) => {
 
 AssetCard.defaultProps = {
   onClick: () => {},
-  onInvalidate: () => {}
+  onInvalidate: () => {},
 } as DefaultProps;
 
 export default AssetCard;
