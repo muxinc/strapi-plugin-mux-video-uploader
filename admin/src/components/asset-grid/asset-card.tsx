@@ -146,9 +146,12 @@ const AssetCard = (props: Props) => {
             </CardSubtitle>
           </CardContent>
           <CardBadge>
-            <Tooltip label={muxAsset.signed ? 'Private Playback' : 'Public Playback'}>
+            {/* <Tooltip label={muxAsset.signed ? 'Private Playback' : 'Public Playback'}>
               {muxAsset.signed ? <Lock /> : <Earth />}
-            </Tooltip>
+            </Tooltip> */}
+            <span title={muxAsset.signed ? 'Private Playback' : 'Public Playback'}>
+              {muxAsset.signed ? <Lock /> : <Earth />}
+            </span>
           </CardBadge>
         </CardBody>
       </Card>
