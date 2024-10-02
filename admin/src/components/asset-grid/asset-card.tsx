@@ -1,5 +1,6 @@
 import React from 'react';
 import { useIntl } from 'react-intl';
+import { Flex } from '@strapi/design-system';
 import styled from 'styled-components';
 import { useFetchClient } from '@strapi/strapi/admin';
 import { Earth, Lock, WarningCircle } from '@strapi/icons';
@@ -131,7 +132,9 @@ const AssetCard = (props: Props) => {
     <BoxStyled onClick={handleOnClick} title={errorTitle || loadingTitle || undefined}>
       <Card>
         <CardHeader>
-          <CardAsset src={thumbnailImageUrl}>{renderCardAssetStatus()}</CardAsset>
+          <CardAsset src={thumbnailImageUrl}>
+            <Flex>{renderCardAssetStatus()}</Flex>
+          </CardAsset>
           {muxAsset.duration && <CardTimer>{secondsToFormattedString(muxAsset.duration)}</CardTimer>}
         </CardHeader>
         <CardBody>
