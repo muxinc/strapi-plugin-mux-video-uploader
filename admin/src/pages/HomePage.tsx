@@ -145,7 +145,6 @@ const HomePage = () => {
   };
 
   const handleOnMuxAssetClick = (muxAsset: MuxAsset) => setSelectedAsset(muxAsset);
-  const handleOnInvalidate = () => loadMuxAssets();
 
   if (!isReady) return <SetupNeeded />;
 
@@ -201,11 +200,7 @@ const HomePage = () => {
           }
         />
         <Layouts.Content>
-          <AssetGrid
-            muxAssets={muxAssets?.items}
-            onMuxAssetClick={handleOnMuxAssetClick}
-            onInvalidate={handleOnInvalidate}
-          />
+          <AssetGrid muxAssets={muxAssets?.items} onMuxAssetClick={handleOnMuxAssetClick} />
           <ListPagination page={page} pages={pages} />
         </Layouts.Content>
       </Page.Main>

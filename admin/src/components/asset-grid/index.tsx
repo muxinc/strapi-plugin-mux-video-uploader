@@ -6,17 +6,14 @@ import { MuxAsset } from '../../../../server/src/content-types/mux-asset/types';
 import AssetCard from './asset-card';
 import { getTranslation } from '../../utils/getTranslation';
 
-interface DefaultProps {
-  onMuxAssetClick: (muxAsset: MuxAsset) => void;
-  onInvalidate: () => void;
-}
-
-interface Props extends DefaultProps {
+interface Props {
   muxAssets: MuxAsset[] | undefined;
+  onMuxAssetClick?: (muxAsset: MuxAsset) => void;
 }
 
 const AssetGrid = (props: Props) => {
-  const { muxAssets, onMuxAssetClick } = props;
+  const { muxAssets, onMuxAssetClick = () => {} } = props;
+
   const { formatMessage } = useIntl();
 
   if (muxAssets === undefined) return null;
@@ -47,10 +44,5 @@ const AssetGrid = (props: Props) => {
     </Box>
   );
 };
-
-AssetGrid.defaultProps = {
-  onMuxAssetClick: () => {},
-  onInvalidate: () => {},
-} as DefaultProps;
 
 export default AssetGrid;

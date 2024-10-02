@@ -8,14 +8,12 @@ import pluginPermissions from '../../permissions';
 import { getTranslation } from '../../utils/getTranslation';
 import ModalNewUpload from '../modal-new-upload/modal-new-upload';
 
-interface DefaultProps {
-  onUploadNewAssetModalClose: () => void;
+interface Props {
+  onUploadNewAssetModalClose?: () => void;
 }
 
-interface Props extends DefaultProps {}
-
 const Header = (props: Props) => {
-  const { onUploadNewAssetModalClose } = props;
+  const { onUploadNewAssetModalClose = () => {} } = props;
 
   const [isNewUploadOpen, setIsNewUploadOpen] = React.useState<boolean>(false);
 
@@ -57,9 +55,5 @@ const Header = (props: Props) => {
     </>
   );
 };
-
-Header.defaultProps = {
-  onUploadNewAssetModalClose: () => {},
-} as DefaultProps;
 
 export default Header;
