@@ -1,17 +1,7 @@
 import React from 'react';
 import { createUpload, UpChunk } from '@mux/upchunk';
 import { useFetchClient } from '@strapi/strapi/admin';
-import {
-  Box,
-  Button,
-  Field,
-  Modal,
-  Radio,
-  Tabs,
-  TextInput,
-  Toggle,
-  Typography
-} from '@strapi/design-system';
+import { Box, Button, Field, Modal, Radio, Tabs, TextInput, Toggle, Typography } from '@strapi/design-system';
 import { Plus } from '@strapi/icons';
 import { FormikErrors, FormikHelpers, useFormik } from 'formik';
 import { useIntl } from 'react-intl';
@@ -167,10 +157,16 @@ const ModalNewUpload = ({ isOpen, onToggle = () => {} }: { isOpen: boolean; onTo
     resetForm();
   };
 
+  const handleOnOpenChange = (open: boolean) => {
+    if (open) return;
+
+    handleOnModalClose();
+  };
+
   if (!isOpen) return null;
 
   return (
-    <Modal.Root open={isOpen}>
+    <Modal.Root open={isOpen} onOpenChange={handleOnOpenChange}>
       <Modal.Content>
         <Modal.Header>
           <Modal.Title>{formatMessage('ModalNewUpload.header', 'New upload')}</Modal.Title>
@@ -228,29 +224,39 @@ function FormBody(props: {
     <Box padding={1} background="neutral0">
       <FieldWrapper>
         <Field.Root error={errors.title}>
-          <Field.Label>{formatMessage({
-            id: getTranslation('Common.title-label'),
-            defaultMessage: 'Title',
-          })}</Field.Label>
-          <TextInput name="title" value={values.title} hasError={errors.title !== undefined} required onChange={handleChange} />
+          <Field.Label>
+            {formatMessage({
+              id: getTranslation('Common.title-label'),
+              defaultMessage: 'Title',
+            })}
+          </Field.Label>
+          <TextInput
+            name="title"
+            value={values.title}
+            hasError={errors.title !== undefined}
+            required
+            onChange={handleChange}
+          />
           <Field.Error />
           <Field.Hint />
         </Field.Root>
       </FieldWrapper>
 
       <Field.Root>
-        <Field.Label>{formatMessage({
-          id: getTranslation('Common.upload_type_label-label'),
-          defaultMessage: 'Upload via',
-        })}</Field.Label>
-        <Tabs.Root
-          id="upload_type"
-          defaultValue="file"
-          variant='simple'
-        >
+        <Field.Label>
+          {formatMessage({
+            id: getTranslation('Common.upload_type_label-label'),
+            defaultMessage: 'Upload via',
+          })}
+        </Field.Label>
+        <Tabs.Root id="upload_type" defaultValue="file" variant="simple">
           <Tabs.List aria-label="Manage your attribute">
-            <Tabs.Trigger value="file" onClick={() => setFieldValue('upload_type', 'file')}>File</Tabs.Trigger>
-            <Tabs.Trigger value="url" onClick={() => setFieldValue('upload_type', 'url')}>URL</Tabs.Trigger>
+            <Tabs.Trigger value="file" onClick={() => setFieldValue('upload_type', 'file')}>
+              File
+            </Tabs.Trigger>
+            <Tabs.Trigger value="url" onClick={() => setFieldValue('upload_type', 'url')}>
+              URL
+            </Tabs.Trigger>
           </Tabs.List>
           <Tabs.Content value="file">
             <FieldWrapper>
@@ -279,10 +285,13 @@ function FormBody(props: {
           <Tabs.Content value="url">
             <FieldWrapper>
               <Field.Root>
-                <Field.Label>label={formatMessage({
-                  id: getTranslation('Common.url-label'),
-                  defaultMessage: 'Url',
-                })}</Field.Label>
+                <Field.Label>
+                  label=
+                  {formatMessage({
+                    id: getTranslation('Common.url-label'),
+                    defaultMessage: 'Url',
+                  })}
+                </Field.Label>
               </Field.Root>
               <TextInput
                 name="url"
@@ -298,10 +307,12 @@ function FormBody(props: {
 
       <FieldWrapper>
         <Field.Root>
-          <Field.Label>{formatMessage({
-            id: getTranslation('Common.signed-label'),
-            defaultMessage: 'Signed Playback URL',
-          })}</Field.Label>
+          <Field.Label>
+            {formatMessage({
+              id: getTranslation('Common.signed-label'),
+              defaultMessage: 'Signed Playback URL',
+            })}
+          </Field.Label>
           <Toggle
             name="Private"
             value={values.signed ? 'on' : 'off'}
@@ -326,10 +337,12 @@ function FormBody(props: {
         >
           <div style={{ position: 'sticky', top: '1em' }}>
             <Field.Root>
-              <Field.Label>{formatMessage({
-                id: getTranslation('Common.encoding_tier-label'),
-                defaultMessage: 'Smart encoding',
-              })}</Field.Label>
+              <Field.Label>
+                {formatMessage({
+                  id: getTranslation('Common.encoding_tier-label'),
+                  defaultMessage: 'Smart encoding',
+                })}
+              </Field.Label>
               <Toggle
                 name="encoding_tier"
                 value={values.encoding_tier}
@@ -349,10 +362,12 @@ function FormBody(props: {
             <div style={{ position: 'sticky', top: '1em', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
                 <Field.Root>
-                  <Field.Label>{formatMessage({
-                    id: getTranslation('Common.mp4_support-label'),
-                    defaultMessage: 'Allow downloading via MP4',
-                  })}</Field.Label>
+                  <Field.Label>
+                    {formatMessage({
+                      id: getTranslation('Common.mp4_support-label'),
+                      defaultMessage: 'Allow downloading via MP4',
+                    })}
+                  </Field.Label>
                   <Toggle
                     name="mp4_support"
                     value={values.mp4_support}
@@ -360,7 +375,10 @@ function FormBody(props: {
                     offLabel="off"
                     checked={values.mp4_support === 'standard'}
                     onChange={(e: any) => {
-                      setFieldValue('mp4_support', (e.target.checked ? 'standard' : 'none') as typeof values.mp4_support);
+                      setFieldValue(
+                        'mp4_support',
+                        (e.target.checked ? 'standard' : 'none') as typeof values.mp4_support
+                      );
                     }}
                   />
                 </Field.Root>
