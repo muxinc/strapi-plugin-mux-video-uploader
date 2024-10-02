@@ -15,7 +15,6 @@ import {
   CardTitle,
   CardSubtitle,
   Loader,
-  Tooltip,
 } from '@strapi/design-system';
 
 import { getTranslation } from '../../utils/getTranslation';
@@ -42,16 +41,13 @@ const CardTitleStyled = styled(CardTitle)`
   min-height: 2.66em;
 `;
 
-interface DefaultProps {
-  onClick: (muxAsset: MuxAsset) => void;
-  onInvalidate: () => void;
-}
-interface Props extends DefaultProps {
+interface Props {
   muxAsset: MuxAsset;
+  onClick?: (muxAsset: MuxAsset) => void;
 }
 
 const AssetCard = (props: Props) => {
-  const { muxAsset, onClick, onInvalidate } = props;
+  const { muxAsset, onClick = () => {} } = props;
 
   const [thumbnailImageUrl, setThumbnailImageUrl] = React.useState<string>('');
 
@@ -158,10 +154,5 @@ const AssetCard = (props: Props) => {
     </BoxStyled>
   );
 };
-
-AssetCard.defaultProps = {
-  onClick: () => {},
-  onInvalidate: () => {},
-} as DefaultProps;
 
 export default AssetCard;

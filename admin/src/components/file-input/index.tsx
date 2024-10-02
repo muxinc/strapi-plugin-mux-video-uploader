@@ -10,7 +10,8 @@ interface Props {
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 }
 
-export const FileInput = ({ name, error, label, required, onFiles, inputProps }: Props) => {
+export const FileInput = (props: Props) => {
+  const { name, label = undefined, error = undefined, required = false, onFiles = () => {} } = props;
   const handleOnChange = (e: any) => onFiles(e.target.files);
 
   return (
@@ -25,10 +26,3 @@ export const FileInput = ({ name, error, label, required, onFiles, inputProps }:
 };
 
 FileInput.displayName = 'FileInput';
-
-FileInput.defaultProps = {
-  label: undefined,
-  error: undefined,
-  required: false,
-  onFiles: () => {},
-};
