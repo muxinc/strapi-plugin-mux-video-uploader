@@ -34,8 +34,10 @@ const AssetGrid = (props: Props) => {
     );
 
   const assets = muxAssets.map((muxAsset) => (
-    <Grid.Item col={3} xs={12} s={6}>
-      <AssetCard muxAsset={muxAsset} onClick={onMuxAssetClick} />
+    <Grid.Item col={3} m={4} xs={12} s={6} key={muxAsset.id}>
+      <Box width="100%">
+        <AssetCard muxAsset={muxAsset} onClick={onMuxAssetClick} />
+      </Box>
     </Grid.Item>
   ));
 
@@ -48,7 +50,7 @@ const AssetGrid = (props: Props) => {
 
 AssetGrid.defaultProps = {
   onMuxAssetClick: () => {},
-  onInvalidate: () => {}
+  onInvalidate: () => {},
 } as DefaultProps;
 
 export default AssetGrid;
