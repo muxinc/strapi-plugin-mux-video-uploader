@@ -1,12 +1,14 @@
 import { MuxAsset } from '../content-types/mux-asset/types';
 import { ASSET_MODEL } from './types';
 
-export const resolveMuxAsset = async (filtersRaw: MuxAssetFilter): Promise<MuxAsset> => {
-  const filters = Object.fromEntries(Object.entries(filtersRaw).filter(([, value]) => value !== undefined));
+export const resolveMuxAsset = async (filters: MuxAssetFilter): Promise<MuxAsset> => {
+  // const muxAssets = await strapi.documents(ASSET_MODEL).findMany({
+  //   filters: filters as any
+  // });
 
-  if (Object.keys(filters).length === 0) throw new Error('Unable to resolve mux-asset');
-
-  const muxAssets = (await strapi.entityService.findMany(ASSET_MODEL, { filters: filters as any })) as MuxAsset[];
+  const muxAssets = await strapi.db.query(ASSET_MODEL).findMany({
+    filters,
+  });
 
   const asset = muxAssets ? (Array.isArray(muxAssets) ? muxAssets[0] : muxAssets) : undefined;
 

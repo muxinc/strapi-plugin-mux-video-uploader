@@ -79,7 +79,7 @@ const thumbnail = async (ctx: Context) => {
     responseType: 'stream',
   });
 
-  ctx.response.set("content-type", "image/jpeg");
+  ctx.response.set('content-type', 'image/jpeg');
   ctx.body = response.data;
 };
 
@@ -237,9 +237,12 @@ const muxWebhookHandler = async (ctx: Context) => {
   if (outcome === undefined) {
     ctx.send('ignored');
   } else {
-    const [documentId, params] = outcome;
-    // @ts-expect-error - v5 migration
-    const result = await strapi.documents(ASSET_MODEL).update(documentId, params as any);
+    const [id, params] = outcome;
+
+    const result = await strapi.db.query(ASSET_MODEL).update({
+      where: { id },
+      data: params.data,
+    });
 
     ctx.send(result);
   }
