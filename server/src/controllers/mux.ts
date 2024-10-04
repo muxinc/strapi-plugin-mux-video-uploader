@@ -79,7 +79,7 @@ const thumbnail = async (ctx: Context) => {
     responseType: 'stream',
   });
 
-  ctx.response.set('content-type', response.headers['content-type']);
+  ctx.response.set("content-type", "image/jpeg");
   ctx.body = response.data;
 };
 
