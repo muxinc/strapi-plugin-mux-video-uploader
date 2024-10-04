@@ -50,8 +50,8 @@
   },
   "devDependencies": {
     "@strapi/sdk-plugin": "^5.2.6",
-    "@strapi/strapi": "^5.0.1",
-    "@strapi/typescript-utils": "^5.0.1",
+    "@strapi/strapi": "^5.0.2",
+    "@strapi/typescript-utils": "^5.0.2",
     "@types/luxon": "^3.4.2",
     "@types/react": "^18.3.9",
     "@types/react-dom": "^18.3.0",
@@ -66,7 +66,7 @@
   },
   "peerDependencies": {
     "@strapi/sdk-plugin": "^5.2.6",
-    "@strapi/strapi": "^5.0.1",
+    "@strapi/strapi": "^5.0.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2",
