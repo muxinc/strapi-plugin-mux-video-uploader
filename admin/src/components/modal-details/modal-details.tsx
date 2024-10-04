@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { FormikHelpers, FormikTouched, useFormik } from 'formik';
 import copy from 'copy-to-clipboard';
-import { 
+import {
   Box,
   Button,
   Dialog,
@@ -15,7 +15,7 @@ import {
   Status,
   TextInput,
   Textarea,
-  Typography
+  Typography,
 } from '@strapi/design-system';
 import { useFetchClient, useNotification } from '@strapi/strapi/admin';
 import { Duplicate, Trash, WarningCircle } from '@strapi/icons';
@@ -34,9 +34,9 @@ const GridItemStyled = styled(Grid.Item)`
 `;
 
 export default function ModalDetails(props: {
-  onToggle: (refresh?: boolean) => void;
+  onToggle: (refresh: boolean) => void;
   isOpen: boolean;
-  muxAsset: MuxAsset;
+  muxAsset?: MuxAsset;
   enableUpdate: boolean;
   enableDelete: boolean;
 }) {
@@ -44,23 +44,23 @@ export default function ModalDetails(props: {
 
   const { post, put } = useFetchClient();
   const { formatMessage } = usePluginIntl();
-  
+
   const deleteButtonRef = React.useRef<HTMLButtonElement>(null);
 
   const [touchedFields, setTouchedFields] = React.useState<FormikTouched<MuxAssetUpdate>>({});
   const [showDeleteWarning, setShowDeleteWarning] = React.useState(false);
   const [deletingState, setDeletingState] = React.useState<'idle' | 'deleting'>('idle');
   const [codeSnippet] = React.useState<string>(`<mux-player
-  playback-id="${muxAsset.playback_id}"
+  playback-id="${muxAsset?.playback_id}"
   playback-token="TOKEN"
   env-key="ENV_KEY"
-  metadata-video-title="${muxAsset.title}"
+  metadata-video-title="${muxAsset?.title}"
   controls
 />`);
 
   const { toggleNotification } = useNotification();
 
-  const subtitles = (props.muxAsset.asset_data?.tracks ?? []).filter(
+  const subtitles = (muxAsset?.asset_data?.tracks ?? []).filter(
     (track) => track.type === 'text' && track.text_type === 'subtitles' && track.status !== 'errored'
   );
 
@@ -71,10 +71,7 @@ export default function ModalDetails(props: {
 
     toggleNotification({
       type: 'success',
-      message: formatMessage(
-        'ModalDetails.copied-to-clipboard',
-        'Copied code snippet to clipboard',
-      ),
+      message: formatMessage('ModalDetails.copied-to-clipboard', 'Copied code snippet to clipboard'),
     });
   };
 
@@ -85,38 +82,29 @@ export default function ModalDetails(props: {
     toggleDeleteWarning();
 
     try {
-      await post(
-        `${PLUGIN_ID}/deleteMuxAsset`,
-        {
-          documentId: muxAsset.id,
-          delete_on_mux: true
-        }
-      );
+      await post(`${PLUGIN_ID}/deleteMuxAsset`, {
+        documentId: muxAsset?.id,
+        delete_on_mux: true,
+      });
 
       setDeletingState('idle');
 
       onToggle(true);
       toggleNotification({
         type: 'success',
-        message: formatMessage(
-          'ModalDetails.delete-success',
-          'Video deleted successfully',
-        ),
+        message: formatMessage('ModalDetails.delete-success', 'Video deleted successfully'),
       });
     } catch (error) {
       toggleNotification({
         type: 'danger',
-        message: formatMessage(
-          'ModalDetails.failed-to-delete',
-          'Failed to delete video',
-        ),
+        message: formatMessage('ModalDetails.failed-to-delete', 'Failed to delete video'),
       });
     }
   };
 
   const initialValues: MuxAssetUpdate = {
-    id: muxAsset.id,
-    title: muxAsset.title || muxAsset.asset_id || muxAsset.createdAt,
+    id: muxAsset?.id || 0,
+    title: muxAsset?.title || muxAsset?.asset_id || muxAsset?.createdAt,
 
     // @ts-expect-error Due to changes in @mux/mux-node v8, where `TextTrack`, `VideoTrack` and `AudioTrack` were unified,
     // properties required to subtitles as text tracks are showing as optional and breaking the `custom_text_tracks` type.
@@ -129,6 +117,7 @@ export default function ModalDetails(props: {
       stored_track: s,
     })),
   };
+
   const handleOnSubmit = async (
     values: MuxAssetUpdate,
     { setErrors, setSubmitting }: FormikHelpers<MuxAssetUpdate>
@@ -145,13 +134,13 @@ export default function ModalDetails(props: {
       JSON.stringify(values.custom_text_tracks || []) !== JSON.stringify(initialValues.custom_text_tracks || []);
 
     const data: MuxAssetUpdate = {
-      id: muxAsset.id,
+      id: muxAsset?.id || 0,
       title: touchedFields.title ? values.title : undefined,
       custom_text_tracks: tracksModified ? values.custom_text_tracks : undefined,
     };
 
     if (data.title || data.custom_text_tracks) {
-      await put(`${PLUGIN_ID}/mux-asset/${muxAsset.id}`, data);
+      await put(`${PLUGIN_ID}/mux-asset/${muxAsset?.id}`, data);
     }
 
     setSubmitting(false);
@@ -166,27 +155,23 @@ export default function ModalDetails(props: {
     onSubmit: handleOnSubmit,
   });
 
-  if (!isOpen) return null;
+  if (!muxAsset) return null;
 
-  const codeSnippetHint = (`<div>
+  const codeSnippetHint = `<div>
   {formatMessage('ModalDetails.powered-by-mux', 'Powered by mux-player.')}{' '}
   <Link href="https://docs.mux.com/guides/video/mux-player" isExternal>
     {formatMessage('ModalDetails.read-more', 'Read more about it')}
   </Link>
-</div>`);
+</div>`;
 
   const aspect_ratio = muxAsset.aspect_ratio || muxAsset.asset_data?.aspect_ratio;
+
   return (
     <SignedTokensProvider muxAsset={muxAsset}>
-      <Modal.Root>
-        <Modal.Trigger>
-          <Button>Edit Release</Button>
-        </Modal.Trigger>
+      <Modal.Root open={isOpen}>
         <Modal.Content>
           <Modal.Header>
-            <Modal.Title>
-              {formatMessage('ModalDetails.header', 'Video details')}
-            </Modal.Title>
+            <Modal.Title>{formatMessage('ModalDetails.header', 'Video details')}</Modal.Title>
           </Modal.Header>
           <form onSubmit={handleSubmit}>
             <Modal.Body>
@@ -210,7 +195,7 @@ export default function ModalDetails(props: {
                     >
                       <PreviewPlayer muxAsset={muxAsset} />
 
-                      <IconButton
+                      {/* <IconButton
                         label={formatMessage('Common.delete-button', 'Delete')}
                         disabled={!enableDelete}
                         onClick={toggleDeleteWarning}
@@ -222,7 +207,7 @@ export default function ModalDetails(props: {
                         }}
                       >
                         <Trash />
-                      </IconButton>
+                      </IconButton> */}
                       <Dialog.Root open={showDeleteWarning}>
                         <Dialog.Content>
                           <Dialog.Header>
@@ -306,18 +291,15 @@ export default function ModalDetails(props: {
                       <Summary muxAsset={muxAsset} />
                     </Box>
                     <Box paddingBottom={4}>
-                      <Field.Label>
-                        {formatMessage('ModalDetails.code-snippet', 'Code snippet')}
-                        <IconButton label="More actions" borderStyle="none" onClick={handleCopyCodeSnippet}>
-                          <Duplicate />
-                        </IconButton>
-                      </Field.Label>
-                      <Textarea
-                        name="codeSnippet"
-                        value={codeSnippet}
-                        placeholder={codeSnippetHint}
-                        disabled
-                      />
+                      <Field.Root>
+                        <Field.Label>
+                          {formatMessage('ModalDetails.code-snippet', 'Code snippet')}
+                          {/* <IconButton label="More actions" borderStyle="none" onClick={handleCopyCodeSnippet}>
+                            <Duplicate />
+                          </IconButton> */}
+                        </Field.Label>
+                        <Textarea name="codeSnippet" value={codeSnippet} placeholder={codeSnippetHint} disabled />
+                      </Field.Root>
                     </Box>
                   </GridItemStyled>
                 </Grid.Root>

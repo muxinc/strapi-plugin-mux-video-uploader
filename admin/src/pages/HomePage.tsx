@@ -16,6 +16,7 @@ import { appendQueryParameter } from '../utils/url';
 import { PLUGIN_ID } from '../pluginId';
 import { SearchField, SearchVector, SortVector } from '../types';
 import Header from '../components/header';
+import ModalDetails from '../components/modal-details/modal-details';
 
 const ProtectedHomePage = () => (
   <Page.Protect permissions={[pluginPermissions.mainRead]}>
@@ -56,6 +57,7 @@ const HomePage = () => {
   const [pageLimit] = React.useState<number>(12);
   const [pages, setPages] = React.useState(1);
   const [page, setPage] = React.useState<number>();
+  const [isDetailsOpen, setIsDetailsOpen] = React.useState<boolean>(false);
 
   const loadMuxAssets = async () => {
     if (page === undefined) return;
@@ -129,6 +131,12 @@ const HomePage = () => {
     return [pluginPermissions.mainCreate, pluginPermissions.mainUpdate, pluginPermissions.mainDelete];
   }, []);
 
+  React.useEffect(() => {
+    if (!selectedAsset) return;
+
+    setIsDetailsOpen(true);
+  }, [selectedAsset]);
+
   const {
     isLoading: isLoadingForPermissions,
     allowedActions: { canCreate, canUpdate, canDelete },
@@ -145,6 +153,13 @@ const HomePage = () => {
   };
 
   const handleOnMuxAssetClick = (muxAsset: MuxAsset) => setSelectedAsset(muxAsset);
+
+  const handleOnDetailsClose = (refresh: boolean) => {
+    setIsDetailsOpen(false);
+    if (!refresh) return;
+
+    loadMuxAssets();
+  };
 
   if (!isReady) return <SetupNeeded />;
 
@@ -204,15 +219,13 @@ const HomePage = () => {
           <ListPagination page={page} pages={pages} />
         </Layouts.Content>
       </Page.Main>
-      {/* {selectedAsset !== undefined && (
-        <ModalDetails
-          isOpen={true}
-          muxAsset={selectedAsset}
-          enableUpdate={canUpdate}
-          enableDelete={canDelete}
-          onToggle={handleOnDetailsClose}
-        />
-      )} */}
+      <ModalDetails
+        isOpen={isDetailsOpen}
+        muxAsset={selectedAsset}
+        enableUpdate={canUpdate}
+        enableDelete={canDelete}
+        onToggle={handleOnDetailsClose}
+      />
     </Layouts.Root>
   );
 };
