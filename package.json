@@ -36,7 +36,6 @@
     "@mux/mux-node": "^8.2.0",
     "@mux/mux-player-react": "^3.0.0",
     "@mux/upchunk": "^3.4.0",
-    "@mux/videojs-kit": "^0.12.0",
     "@strapi/design-system": "^2.0.0-rc.11",
     "@strapi/icons": "^2.0.0-rc.11",
     "@strapi/utils": "^4.20.5",

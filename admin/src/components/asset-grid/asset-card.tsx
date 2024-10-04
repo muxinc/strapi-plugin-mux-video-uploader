@@ -2,7 +2,6 @@ import React from 'react';
 import { useIntl } from 'react-intl';
 import { Flex } from '@strapi/design-system';
 import styled from 'styled-components';
-import { useFetchClient } from '@strapi/strapi/admin';
 import { Earth, Lock, WarningCircle } from '@strapi/icons';
 import {
   Box,
@@ -22,6 +21,7 @@ import { getTranslation } from '../../utils/getTranslation';
 import { secondsToFormattedString } from '../../utils/date-time';
 import { MuxAsset } from '../../../../server/src/content-types/mux-asset/types';
 import { PLUGIN_ID } from '../../pluginId';
+import { useSignedTokens } from '../signed-tokens-provider';
 
 const BoxStyled = styled(Box)`
   cursor: pointer;
@@ -55,17 +55,15 @@ const AssetCard = (props: Props) => {
     'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
   );
 
-  const { get } = useFetchClient();
   const { formatMessage, formatDate } = useIntl();
+  const tokens = useSignedTokens();
 
   const isLoading = muxAsset.asset_id === null;
 
   const init = async (muxAsset: MuxAsset) => {
     const { playback_id } = muxAsset;
     if (muxAsset.playback_id !== null && muxAsset.signed) {
-      const { data: sigData } = await get(`/${PLUGIN_ID}/sign/${playback_id}?type=thumbnail`);
-
-      setThumbnailImageUrl(`/${PLUGIN_ID}/thumbnail/${playback_id}?token=${sigData.token}`);
+      setThumbnailImageUrl(`/${PLUGIN_ID}/thumbnail/${playback_id}?token=${tokens.thumbnail}`);
     } else if (muxAsset.playback_id !== null) {
       setThumbnailImageUrl(`/${PLUGIN_ID}/thumbnail/${playback_id}`);
     }
