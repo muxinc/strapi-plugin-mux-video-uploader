@@ -156,6 +156,7 @@ const HomePage = () => {
 
   const handleOnDetailsClose = (refresh: boolean) => {
     setIsDetailsOpen(false);
+    setSelectedAsset(undefined);
     if (!refresh) return;
 
     loadMuxAssets();

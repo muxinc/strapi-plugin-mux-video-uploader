@@ -52,6 +52,7 @@ const PreviewPlayer = (props: { muxAsset?: MuxAsset }) => {
         page_type: 'Preview Player',
       }}
       streamType="on-demand"
+      style={{ display: 'block' }}
     />
   );
 };
