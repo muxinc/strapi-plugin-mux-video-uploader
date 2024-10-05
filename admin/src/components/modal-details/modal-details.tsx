@@ -61,7 +61,7 @@ export default function ModalDetails(props: {
   const { toggleNotification } = useNotification();
 
   const subtitles = (muxAsset?.asset_data?.tracks ?? []).filter(
-    (track) => track.type === 'text' && track.text_type === 'subtitles' && track.status !== 'errored'
+    (track: any) => track.type === 'text' && track.text_type === 'subtitles' && track.status !== 'errored'
   );
 
   const toggleDeleteWarning = () => setShowDeleteWarning((prevState) => !prevState);
@@ -148,6 +148,12 @@ export default function ModalDetails(props: {
     onToggle(true);
   };
 
+  const handleOnOpenChange = (open: boolean) => {
+    if (open) return;
+
+    onToggle(false);
+  };
+
   const { errors, values, isSubmitting, handleChange, handleSubmit, setFieldValue } = useFormik<MuxAssetUpdate>({
     initialValues,
     validateOnChange: false,
@@ -168,8 +174,13 @@ export default function ModalDetails(props: {
 
   return (
     <SignedTokensProvider muxAsset={muxAsset}>
-      <Modal.Root open={isOpen}>
-        <Modal.Content>
+      <Modal.Root open={isOpen} onOpenChange={handleOnOpenChange}>
+        <Modal.Content
+          style={{
+            width: 'min(90vw, 100rem)',
+            maxWidth: 'unset',
+          }}
+        >
           <Modal.Header>
             <Modal.Title>{formatMessage('ModalDetails.header', 'Video details')}</Modal.Title>
           </Modal.Header>
@@ -183,32 +194,36 @@ export default function ModalDetails(props: {
                 </Flex>
               ) : (
                 <Grid.Root gap={4} style={{ alignItems: 'flex-start' }}>
-                  <GridItemStyled col={6} s={12}>
+                  <GridItemStyled col={6} s={12} direction="column" alignItems="start">
                     <Box
                       background="neutral150"
                       style={{
                         aspectRatio: aspect_ratio ? aspect_ratio.replace(':', ' / ') : undefined,
                         marginBottom: '1.5rem',
-                        paddingTop: '3rem',
+                        padding: '3rem 0',
                         position: 'relative',
                       }}
+                      width="100%"
                     >
                       <PreviewPlayer muxAsset={muxAsset} />
 
-                      {/* <IconButton
-                        label={formatMessage('Common.delete-button', 'Delete')}
-                        disabled={!enableDelete}
-                        onClick={toggleDeleteWarning}
-                        ref={deleteButtonRef}
-                        style={{
-                          position: 'absolute',
-                          top: '0.5rem',
-                          right: '0.5rem',
-                        }}
-                      >
-                        <Trash />
-                      </IconButton> */}
                       <Dialog.Root open={showDeleteWarning}>
+                        <Dialog.Trigger>
+                          <IconButton
+                            label={formatMessage('Common.delete-button', 'Delete')}
+                            disabled={!enableDelete}
+                            onClick={toggleDeleteWarning}
+                            withTooltip={false}
+                            ref={deleteButtonRef}
+                            style={{
+                              position: 'absolute',
+                              top: '0.5rem',
+                              right: '0.5rem',
+                            }}
+                          >
+                            <Trash />
+                          </IconButton>
+                        </Dialog.Trigger>
                         <Dialog.Content>
                           <Dialog.Header>
                             {formatMessage(
@@ -262,7 +277,7 @@ export default function ModalDetails(props: {
                       />
                     </div>
                   </GridItemStyled>
-                  <GridItemStyled col={6} s={12}>
+                  <GridItemStyled col={6} s={12} direction="column" alignItems="start">
                     {muxAsset.error_message ? (
                       <Box paddingBottom={4}>
                         <Status variant="danger">
@@ -270,10 +285,10 @@ export default function ModalDetails(props: {
                         </Status>
                       </Box>
                     ) : null}
-                    <Box paddingBottom={4}>
+                    <Box paddingBottom={4} width="100%">
                       <Field.Root id="with_field" error={errors.title}>
                         <Field.Label>{formatMessage('Common.title-label', 'Title')}</Field.Label>
-                        <Textarea
+                        <Field.Input
                           name="title"
                           hasError={errors.title !== undefined}
                           value={values.title}
@@ -287,16 +302,21 @@ export default function ModalDetails(props: {
                         <Field.Error />
                       </Field.Root>
                     </Box>
-                    <Box paddingBottom={4}>
+                    <Box paddingBottom={4} width="100%">
                       <Summary muxAsset={muxAsset} />
                     </Box>
-                    <Box paddingBottom={4}>
+                    <Box paddingBottom={4} width="100%">
                       <Field.Root>
                         <Field.Label>
                           {formatMessage('ModalDetails.code-snippet', 'Code snippet')}
-                          {/* <IconButton label="More actions" borderStyle="none" onClick={handleCopyCodeSnippet}>
+                          <IconButton
+                            label="More actions"
+                            borderStyle="none"
+                            withTooltip={false}
+                            onClick={handleCopyCodeSnippet}
+                          >
                             <Duplicate />
-                          </IconButton> */}
+                          </IconButton>
                         </Field.Label>
                         <Textarea name="codeSnippet" value={codeSnippet} placeholder={codeSnippetHint} disabled />
                       </Field.Root>
@@ -318,13 +338,6 @@ export default function ModalDetails(props: {
           </form>
         </Modal.Content>
       </Modal.Root>
-      {/* <ModalLayout
-        onClose={onToggle}
-        labelledBy="title"
-        style={{
-          width: 'min(90vw, 60rem)',
-        }}
-      ></ModalLayout> */}
     </SignedTokensProvider>
   );
 }
