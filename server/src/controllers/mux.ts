@@ -154,8 +154,9 @@ const deleteMuxAsset = async (ctx: Context) => {
   );
 
   // Ensure that the mux-asset entry exists for the id
-  // @ts-expect-error - v5 migration
-  const muxAsset = await strapi.documents(ASSET_MODEL).findOne(documentId);
+  // @ts-ignore - v5 migration
+  // const muxAsset = await strapi.documents(ASSET_MODEL).findOne(documentId);
+  const muxAsset = await strapi.db.query(ASSET_MODEL).findOne({ where: { id: documentId } });
 
   if (!muxAsset) {
     ctx.notFound('mux-asset.notFound');
@@ -164,14 +165,15 @@ const deleteMuxAsset = async (ctx: Context) => {
   }
 
   // Delete mux-asset entry
-  // @ts-expect-error - v5 migration
-  const deleteRes = await strapi.documents(ASSET_MODEL).delete(documentId);
+  // @ts-ignore - v5 migration
+  // const deleteRes = await strapi.documents(ASSET_MODEL).delete(documentId);
+  const deleteRes = await strapi.db.query(ASSET_MODEL).delete({ where: { id: documentId } });
   if (!deleteRes) {
     ctx.send({ success: false });
     return;
   }
 
-  // @ts-expect-error - v5 migration
+  // @ts-ignore - v5 migration
   const { asset_id, upload_id } = deleteRes;
   const result = { success: true, deletedOnMux: false };
 
