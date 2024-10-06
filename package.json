@@ -33,7 +33,7 @@
     "preprepare": "husky install"
   },
   "dependencies": {
-    "@mux/mux-node": "^8.2.0",
+    "@mux/mux-node": "^8.8.0",
     "@mux/mux-player-react": "^3.0.0",
     "@mux/upchunk": "^3.4.0",
     "@strapi/design-system": "^2.0.0-rc.11",
