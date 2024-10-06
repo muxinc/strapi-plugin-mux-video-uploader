@@ -956,9 +956,9 @@
     strict-event-emitter "^0.2.4"
     web-encoding "^1.1.5"
 
-"@mux/mux-node@^8.2.0":
+"@mux/mux-node@^8.8.0":
   version "8.8.0"
-  resolved "https://registry.npmjs.org/@mux/mux-node/-/mux-node-8.8.0.tgz"
+  resolved "https://registry.yarnpkg.com/@mux/mux-node/-/mux-node-8.8.0.tgz#7c082cd6799db4104a762c6aab59581b53e31ced"
   integrity sha512-7EMuTh62s3Ux+SrcKHoLvXgLDQzeHmbBnOf8xO9hEPLxU9SdV8XX7cqTkWnYlmVdP6ywIoBb4boQX2skI5qk5w==
   dependencies:
     "@types/node" "^18.11.18"
