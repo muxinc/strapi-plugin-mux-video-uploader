@@ -18,6 +18,8 @@ export async function storeTextTracks(custom_text_tracks: ParsedCustomTextTrack[
   );
 }
 
+// TODO - This export is used in a shared types file which is also referenced in admin.
+// Because of this, the BACKEND_URI doesn't ref correctly :-\
 export function storedTextTrackToMuxTrack(track: StoredTextTrack): Mux.Video.AssetCreateTrackParams {
   return {
     type: 'text',
@@ -29,10 +31,10 @@ export function storedTextTrackToMuxTrack(track: StoredTextTrack): Mux.Video.Ass
   };
 }
 
-const BASE_URL = (strapi as any).backendURL;
+const BACKEND_URI = strapi.config?.server.url;
 
 function getStrapiTextTrackUrl(id: StoredTextTrack['id']) {
-  return `${BASE_URL}/${pluginId}/mux-text-tracks/${id}`;
+  return `${BACKEND_URI}/${pluginId}/mux-text-tracks/${id}`;
 }
 
 export function getMuxTextTrackUrl({

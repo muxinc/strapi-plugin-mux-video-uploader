@@ -67,13 +67,17 @@ const muxService = () => ({
   }): Promise<Mux.Video.Uploads.Upload> {
     const { video } = await getMuxClient();
 
+    // @TODO - This is a workaround until Mux releases an update to their node SDK
+    // which adds the updated `video_quality` parameter
+    const encodingTier = config.video_quality === 'basic' ? 'baseline' : 'smart';
+
     return video.uploads.create({
       cors_origin: corsOrigin,
       new_asset_settings: {
         input: uploadConfigToNewAssetInput(config, storedTextTracks),
         playback_policy: [config.signed ? 'signed' : 'public'],
         mp4_support: config.mp4_support,
-        encoding_tier: config.encoding_tier,
+        encoding_tier: encodingTier,
         max_resolution_tier: config.max_resolution_tier,
       },
     });
@@ -90,11 +94,15 @@ const muxService = () => ({
   }) {
     const { video } = await getMuxClient();
 
+    // @TODO - This is a workaround until Mux releases an update to their node SDK
+    // which adds the updated `video_quality` parameter
+    const encodingTier = config.video_quality === 'basic' ? 'baseline' : 'smart';
+
     return video.assets.create({
       input: uploadConfigToNewAssetInput(config, storedTextTracks, url) || [],
       playback_policy: [config.signed ? 'signed' : 'public'],
       mp4_support: config.mp4_support,
-      encoding_tier: config.encoding_tier,
+      encoding_tier: encodingTier,
       max_resolution_tier: config.max_resolution_tier,
     });
   },

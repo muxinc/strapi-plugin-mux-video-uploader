@@ -1,4 +1,14 @@
-import { Button, Card, CardBody, CardContent, Checkbox, Combobox, ComboboxOption, Field, Flex } from '@strapi/design-system';
+import {
+  Button,
+  Card,
+  CardBody,
+  CardContent,
+  Checkbox,
+  Combobox,
+  ComboboxOption,
+  Field,
+  Flex,
+} from '@strapi/design-system';
 import { Download, Pencil, Plus, Trash } from '@strapi/icons';
 import LanguagesList, { LanguageCode } from 'iso-639-1';
 import React, { ChangeEvent } from 'react';
@@ -69,12 +79,12 @@ function TrackForm({
                   defaultMessage: 'Language',
                 })}
               >
-                <Field.Label>{
-                  formatMessage({
+                <Field.Label>
+                  {formatMessage({
                     id: getTranslation('CustomTextTrackForm.language'),
                     defaultMessage: 'Language',
-                  })
-                }</Field.Label>
+                  })}
+                </Field.Label>
                 <Combobox
                   value={track.language_code}
                   onChange={(newValue: LanguageCode) => {
@@ -120,7 +130,7 @@ function TrackForm({
           )}
           <Checkbox
             value={parseInt(track.closed_captions ? 'yes' : 'no')}
-            onChange={(e:any) => {
+            onChange={(e: any) => {
               modifyTrack({ closed_captions: e.currentTarget.value === 'yes' ? true : false });
             }}
             disabled={!editable}
@@ -213,7 +223,7 @@ export default function CustomTextTrackForm({
           muxAsset={muxAsset}
         />
       ))}
-      <Button startIcon={<Plus />} onClick={handleNew} style={{ justifyContent: 'center' }}>
+      <Button type="button" startIcon={<Plus />} onClick={handleNew} style={{ justifyContent: 'center' }}>
         {formatMessage({
           id: getTranslation('CustomTextTrackForm.new-caption'),
           defaultMessage: 'New caption/subtitle',
