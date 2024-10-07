@@ -1,7 +1,7 @@
 import React from 'react';
 import { useIntl } from 'react-intl';
 import { WarningCircle } from '@strapi/icons';
-import { Box, Flex, Typography } from '@strapi/design-system';
+import { Box, Flex, Link, Typography } from '@strapi/design-system';
 
 import { getTranslation } from '../../utils/getTranslation';
 
@@ -36,12 +36,12 @@ const UploadError = (props: Props) => {
               'An error occurred while uploading the file.  Submit an issue with the following error message',
           })}
           &nbsp;-&nbsp;
-          <a href="https://github.com/muxinc/strapi-plugin-mux-video-uploader/issues" target="_blank">
+          <Link isExternal href="https://github.com/muxinc/strapi-plugin-mux-video-uploader/issues">
             {formatMessage({
               id: getTranslation('UploadError.issues'),
               defaultMessage: 'File issue',
             })}
-          </a>
+          </Link>
         </Typography>
       </Box>
       <Box paddingTop={5}>
