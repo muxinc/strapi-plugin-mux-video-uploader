@@ -67,7 +67,7 @@
   "ListPagination.previous-page": "Previous page",
   "ListPagination.next-page": "Next page",
   "ListPagination.goto-page-n": "Go to page {pageNumber}",
-  "ListPagination.dots": "And {more} other links",
+  "ListPagination.dots": "And {more} other pages",
 
   "ModalDetails.header": "Video Details",
   "ModalDetails.delete-confirmation-header": "Delete confirmation",
