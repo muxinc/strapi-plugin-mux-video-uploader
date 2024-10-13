@@ -10,11 +10,11 @@ export default {
       to: `plugins/${PLUGIN_ID}`,
       icon: PluginIcon,
       intlLabel: {
-        id: `${PLUGIN_ID}.plugin.name`,
-        defaultMessage: PLUGIN_ID,
+        id: getTranslation('Common.plugin-title'),
+        defaultMessage: 'Mux Video Uploader',
       },
       permissions: [pluginPermissions.mainRead],
-      Component: () => import('./pages/App')
+      Component: () => import('./pages/App'),
     });
 
     app.registerPlugin({
