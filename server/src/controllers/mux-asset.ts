@@ -31,10 +31,14 @@ const find = async (ctx: Context) => {
 const findOne = async (ctx: Context) => {
   const { documentId } = ctx.params;
 
-  return await strapi.documents(ASSET_MODEL).findOne({
-    documentId,
-    filters: ctx.query,
+  return await strapi.db.query(ASSET_MODEL).findOne({
+    where: { id: documentId },
   });
+  // @ts-ignore - v5 migration
+  // return await strapi.documents(ASSET_MODEL).findOne({
+  //   documentId,
+  //   filters: ctx.query,
+  // });
 };
 
 const count = (ctx: Context) => {
