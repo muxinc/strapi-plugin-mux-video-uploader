@@ -21,4 +21,5 @@ export interface MuxAssetFilter {
   upload_id?: string;
   asset_id?: string;
   documentId?: string;
+  id?: string;
 }

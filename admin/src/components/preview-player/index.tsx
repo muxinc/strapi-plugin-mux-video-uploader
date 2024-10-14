@@ -7,8 +7,6 @@ import { useSignedTokens } from '../signed-tokens-provider';
 import pluginPkg from '../../../../package.json';
 import { PLUGIN_ID } from '../../pluginId';
 
-// THE FOLLOWING IS TEMPORARILY COMMENTED OUT DUE TO ISSUE WITH STRAPI
-// ts-expect-error styled-components typings are off
 const MuxPlayerStyled = styled(MuxPlayer)`
   width: 100%;
 `;
