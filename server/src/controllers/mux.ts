@@ -46,6 +46,17 @@ const processWebhookEvent = async (webhookEvent: any) => {
         },
       ] as const;
     }
+    case 'video.upload.errored': {
+      const muxAsset = await resolveMuxAsset({ upload_id: data.id });
+      return [
+        muxAsset.id,
+        {
+          data: {
+            error_message: `There was an unexpected error during upload`,
+          },
+        },
+      ] as const;
+    }
     case 'video.asset.errored': {
       const muxAsset = await resolveMuxAsset({ asset_id: data.id });
       return [

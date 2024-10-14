@@ -184,7 +184,7 @@ export default function ModalDetails(props: {
             <Modal.Header>
               <Modal.Title>{formatMessage('ModalDetails.header', 'Video details')}</Modal.Title>
             </Modal.Header>
-            <Modal.Body>
+            <Modal.Body style={{ paddingInline: 20 }}>
               {deletingState === 'deleting' ? (
                 <Flex justifyContent="center" padding={4}>
                   <Typography variant="omega" textColor="neutral700">
@@ -265,20 +265,20 @@ export default function ModalDetails(props: {
                       </Dialog.Root>
                     </Box>
 
-                    <div>
-                      <Typography variant="pi" fontWeight="bold">
-                        {formatMessage('Captions.title', 'Captions / subtitles')}
-                      </Typography>
-                      <CustomTextTrackForm
-                        custom_text_tracks={values.custom_text_tracks || []}
-                        modifyCustomTextTracks={(newTracks) => setFieldValue('custom_text_tracks', newTracks)}
-                        muxAsset={muxAsset}
-                      />
-                    </div>
+                    <Box width="100%">
+                      <Field.Root>
+                        <Field.Label>{formatMessage('Captions.title', 'Captions / subtitles')}</Field.Label>
+                        <CustomTextTrackForm
+                          custom_text_tracks={values.custom_text_tracks || []}
+                          modifyCustomTextTracks={(newTracks) => setFieldValue('custom_text_tracks', newTracks)}
+                          muxAsset={muxAsset}
+                        />
+                      </Field.Root>
+                    </Box>
                   </Grid.Item>
                   <Grid.Item col={6} s={12} direction="column" alignItems="start">
                     {muxAsset.error_message ? (
-                      <Box paddingBottom={4}>
+                      <Box paddingBottom={4} width="100%">
                         <Status variant="danger">
                           <Typography>{muxAsset.error_message}</Typography>
                         </Status>
@@ -305,8 +305,8 @@ export default function ModalDetails(props: {
                       <Summary muxAsset={muxAsset} />
                     </Box>
                     <Box paddingBottom={4} width="100%">
-                      <Field.Root style={{ height: 'unset' }}>
-                        <Field.Label>
+                      <Field.Root>
+                        <Field.Label style={{ alignItems: 'center', justifyContent: 'space-between' }}>
                           {formatMessage('ModalDetails.code-snippet', 'Code snippet')}
                           <IconButton
                             label="More actions"
@@ -322,8 +322,6 @@ export default function ModalDetails(props: {
                           value={codeSnippet}
                           placeholder={codeSnippetHint}
                           rows={7}
-                          height={undefined}
-                          style={{ display: 'block' }}
                           disabled
                         />
                       </Field.Root>
