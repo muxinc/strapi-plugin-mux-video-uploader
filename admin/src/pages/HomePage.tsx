@@ -17,6 +17,7 @@ import { PLUGIN_ID } from '../pluginId';
 import { SearchField, SearchVector, SortVector } from '../types';
 import Header from '../components/header';
 import ModalDetails from '../components/modal-details/modal-details';
+import SignedTokensProvider from '../components/signed-tokens-provider';
 
 const ProtectedHomePage = () => (
   <Page.Protect permissions={[pluginPermissions.mainRead]}>
@@ -167,67 +168,69 @@ const HomePage = () => {
   if (isLoadingForPermissions) return null;
 
   return (
-    <Layouts.Root>
-      <Page.Main>
-        <Header onUploadNewAssetModalClose={handleOnUploadNewAssetModalClose} />
-        <Layouts.Action
-          startActions={
-            <Grid.Root gap={4}>
-              <Grid.Item col={2} xs={12} s={12}>
-                <SingleSelect
-                  aria-label={formatMessage({
-                    id: getTranslation('HomePage.search-label'),
-                    defaultMessage: 'Choose the field to search',
-                  })}
-                  placeholder={formatMessage({
-                    id: getTranslation('HomePage.search-placeholder'),
-                    defaultMessage: 'Search field',
-                  })}
-                  value={searchField}
-                  onChange={(value: string) => handleOnSearchFieldChange(value.toString())}
-                >
-                  {SEARCH_FIELDS.map((searchField) => (
-                    <SingleSelectOption value={searchField.value} key={searchField.value}>
-                      {searchField.label}
-                    </SingleSelectOption>
-                  ))}
-                </SingleSelect>
-              </Grid.Item>
-              <Grid.Item col={8} xs={12} s={12}>
-                <Box width="100%">
-                  <Searchbar
-                    name="searchbar"
-                    onClear={() => setSearchValue('')}
-                    value={searchValue}
-                    onChange={handleOnSearchValueChange}
-                    clearLabel={formatMessage({
-                      id: getTranslation('HomePage.clear-label'),
-                      defaultMessage: 'Clear search',
+    <SignedTokensProvider>
+      <Layouts.Root>
+        <Page.Main>
+          <Header onUploadNewAssetModalClose={handleOnUploadNewAssetModalClose} />
+          <Layouts.Action
+            startActions={
+              <Grid.Root gap={4}>
+                <Grid.Item col={2} xs={12} s={12}>
+                  <SingleSelect
+                    aria-label={formatMessage({
+                      id: getTranslation('HomePage.search-label'),
+                      defaultMessage: 'Choose the field to search',
                     })}
+                    placeholder={formatMessage({
+                      id: getTranslation('HomePage.search-placeholder'),
+                      defaultMessage: 'Search field',
+                    })}
+                    value={searchField}
+                    onChange={(value: string) => handleOnSearchFieldChange(value.toString())}
                   >
-                    {formatMessage({
-                      id: getTranslation('HomePage.searching'),
-                      defaultMessage: 'Searching for Mux assets',
-                    })}
-                  </Searchbar>
-                </Box>
-              </Grid.Item>
-            </Grid.Root>
-          }
+                    {SEARCH_FIELDS.map((searchField) => (
+                      <SingleSelectOption value={searchField.value} key={searchField.value}>
+                        {searchField.label}
+                      </SingleSelectOption>
+                    ))}
+                  </SingleSelect>
+                </Grid.Item>
+                <Grid.Item col={8} xs={12} s={12}>
+                  <Box width="100%">
+                    <Searchbar
+                      name="searchbar"
+                      onClear={() => setSearchValue('')}
+                      value={searchValue}
+                      onChange={handleOnSearchValueChange}
+                      clearLabel={formatMessage({
+                        id: getTranslation('HomePage.clear-label'),
+                        defaultMessage: 'Clear search',
+                      })}
+                    >
+                      {formatMessage({
+                        id: getTranslation('HomePage.searching'),
+                        defaultMessage: 'Searching for Mux assets',
+                      })}
+                    </Searchbar>
+                  </Box>
+                </Grid.Item>
+              </Grid.Root>
+            }
+          />
+          <Layouts.Content>
+            <AssetGrid muxAssets={muxAssets?.items} onMuxAssetClick={handleOnMuxAssetClick} />
+            <ListPagination page={page} pages={pages} />
+          </Layouts.Content>
+        </Page.Main>
+        <ModalDetails
+          isOpen={isDetailsOpen}
+          muxAsset={selectedAsset}
+          enableUpdate={canUpdate}
+          enableDelete={canDelete}
+          onToggle={handleOnDetailsClose}
         />
-        <Layouts.Content>
-          <AssetGrid muxAssets={muxAssets?.items} onMuxAssetClick={handleOnMuxAssetClick} />
-          <ListPagination page={page} pages={pages} />
-        </Layouts.Content>
-      </Page.Main>
-      <ModalDetails
-        isOpen={isDetailsOpen}
-        muxAsset={selectedAsset}
-        enableUpdate={canUpdate}
-        enableDelete={canDelete}
-        onToggle={handleOnDetailsClose}
-      />
-    </Layouts.Root>
+      </Layouts.Root>
+    </SignedTokensProvider>
   );
 };
 

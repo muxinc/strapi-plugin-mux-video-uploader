@@ -47,14 +47,16 @@ function TrackForm({
     modifyTrack({ file: parsed.data });
   }
 
-  function downloadOnClick(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
+  async function downloadOnClick(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
     e.preventDefault();
     if (!muxAsset?.playback_id || !track.stored_track) return;
+
+    const token = await video(muxAsset);
 
     const trackUrl = getMuxTextTrackUrl({
       playback_id: muxAsset.playback_id,
       track: track.stored_track,
-      signedToken: video || undefined,
+      signedToken: token || undefined,
     });
 
     const anchor = document.createElement('a');

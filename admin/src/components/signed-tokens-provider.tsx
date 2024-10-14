@@ -4,14 +4,16 @@ import { useFetchClient } from '@strapi/strapi/admin';
 import { MuxAsset } from '../../../server/src/content-types/mux-asset/types';
 import { PLUGIN_ID } from '../pluginId';
 
+type SignFunction = (muxAsset: MuxAsset) => Promise<string | null>;
+
 export const SignedTokensContext = React.createContext<{
-  video: string | null;
-  thumbnail: string | null;
-  storyboard: string | null;
+  video: SignFunction;
+  thumbnail: SignFunction;
+  storyboard: SignFunction;
 }>({
-  video: null,
-  thumbnail: null,
-  storyboard: null,
+  video: async () => null,
+  thumbnail: async () => null,
+  storyboard: async () => null,
 });
 
 export function useSignedTokens() {
@@ -19,34 +21,32 @@ export function useSignedTokens() {
 }
 
 export default function SignedTokensProvider({ muxAsset, children }: React.PropsWithChildren<{ muxAsset?: MuxAsset }>) {
-  const [playbackToken, setPlaybackToken] = React.useState<string>('');
-  const [thumbnailToken, setThumbnailToken] = React.useState<string>('');
-  const [storyboardToken, setStoryboardToken] = React.useState<string>('');
-
   const { get } = useFetchClient();
 
-  const init = async (muxAsset:MuxAsset) => {
-    const { data: videoData } = await get(`${PLUGIN_ID}/sign/${muxAsset.playback_id}?type=video`);
-    const { data: thumbnailData } = await get(`${PLUGIN_ID}/sign/${muxAsset.playback_id}?type=thumbnail`);
-    const { data: storyboardData } = await get(`${PLUGIN_ID}/sign/${muxAsset.playback_id}?type=storyboard`);
+  const video: SignFunction = async function (muxAsset) {
+    const { data } = await get(`${PLUGIN_ID}/sign/${muxAsset.playback_id}?type=video`);
 
-    setPlaybackToken(videoData.token);
-    setThumbnailToken(thumbnailData.token);
-    setStoryboardToken(storyboardData.token);
+    return data.token;
   };
 
-  React.useEffect(() => {
-    if (!muxAsset?.signed || !muxAsset?.playback_id) return;
+  const thumbnail: SignFunction = async function (muxAsset) {
+    const { data } = await get(`${PLUGIN_ID}/sign/${muxAsset.playback_id}?type=thumbnail`);
 
-    init(muxAsset);
-  }, []);
+    return data.token;
+  };
+
+  const storyboard: SignFunction = async function (muxAsset) {
+    const { data } = await get(`${PLUGIN_ID}/sign/${muxAsset.playback_id}?type=storyboard`);
+
+    return data.token;
+  };
 
   return (
     <SignedTokensContext.Provider
       value={{
-        video: playbackToken,
-        thumbnail: thumbnailToken,
-        storyboard: storyboardToken,
+        video,
+        thumbnail,
+        storyboard,
       }}
     >
       {children}

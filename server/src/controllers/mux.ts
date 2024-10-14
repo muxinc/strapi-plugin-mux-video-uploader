@@ -94,6 +94,27 @@ const thumbnail = async (ctx: Context) => {
   ctx.body = response.data;
 };
 
+// Though wise men at their end know dark is right,
+// Because their words had forked no lightning they
+// Do not go gentle into that good night.
+const storyboard = async (ctx: Context) => {
+  const { documentId } = ctx.params;
+  const { token } = ctx.query;
+
+  let imageUrl = `https://image.mux.com/${documentId}/storyboard.vtt?format=webp`;
+
+  if (token) {
+    imageUrl += `&token=${token}`;
+  }
+
+  const response = await axios.get(imageUrl, {
+    responseType: 'stream',
+  });
+
+  ctx.response.set('content-type', 'text/vtt');
+  ctx.body = response.data;
+};
+
 async function parseUploadRequest(ctx: Context) {
   const body = parseJSONBody(ctx, UploadDataWithoutFile);
 
@@ -300,6 +321,7 @@ export default {
   deleteMuxAsset,
   muxWebhookHandler,
   thumbnail,
+  storyboard,
   signMuxPlaybackId,
   textTrack,
 };
