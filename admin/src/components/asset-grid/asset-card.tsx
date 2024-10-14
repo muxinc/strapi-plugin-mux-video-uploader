@@ -77,7 +77,7 @@ const AssetCard = (props: Props) => {
     if (muxAsset.error_message !== null) {
       return (
         <Flex>
-          <WarningCircle color="danger500" />
+          <WarningCircle fill="danger500" />
         </Flex>
       );
     } else if (isLoading || !muxAsset.playback_id) {

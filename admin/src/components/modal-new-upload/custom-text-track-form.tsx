@@ -1,4 +1,5 @@
 import {
+  Box,
   Button,
   Card,
   CardBody,
@@ -7,7 +8,8 @@ import {
   Combobox,
   ComboboxOption,
   Field,
-  Flex,
+  Grid,
+  IconButton,
 } from '@strapi/design-system';
 import { Download, Pencil, Plus, Trash } from '@strapi/icons';
 import LanguagesList, { LanguageCode } from 'iso-639-1';
@@ -62,100 +64,115 @@ function TrackForm({
   }
 
   return (
-    <Card>
+    <Card width="100%">
       <CardBody>
-        <CardContent
-          style={{
-            display: 'grid',
-            gap: '1rem',
-            flex: 1,
-          }}
-        >
-          <Flex alignItems="start" gap={2}>
-            <div style={{ flex: 1 }}>
-              <Field.Root
-                hint={formatMessage({
-                  id: getTranslation('CustomTextTrackForm.language'),
-                  defaultMessage: 'Language',
-                })}
-              >
-                <Field.Label>
-                  {formatMessage({
+        <CardContent width="100%">
+          <Grid.Root width="100%" gap={4}>
+            <Grid.Item col={12} s={12}>
+              <Box grow={1}>
+                <Field.Root
+                  hint={formatMessage({
                     id: getTranslation('CustomTextTrackForm.language'),
                     defaultMessage: 'Language',
                   })}
-                </Field.Label>
-                <Combobox
-                  value={track.language_code}
-                  onChange={(newValue: LanguageCode) => {
-                    modifyTrack({ language_code: newValue, name: LanguagesList.getNativeName(newValue) });
-                  }}
-                  required
-                  disabled={!editable}
                 >
-                  {LanguagesList.getAllCodes().map((code) => (
-                    <ComboboxOption key={code} value={code}>
-                      {LanguagesList.getNativeName(code)}
-                    </ComboboxOption>
-                  ))}
-                </Combobox>
-                <Field.Error />
-                <Field.Hint />
-              </Field.Root>
-            </div>
-            {track.stored_track?.id && muxAsset?.playback_id && (
-              <div style={{ paddingTop: '1.5em' }}>
-                <Button variant="ghost" startIcon={<Download />} onClick={downloadOnClick}>
+                  <Field.Label>
+                    {formatMessage({
+                      id: getTranslation('CustomTextTrackForm.language'),
+                      defaultMessage: 'Language',
+                    })}
+                  </Field.Label>
+                  <Combobox
+                    value={track.language_code}
+                    onChange={(newValue: LanguageCode) => {
+                      modifyTrack({ language_code: newValue, name: LanguagesList.getNativeName(newValue) });
+                    }}
+                    required
+                    disabled={!editable}
+                  >
+                    {LanguagesList.getAllCodes().map((code) => (
+                      <ComboboxOption key={code} value={code}>
+                        {LanguagesList.getNativeName(code)}
+                      </ComboboxOption>
+                    ))}
+                  </Combobox>
+                  <Field.Error />
+                </Field.Root>
+              </Box>
+              {track.stored_track?.id && muxAsset?.playback_id && (
+                <Box marginLeft={4}>
+                  <Field.Root>
+                    <Field.Label>&nbsp;</Field.Label>
+                    <IconButton
+                      label={formatMessage({
+                        id: getTranslation('Common.download-button'),
+                        defaultMessage: 'Download',
+                      })}
+                      withTooltip={false}
+                      onClick={downloadOnClick}
+                    >
+                      <Download />
+                    </IconButton>
+                  </Field.Root>
+                </Box>
+              )}
+            </Grid.Item>
+            <Grid.Item col={12} s={12}>
+              {editable && (
+                <Box marginRight={4}>
+                  <FileInput
+                    name="file"
+                    label={formatMessage({
+                      id: getTranslation('Common.file-label'),
+                      defaultMessage: 'Subtitles file (.vtt or .srt)',
+                    })}
+                    required
+                    onFiles={handleFiles}
+                    inputProps={{
+                      accept: '.vtt,.srt',
+                    }}
+                  />
+                </Box>
+              )}
+              <Box>
+                <Field.Root>
+                  <Field.Label>{editable ? '\u00A0' : null}</Field.Label>
+                  <Checkbox
+                    value={parseInt(track.closed_captions ? 'yes' : 'no')}
+                    onChange={(e: any) => {
+                      modifyTrack({ closed_captions: e.currentTarget.value === 'yes' ? true : false });
+                    }}
+                    disabled={!editable}
+                  >
+                    {formatMessage({
+                      id: getTranslation('CustomTextTrackForm.closed-captions'),
+                      defaultMessage: 'Closed captions',
+                    })}
+                  </Checkbox>
+                </Field.Root>
+              </Box>
+            </Grid.Item>
+            <Grid.Item>
+              <Box marginRight={4}>
+                <Button startIcon={<Trash />} onClick={deleteTrack} variant="danger-light">
                   {formatMessage({
-                    id: getTranslation('Common.download-button'),
-                    defaultMessage: 'Download',
+                    id: getTranslation('Common.delete-button'),
+                    defaultMessage: 'Delete',
                   })}
                 </Button>
-              </div>
-            )}
-          </Flex>
-          {editable && (
-            <FileInput
-              name="file"
-              label={formatMessage({
-                id: getTranslation('Common.file-label'),
-                defaultMessage: 'Subtitles file (.vtt or .srt)',
-              })}
-              required
-              onFiles={handleFiles}
-              inputProps={{
-                accept: '.vtt,.srt',
-              }}
-            />
-          )}
-          <Checkbox
-            value={parseInt(track.closed_captions ? 'yes' : 'no')}
-            onChange={(e: any) => {
-              modifyTrack({ closed_captions: e.currentTarget.value === 'yes' ? true : false });
-            }}
-            disabled={!editable}
-          >
-            {formatMessage({
-              id: getTranslation('CustomTextTrackForm.closed-captions'),
-              defaultMessage: 'Closed captions',
-            })}
-          </Checkbox>
-          <Flex alignItems="center" justifyContent="between" gap={2}>
-            <Button startIcon={<Trash />} onClick={deleteTrack} variant="danger-light">
-              {formatMessage({
-                id: getTranslation('Common.delete-button'),
-                defaultMessage: 'Delete',
-              })}
-            </Button>
-            {!editable && (
-              <Button onClick={() => setEditable(true)} startIcon={<Pencil />}>
-                {formatMessage({
-                  id: getTranslation('Common.update-button'),
-                  defaultMessage: 'Update',
-                })}
-              </Button>
-            )}
-          </Flex>
+              </Box>
+              <Box marginRight={4}>
+                {!editable && (
+                  <Button onClick={() => setEditable(true)} startIcon={<Pencil />}>
+                    {formatMessage({
+                      id: getTranslation('Common.update-button'),
+                      defaultMessage: 'Update',
+                    })}
+                  </Button>
+                )}
+              </Box>
+            </Grid.Item>
+          </Grid.Root>
         </CardContent>
       </CardBody>
     </Card>
@@ -208,28 +225,27 @@ export default function CustomTextTrackForm({
   }
 
   return (
-    <div
-      style={{
-        display: 'grid',
-        gap: '1rem',
-      }}
-    >
+    <Grid.Root gap={2}>
       {custom_text_tracks?.map((track, index) => (
-        <TrackForm
-          key={track.stored_track?.id || `${index}-${track.language_code}`}
-          track={track}
-          modifyTrack={modifyTrack(index)}
-          deleteTrack={deleteTrack(index)}
-          muxAsset={muxAsset}
-        />
+        <Grid.Item key={index} col={12} s={12}>
+          <TrackForm
+            key={track.stored_track?.id || `${index}-${track.language_code}`}
+            track={track}
+            modifyTrack={modifyTrack(index)}
+            deleteTrack={deleteTrack(index)}
+            muxAsset={muxAsset}
+          />
+        </Grid.Item>
       ))}
-      <Button type="button" startIcon={<Plus />} onClick={handleNew} style={{ justifyContent: 'center' }}>
-        {formatMessage({
-          id: getTranslation('CustomTextTrackForm.new-caption'),
-          defaultMessage: 'New caption/subtitle',
-        })}
-      </Button>
-    </div>
+      <Grid.Item col={12} s={12}>
+        <Button type="button" startIcon={<Plus />} onClick={handleNew} style={{ justifyContent: 'center' }}>
+          {formatMessage({
+            id: getTranslation('CustomTextTrackForm.new-caption'),
+            defaultMessage: 'New caption/subtitle',
+          })}
+        </Button>
+      </Grid.Item>
+    </Grid.Root>
   );
 }
 
