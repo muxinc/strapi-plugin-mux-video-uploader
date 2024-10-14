@@ -173,7 +173,7 @@ export default function ModalDetails(props: {
 
   return (
     <SignedTokensProvider muxAsset={muxAsset}>
-      <form onSubmit={handleSubmit}>
+      <form>
         <Modal.Root open={isOpen} onOpenChange={handleOnOpenChange}>
           <Modal.Content
             style={{
@@ -336,7 +336,7 @@ export default function ModalDetails(props: {
                   {formatMessage('Common.cancel-button', 'Cancel')}
                 </Button>
               </Modal.Close>
-              <Button type="submit" variant="success" disabled={deletingState === 'deleting' || isSubmitting}>
+              <Button variant="success" disabled={deletingState === 'deleting' || isSubmitting} onClick={handleSubmit}>
                 {formatMessage('Common.finish-button', 'Finish')}
               </Button>
             </Modal.Footer>

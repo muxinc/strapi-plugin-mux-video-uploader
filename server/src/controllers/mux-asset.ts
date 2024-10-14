@@ -51,7 +51,7 @@ const create = async (ctx: Context) => {
 
 const update = async (ctx: Context) => {
   const { documentId } = ctx.params;
-  const muxAsset = await resolveMuxAsset({ documentId });
+  const muxAsset = await resolveMuxAsset({ id: documentId });
 
   const { title, custom_text_tracks } = <MuxAssetUpdate>ctx.request.body;
 
@@ -59,11 +59,16 @@ const update = async (ctx: Context) => {
   await updateTextTracks(muxAsset, custom_text_tracks);
 
   if (typeof title === 'string' && title) {
-    await strapi.documents(ASSET_MODEL).update({
-      documentId,
-      // @ts-expect-error - v5 migration
+    await strapi.db.query(ASSET_MODEL).update({
+      where: { id: documentId },
       data: { title },
     });
+    // @ts-ignore - v5 migration
+    // await strapi.documents(ASSET_MODEL).update({
+    //   documentId,
+    //   // @ts-expect-error - v5 migration
+    //   data: { title },
+    // });
   }
 
   return { ok: true };
