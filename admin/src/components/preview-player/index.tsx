@@ -14,17 +14,24 @@ const MuxPlayerStyled = styled(MuxPlayer)`
 const PreviewPlayer = (props: { muxAsset?: MuxAsset }) => {
   const { muxAsset } = props;
 
+  const [videoToken, setVideoToken] = React.useState<string | null>();
   const [posterUrl, setPosterUrl] = React.useState<string>(
     // Empty pixel
     'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
   );
+  const [storyboardUrl, setStoryboardUrl] = React.useState<string>();
 
-  const tokens = useSignedTokens();
+  const { video, thumbnail, storyboard } = useSignedTokens();
 
   const init = async (muxAsset: MuxAsset) => {
     const { playback_id } = muxAsset;
     if (muxAsset.playback_id !== null && muxAsset.signed) {
-      setPosterUrl(`/${PLUGIN_ID}/thumbnail/${playback_id}?token=${tokens.thumbnail}`);
+      const videoToken = await video(muxAsset);
+      const thumbnailToken = await thumbnail(muxAsset);
+      const storyboardToken = await storyboard(muxAsset);
+      setVideoToken(videoToken);
+      setPosterUrl(`/${PLUGIN_ID}/thumbnail/${playback_id}?token=${thumbnailToken}`);
+      setStoryboardUrl(`/${PLUGIN_ID}/storyboard/${playback_id}?token=${storyboardToken}`);
     } else if (muxAsset.playback_id !== null) {
       setPosterUrl(`/${PLUGIN_ID}/thumbnail/${playback_id}`);
     }
@@ -34,14 +41,16 @@ const PreviewPlayer = (props: { muxAsset?: MuxAsset }) => {
     muxAsset && init(muxAsset);
   }, []);
 
-  if (!muxAsset?.playback_id || (muxAsset.signed && !tokens.video)) return null;
+  if (!muxAsset?.playback_id || (muxAsset.signed && !videoToken)) return null;
 
   return (
     <MuxPlayerStyled
       playbackId={muxAsset.playback_id}
       poster={posterUrl}
-      playback-token={tokens.video}
-      storyboard-token={tokens.storyboard}
+      playback-token={videoToken}
+      // Disabled because even though we proxy this request, the images in the VTT still go against
+      // image.mux.com which is causing CSP errors :'(
+      // storyboard-src={storyboardUrl}
       metadata={{
         video_id: muxAsset.id,
         video_title: muxAsset.title,

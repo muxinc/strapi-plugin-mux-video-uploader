@@ -56,14 +56,15 @@ const AssetCard = (props: Props) => {
   );
 
   const { formatMessage, formatDate } = useIntl();
-  const tokens = useSignedTokens();
+  const { thumbnail } = useSignedTokens();
 
   const isLoading = muxAsset.asset_id === null;
 
   const init = async (muxAsset: MuxAsset) => {
     const { playback_id } = muxAsset;
     if (muxAsset.playback_id !== null && muxAsset.signed) {
-      setThumbnailImageUrl(`/${PLUGIN_ID}/thumbnail/${playback_id}?token=${tokens.thumbnail}`);
+      const token = await thumbnail(muxAsset);
+      setThumbnailImageUrl(`/${PLUGIN_ID}/thumbnail/${playback_id}?token=${token}`);
     } else if (muxAsset.playback_id !== null) {
       setThumbnailImageUrl(`/${PLUGIN_ID}/thumbnail/${playback_id}`);
     }

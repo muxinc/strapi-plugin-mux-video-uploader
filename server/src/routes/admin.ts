@@ -47,6 +47,16 @@ const routes = [
   },
   {
     method: 'GET',
+    path: '/mux-video-uploader/storyboard/:documentId',
+    handler: 'mux.storyboard',
+    config: {
+      auth: false,
+      prefix: false,
+      description: 'Proxies storyboard requests to load correctly within the Strapi Admin Dashboard',
+    },
+  },
+  {
+    method: 'GET',
     path: '/mux-video-uploader/sign/:documentId',
     handler: 'mux.signMuxPlaybackId',
     config: {
