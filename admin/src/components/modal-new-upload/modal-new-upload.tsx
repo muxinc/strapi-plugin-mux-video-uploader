@@ -69,7 +69,7 @@ const ModalNewUpload = ({ isOpen, onToggle = () => {} }: { isOpen: boolean; onTo
       return;
     }
 
-    const url = `${PLUGIN_ID}/${uploadInfo.upload_type === 'url' ? 'submitRemoteUpload' : 'submitDirectUpload'}`;
+    const url = `${PLUGIN_ID}/${uploadInfo.upload_type === 'url' ? 'remote-upload' : 'direct-upload'}`;
 
     const result = await post(url, uploadInfo).catch((error) => {
       console.log({ error });
