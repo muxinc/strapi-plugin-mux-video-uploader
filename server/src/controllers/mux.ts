@@ -13,15 +13,6 @@ const processWebhookEvent = async (webhookEvent: any) => {
   const { type, data } = webhookEvent;
 
   switch (type) {
-    case 'video.asset.updated': {
-      const muxAsset = await resolveMuxAsset({ upload_id: data.upload_id, asset_id: data.object?.id || data.id });
-      return [
-        muxAsset.id,
-        {
-          data: { asset_data: data },
-        },
-      ] as const;
-    }
     case 'video.upload.asset_created': {
       const muxAsset = await resolveMuxAsset({ upload_id: data.id });
       return [
