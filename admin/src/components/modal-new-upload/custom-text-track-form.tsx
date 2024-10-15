@@ -140,9 +140,9 @@ function TrackForm({
                 <Field.Root>
                   <Field.Label>{editable ? '\u00A0' : null}</Field.Label>
                   <Checkbox
-                    value={parseInt(track.closed_captions ? 'yes' : 'no')}
+                    value={track.closed_captions ? 1 : 0}
                     onChange={(e: any) => {
-                      modifyTrack({ closed_captions: e.currentTarget.value === 'yes' ? true : false });
+                      modifyTrack({ closed_captions: e.currentTarget.value === 1 ? true : false });
                     }}
                     disabled={!editable}
                   >
