@@ -1,8 +1,8 @@
 const routes = [
   {
     method: 'POST',
-    path: '/mux-video-uploader/submitDirectUpload',
-    handler: 'mux.submitDirectUpload',
+    path: '/mux-video-uploader/direct-upload',
+    handler: 'mux.postDirectUpload',
     config: {
       policies: [],
       prefix: false,
@@ -10,16 +10,16 @@ const routes = [
   },
   {
     method: 'POST',
-    path: '/mux-video-uploader/submitRemoteUpload',
-    handler: 'mux.submitRemoteUpload',
+    path: '/mux-video-uploader/remote-upload',
+    handler: 'mux.postRemoteUpload',
     config: {
       policies: [],
       prefix: false,
     },
   },
   {
-    method: 'POST',
-    path: '/mux-video-uploader/deleteMuxAsset',
+    method: 'DELETE',
+    path: '/mux-video-uploader/mux-asset/:documentId',
     handler: 'mux.deleteMuxAsset',
     config: {
       policies: [],

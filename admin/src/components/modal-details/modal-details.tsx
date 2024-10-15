@@ -34,7 +34,7 @@ export default function ModalDetails(props: {
 }) {
   const { isOpen, muxAsset, enableUpdate, enableDelete, onToggle = () => {} } = props;
 
-  const { post, put } = useFetchClient();
+  const { del, put } = useFetchClient();
   const { formatMessage } = usePluginIntl();
 
   const deleteButtonRef = React.useRef<HTMLButtonElement>(null);
@@ -79,10 +79,13 @@ export default function ModalDetails(props: {
     setDeletingState('deleting');
     toggleDeleteWarning();
 
+    if (!muxAsset) return;
+
     try {
-      await post(`${PLUGIN_ID}/deleteMuxAsset`, {
-        documentId: muxAsset?.id,
-        delete_on_mux: true,
+      await del(`${PLUGIN_ID}/mux-asset/${muxAsset.id}`, {
+        params: {
+          delete_on_mux: true,
+        },
       });
 
       setDeletingState('idle');

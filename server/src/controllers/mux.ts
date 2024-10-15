@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 import { StoredTextTrack, UploadConfig, UploadDataWithoutFile } from '../../../types/shared-types';
 import { Config, getService } from '../utils';
-import { parseJSONBody } from '../utils/parse-json-body';
+import { parseRequest } from '../utils/parse-json-body';
 import { resolveMuxAsset } from '../utils/resolve-mux-asset';
 import { storeTextTracks } from '../utils/text-tracks';
 import { ASSET_MODEL, TEXT_TRACK_MODEL } from '../utils/types';
@@ -116,9 +116,9 @@ const storyboard = async (ctx: Context) => {
 };
 
 async function parseUploadRequest(ctx: Context) {
-  const body = parseJSONBody(ctx, UploadDataWithoutFile);
+  const params = parseRequest(ctx, UploadDataWithoutFile, null, null);
 
-  const config = UploadConfig.safeParse(body);
+  const config = UploadConfig.safeParse(params.body);
 
   if (!config.success) {
     throw new Error(config.error.message);
@@ -131,12 +131,12 @@ async function parseUploadRequest(ctx: Context) {
   return {
     storedTextTracks,
     config: config.data,
-    body,
+    params,
   };
 }
 
-const submitDirectUpload = async (ctx: Context) => {
-  const { config, storedTextTracks, body } = await parseUploadRequest(ctx);
+const postDirectUpload = async (ctx: Context) => {
+  const { config, storedTextTracks, params } = await parseUploadRequest(ctx);
 
   const result = await getService('mux').getDirectUploadUrl({
     config,
@@ -145,7 +145,7 @@ const submitDirectUpload = async (ctx: Context) => {
   });
 
   const data = {
-    title: body.title || '',
+    title: params.body?.title || '',
     upload_id: result.id,
     ...config,
   };
@@ -155,22 +155,22 @@ const submitDirectUpload = async (ctx: Context) => {
   ctx.send(result);
 };
 
-const submitRemoteUpload = async (ctx: Context) => {
-  const { config, storedTextTracks, body } = await parseUploadRequest(ctx);
+const postRemoteUpload = async (ctx: Context) => {
+  const { config, storedTextTracks, params } = await parseUploadRequest(ctx);
 
-  if (body.upload_type !== 'url' || !body.url) {
+  if (params.body?.upload_type !== 'url' || !params.body.url) {
     // ctx.badRequest's type seems to be off - we're following the official example: https://docs.strapi.io/dev-docs/error-handling#controllers-and-middlewares
     (ctx as any).badRequest('ValidationError', { errors: { url: ['url cannot be empty'] } });
 
     return;
   }
 
-  const result = await getService('mux').createRemoteAsset({ config, storedTextTracks, url: body.url });
+  const result = await getService('mux').createRemoteAsset({ config, storedTextTracks, url: params.body.url });
 
   const data = {
     asset_id: result.id,
-    title: body.title || '',
-    url: body.url,
+    title: params.body?.title || '',
+    url: params.body.url,
     ...config,
   };
 
@@ -180,15 +180,17 @@ const submitRemoteUpload = async (ctx: Context) => {
 };
 
 const deleteMuxAsset = async (ctx: Context) => {
-  const { documentId, delete_on_mux } = parseJSONBody(
+  const { params, query } = parseRequest(
     ctx,
-    z.object({ documentId: z.string().or(z.number()), delete_on_mux: z.boolean().default(true) })
+    null,
+    z.object({ documentId: z.string().or(z.number()) }),
+    z.object({ delete_on_mux: z.string().or(z.boolean()).default(true) })
   );
 
   // Ensure that the mux-asset entry exists for the id
   // @ts-ignore - v5 migration
   // const muxAsset = await strapi.documents(ASSET_MODEL).findOne(documentId);
-  const muxAsset = await strapi.db.query(ASSET_MODEL).findOne({ where: { id: documentId } });
+  const muxAsset = await strapi.db.query(ASSET_MODEL).findOne({ where: { id: params.documentId } });
 
   if (!muxAsset) {
     ctx.notFound('mux-asset.notFound');
@@ -198,8 +200,8 @@ const deleteMuxAsset = async (ctx: Context) => {
 
   // Delete mux-asset entry
   // @ts-ignore - v5 migration
-  // const deleteRes = await strapi.documents(ASSET_MODEL).delete(documentId);
-  const deleteRes = await strapi.db.query(ASSET_MODEL).delete({ where: { id: documentId } });
+  // const deleteRes = await strapi.documents(ASSET_MODEL).delete(params.documentId);
+  const deleteRes = await strapi.db.query(ASSET_MODEL).delete({ where: { id: params.documentId } });
   if (!deleteRes) {
     ctx.send({ success: false });
     return;
@@ -210,7 +212,7 @@ const deleteMuxAsset = async (ctx: Context) => {
   const result = { success: true, deletedOnMux: false };
 
   // If the directive exists deleting the Asset from Mux
-  if (delete_on_mux) {
+  if (query.delete_on_mux) {
     try {
       // Resolve the asset_id
       // - Use the asset_id that was available on the deleted mux-asset entry
@@ -316,8 +318,8 @@ const textTrack = async (ctx: Context) => {
 };
 
 export default {
-  submitDirectUpload,
-  submitRemoteUpload,
+  postDirectUpload,
+  postRemoteUpload,
   deleteMuxAsset,
   muxWebhookHandler,
   thumbnail,
