@@ -12,11 +12,15 @@ This plugin provides the ability to upload content via a url or a direct file up
 - Preview content using a player (powered by the [mux-player-react](https://github.com/muxinc/elements/tree/main/packages/mux-player-react) project)
 - Delete assets which result in the [Mux](https://mux.com) Asset also being deleted
 - Support uploading audio files
+- Attachment of either sidecar subtitle files (supports `.vtt` or `.srt` files) or Mux's auto-generated captions
+- Enable Signed playback for protected video delivery
+- Support of Mux's video quality and maximum stream resolution
+- Enable MP4 downloads on assets during upload
 - [Mux](https://mux.com) updates [Strapi](https://strapi.io/) automatically when the asset is ready using Webhooks
 
 ## 🧑‍💻 Install
 
-For installing with **Strapi v4**, install the latest—
+For installing with **Strapi v5**, install the latest—
 
 ```
 npm i strapi-plugin-mux-video-uploader@latest
@@ -24,28 +28,48 @@ npm i strapi-plugin-mux-video-uploader@latest
 yarn add strapi-plugin-mux-video-uploader@latest
 ```
 
-For installing with **Strapi v3**, install v2.0.0—
+For installing with **Strapi v4**, install v2.0.0—
 
 ```
-npm i strapi-plugin-mux-video-uploader@2.0.0
+npm i strapi-plugin-mux-video-uploader@2.8.4
 
-yarn add strapi-plugin-mux-video-uploader@2.0.0
+yarn add strapi-plugin-mux-video-uploader@2.8.4
 ```
 
 ## 🖐 Requirements
 
 - A [Mux](https://mux.com) account
 - You will need both the **Access Token** and **Secret Key** scoped with "Full Access" permissions which can be created in the [Mux Dashboard](https://dashboard.mux.com/settings/access-tokens)
+- (Optional) If you plan to support [Signed video playback](https://docs.mux.com/guides/secure-video-playback), you will need to obtain a Signing key set
 - The **Webhook Signing Secret** which can be created in the [Mux Dashboard](https://dashboard.mux.com/settings/webhooks) (See the [Webhooks](#Webhooks) section for more info)
-- Tested with [Strapi](https://strapi.io/) v4.5.1 Community Edition
+- Tested with [Strapi](https://strapi.io/) v5.0.6 Community Edition
 
 ## ⚙️ Configuration
 
 In order for this plugin to communicate with [Mux](https://mux.com), some configuration values need to be set for the plugin before it can be used.
 
-With your **Access Token**, **Secret Key** and **Webhook Signing Secret**, navigate to the Settings view within [Strapi](https://strapi.io/) and click the "General" section under **MUX VIDEO UPLOADER**.
+**Starting in v3.0.0 of this plugin, we have switch to Strapi's File Based Config**.  To increase the portability of clustered deployments, we have switched to this paradigm to manage app configs.  This means that setting the configurations using the Settings view in the [Strapi](https://strapi.io/) Admin UI will no longer be available.
 
-On this view, set the appropriate values to their fields and click the Save button.
+In migrating to v3.0.0, you will need to transition to the [Strapi](https://strapi.io/) File Based Config and copy the values that you had used to initially set up your plugin—
+
+```js
+// ./config/plugins.ts
+export default () => ({
+  ...
+  "mux-video-uploader": {
+    enabled: true,
+    resolve: "./src/plugins/strapi-plugin-mux-video-uploader",
+    config: {
+      accessTokenId: '{ACCESS_TOKEN_ID}',
+      secretKey: '{ACCESS_TOKEN_SECRET}',
+      webhookSigningSecret: '{WEBHOOK_SIGNING_SECRET}',
+      playbackSigningId: '{SIGNING_KEY_ID}',
+      playbackSigningSecret: '{SIGNING_KEY_PRIVATE_KEY}'
+    }
+  }
+  ...
+});
+```
 
 ## 🪝 Webhooks
 
@@ -91,9 +115,23 @@ Here is an example of how to do this on a unix-based operating system from withi
 
 ### Custom subtitles and captions aren't working
 
-When uploading a video with custom text tracks, Mux asks for an URL pointing to these files. This feature currently works only on deployed Strapi installations.
+When uploading a video with custom text tracks, Mux asks for an URL pointing to these files. This feature currently works only on deployed [Strapi](https://strapi.io/) installations.
 
-When developing locally with Strapi, we don't have a globally reachable URL. Unlike webhooks with which we can use a local tunnel, the plugin currently offers no way to configure a base URL to receive Mux's caption download requests. You'll still be able to upload videos, but the tracks won't be properly parsed by Mux.
+When developing locally with [Strapi](https://strapi.io/), we don't have a globally reachable URL. Unlike webhooks with which we can use a local webhook proxy (e.g. Smee.io or ngrok), the plugin currently offers no way to configure a base URL to receive Mux's caption download requests. You'll still be able to upload videos, but the tracks won't be properly parsed by Mux.
+
+Another approach would be to use tunnel service such as Cloudflare ZeroTrust or Tailscale to route requests against a publicly accessible hostname to your local instance.  If you go this route, you will need to ensure that you configure [Strapi](https://strapi.io/) to use the hostname when generating the Mux's caption download requests.  Here is an example of how to do that—
+
+```js
+// ./config/server.ts
+export default ({ env }) => ({
+  host: env('HOST', '0.0.0.0'),
+  port: env.int('PORT', 1337),
+  app: {
+    keys: env.array('APP_KEYS'),
+  },
+  url: 'https://strapi.erikthe.red'
+});
+```
 
 ## ❤️ Thanks
 
