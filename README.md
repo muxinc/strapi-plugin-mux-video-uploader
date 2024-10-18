@@ -22,7 +22,7 @@ This plugin provides the ability to upload content via a url or a direct file up
 
 For installing with **Strapi v5**, install the latest—
 
-```
+```bash
 npm i strapi-plugin-mux-video-uploader@latest
 
 yarn add strapi-plugin-mux-video-uploader@latest
@@ -30,7 +30,7 @@ yarn add strapi-plugin-mux-video-uploader@latest
 
 For installing with **Strapi v4**, install v2.0.0—
 
-```
+```bash
 npm i strapi-plugin-mux-video-uploader@2.8.4
 
 yarn add strapi-plugin-mux-video-uploader@2.8.4
@@ -52,22 +52,43 @@ In order for this plugin to communicate with [Mux](https://mux.com), some config
 
 In migrating to v3.0.0, you will need to transition to the [Strapi](https://strapi.io/) File Based Config and copy the values that you had used to initially set up your plugin—
 
-```js
-// ./config/plugins.ts
-export default () => ({
-  ...
+### Typescript - Plugin Config
+
+```ts
+// Path: ./config/plugins.ts
+export default ({env}) => ({
+  // ...
   "mux-video-uploader": {
     enabled: true,
-    resolve: "./src/plugins/strapi-plugin-mux-video-uploader",
     config: {
-      accessTokenId: '{ACCESS_TOKEN_ID}',
-      secretKey: '{ACCESS_TOKEN_SECRET}',
-      webhookSigningSecret: '{WEBHOOK_SIGNING_SECRET}',
-      playbackSigningId: '{SIGNING_KEY_ID}',
-      playbackSigningSecret: '{SIGNING_KEY_PRIVATE_KEY}'
+      accessTokenId: env('ACCESS_TOKEN_ID'),
+      secretKey: env('ACCESS_TOKEN_SECRET'),
+      webhookSigningSecret: env('WEBHOOK_SIGNING_SECRET'),
+      playbackSigningId: env('SIGNING_KEY_ID'),
+      playbackSigningSecret: env('SIGNING_KEY_PRIVATE_KEY'),
     }
   }
-  ...
+  // ...
+});
+```
+
+### Javascript - Plugin Config
+
+```js
+// Path: ./config/plugins.js
+module.exports = ({env}) => ({
+  // ...
+  "mux-video-uploader": {
+    enabled: true,
+    config: {
+      accessTokenId: env('ACCESS_TOKEN_ID'),
+      secretKey: env('ACCESS_TOKEN_SECRET'),
+      webhookSigningSecret: env('WEBHOOK_SIGNING_SECRET'),
+      playbackSigningId: env('SIGNING_KEY_ID'),
+      playbackSigningSecret: env('SIGNING_KEY_PRIVATE_KEY'),
+    }
+  }
+  // ...
 });
 ```
 
@@ -105,12 +126,12 @@ Yes! However, in order to make it work, you'll need a "Webhook Relay" that runs 
 
 ### I've installed the plugin, but the Strapi Admin UI doesn't show it
 
-This happens when you need to rebuild your [Strapi](https://strapi.io/) instance. To do this, you need delete the `.cache` and `build` folders (while [Strapi](https://strapi.io/) is off) and restart to rebuild the instance.
+This happens when you need to rebuild your [Strapi](https://strapi.io/) instance. To do this, you need delete the `.cache`, `.strapi`, and `build` folders (while [Strapi](https://strapi.io/) is off) and restart to rebuild the instance.
 
 Here is an example of how to do this on a unix-based operating system from within the [Strapi](https://strapi.io/) application root—
 
-```
-% rm -rf ./.cache ./build
+```bash
+rm -rf ./.cache ./build ./.strapi
 ```
 
 ### Custom subtitles and captions aren't working
@@ -121,15 +142,31 @@ When developing locally with [Strapi](https://strapi.io/), we don't have a globa
 
 Another approach would be to use tunnel service such as Cloudflare ZeroTrust or Tailscale to route requests against a publicly accessible hostname to your local instance.  If you go this route, you will need to ensure that you configure [Strapi](https://strapi.io/) to use the hostname when generating the Mux's caption download requests.  Here is an example of how to do that—
 
-```js
-// ./config/server.ts
+### Typescript - Server Config
+
+```ts
+// Path: ./config/server.ts
 export default ({ env }) => ({
   host: env('HOST', '0.0.0.0'),
   port: env.int('PORT', 1337),
   app: {
     keys: env.array('APP_KEYS'),
   },
-  url: 'https://strapi.erikthe.red'
+  url: env('PUBLIC_URL', 'https://strapi.erikthe.red'),
+});
+```
+
+### Javascript - Server Config
+
+```js
+// Path: ./config/server.js
+module.exports = ({ env }) => ({
+  host: env('HOST', '0.0.0.0'),
+  port: env.int('PORT', 1337),
+  app: {
+    keys: env.array('APP_KEYS'),
+  },
+  url: env('PUBLIC_URL', 'https://strapi.erikthe.red'),
 });
 ```
 
