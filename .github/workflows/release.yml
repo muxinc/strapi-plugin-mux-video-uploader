@@ -27,6 +27,9 @@ jobs:
       - name: Create Build
         run: yarn build
 
+      - name: Verify Build
+        run: yarn verify
+
       - name: Publish to NPM
         run: yarn publish ./dist
         env:
