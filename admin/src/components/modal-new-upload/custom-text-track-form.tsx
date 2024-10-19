@@ -10,6 +10,7 @@ import {
   Field,
   Grid,
   IconButton,
+  Typography,
 } from '@strapi/design-system';
 import { Download, Pencil, Plus, Trash } from '@strapi/icons';
 import LanguagesList, { LanguageCode } from 'iso-639-1';
@@ -146,10 +147,12 @@ function TrackForm({
                     }}
                     disabled={!editable}
                   >
-                    {formatMessage({
-                      id: getTranslation('CustomTextTrackForm.closed-captions'),
-                      defaultMessage: 'Closed captions',
-                    })}
+                    <Typography style={{ whiteSpace: 'nowrap' }}>
+                      {formatMessage({
+                        id: getTranslation('CustomTextTrackForm.closed-captions'),
+                        defaultMessage: 'Closed captions',
+                      })}
+                    </Typography>
                   </Checkbox>
                 </Field.Root>
               </Box>
