@@ -1,6 +1,6 @@
 import { PLUGIN_NAME } from '../constants';
 
-interface Config {
+export interface Config {
   accessTokenId?: string;
   secretKey?: string;
   webhookSigningSecret?: string;
