@@ -164,13 +164,6 @@ export default function ModalDetails(props: {
 
   if (!muxAsset) return null;
 
-  const codeSnippetHint = `<div>
-  {formatMessage('ModalDetails.powered-by-mux', 'Powered by mux-player.')}{' '}
-  <Link href="https://docs.mux.com/guides/video/mux-player" isExternal>
-    {formatMessage('ModalDetails.read-more', 'Read more about it')}
-  </Link>
-</div>`;
-
   const aspect_ratio = muxAsset.aspect_ratio || muxAsset.asset_data?.aspect_ratio;
 
   return (
@@ -306,7 +299,17 @@ export default function ModalDetails(props: {
                     <Summary muxAsset={muxAsset} />
                   </Box>
                   <Box paddingBottom={4} width="100%">
-                    <Field.Root>
+                    <Field.Root
+                      hint={
+                        <>
+                          {formatMessage('ModalDetails.powered-by-mux', 'Powered by mux-player.')}
+                          &nbsp;
+                          <Link href="https://docs.mux.com/guides/video/mux-player" isExternal>
+                            {formatMessage('ModalDetails.read-more', 'Read more about it')}
+                          </Link>
+                        </>
+                      }
+                    >
                       <Field.Label style={{ alignItems: 'center', justifyContent: 'space-between' }}>
                         {formatMessage('ModalDetails.code-snippet', 'Code snippet')}
                         <IconButton
@@ -318,13 +321,8 @@ export default function ModalDetails(props: {
                           <Duplicate />
                         </IconButton>
                       </Field.Label>
-                      <Textarea
-                        name="codeSnippet"
-                        value={codeSnippet}
-                        placeholder={codeSnippetHint}
-                        rows={7}
-                        disabled
-                      />
+                      <Textarea name="codeSnippet" value={codeSnippet} rows={7} disabled />
+                      <Field.Hint />
                     </Field.Root>
                   </Box>
                 </Grid.Item>
