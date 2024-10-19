@@ -9,7 +9,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { GetMuxAssetsResponse, MuxAsset } from '../../../server/src/content-types/mux-asset/types';
 import AssetGrid from '../components/asset-grid';
 import ListPagination from '../components/list-pagination';
-import SetupNeeded from '../components/setup-needed';
 import pluginPermissions from '../permissions';
 import { getTranslation } from '../utils/getTranslation';
 import { appendQueryParameter } from '../utils/url';
@@ -162,8 +161,6 @@ const HomePage = () => {
 
     loadMuxAssets();
   };
-
-  if (!isReady) return <SetupNeeded />;
 
   if (isLoadingForPermissions) return null;
 
