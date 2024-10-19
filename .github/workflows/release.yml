@@ -31,6 +31,6 @@ jobs:
         run: yarn verify
 
       - name: Publish to NPM
-        run: yarn publish ./dist
+        run: yarn publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
