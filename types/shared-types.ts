@@ -73,7 +73,7 @@ export const UploadConfig = z
      * @see {@link https://docs.mux.com/guides/use-video-quality-levels}
      * @defaultValue 'plus'
      */
-    video_quality: z.enum(['basic', 'plus']).default('plus'),
+    video_quality: z.enum(['basic', 'plus', 'premium']).default('plus'),
 
     /**
      * Whether or not to use signed URLs, making the asset private

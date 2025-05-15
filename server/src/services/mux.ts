@@ -20,11 +20,11 @@ export interface UploadRequestConfig {
   max_resolution_tier?: '2160p' | '1440p' | '1080p';
 
   /**
-   * The encoding tier informs the cost, quality, and available platform features for the asset.
-   * @see {@link https://docs.mux.com/guides/use-encoding-tiers}
-   * @defaultValue 'smart'
+   * The video quality informs the cost, quality, and available platform features for the asset.
+   * @see {@link https://www.mux.com/docs/guides/use-video-quality-levels}
+   * @defaultValue 'plus'
    */
-  encoding_tier?: 'baseline' | 'smart';
+  video_quality?: 'basic' | 'plus' | 'premium';
 
   signed?: 'true' | 'false';
 }
@@ -67,17 +67,13 @@ const muxService = () => ({
   }): Promise<Mux.Video.Uploads.Upload> {
     const { video } = await getMuxClient();
 
-    // @TODO - This is a workaround until Mux releases an update to their node SDK
-    // which adds the updated `video_quality` parameter
-    const encodingTier = config.video_quality === 'basic' ? 'baseline' : 'smart';
-
     return video.uploads.create({
       cors_origin: corsOrigin,
       new_asset_settings: {
         input: uploadConfigToNewAssetInput(config, storedTextTracks),
         playback_policy: [config.signed ? 'signed' : 'public'],
         mp4_support: config.mp4_support,
-        encoding_tier: encodingTier,
+        video_quality: config.video_quality,
         max_resolution_tier: config.max_resolution_tier,
       },
     });
@@ -94,15 +90,11 @@ const muxService = () => ({
   }) {
     const { video } = await getMuxClient();
 
-    // @TODO - This is a workaround until Mux releases an update to their node SDK
-    // which adds the updated `video_quality` parameter
-    const encodingTier = config.video_quality === 'basic' ? 'baseline' : 'smart';
-
     return video.assets.create({
       input: uploadConfigToNewAssetInput(config, storedTextTracks, url) || [],
       playback_policy: [config.signed ? 'signed' : 'public'],
       mp4_support: config.mp4_support,
-      encoding_tier: encodingTier,
+      video_quality: config.video_quality,
       max_resolution_tier: config.max_resolution_tier,
     });
   },

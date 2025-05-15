@@ -366,6 +366,12 @@ function FormBody(props: {
                           defaultMessage: 'Plus',
                         })}
                       </Radio.Item>
+                      <Radio.Item value="premium">
+                        {formatMessage({
+                          id: getTranslation('Common.video_quality_premium-label'),
+                          defaultMessage: 'Premium',
+                        })}
+                      </Radio.Item>
                     </Radio.Group>
                   </Field.Root>
                 </Box>
