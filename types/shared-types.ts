@@ -55,13 +55,6 @@ export type StoredTextTrack = ParsedCustomTextTrack & { id: string };
 export const UploadConfig = z
   .object({
     /**
-     * Enable static renditions by setting this to 'standard'. Can be overwritten on a per-asset basis.
-     * @see {@link https://docs.mux.com/guides/video/enable-static-mp4-renditions#why-enable-mp4-support}
-     * @defaultValue 'none'
-     */
-    mp4_support: z.enum(['none', 'standard']).default('none'),
-
-    /**
      * Max resolution tier can be used to control the maximum resolution_tier your asset is encoded, stored, and streamed at.
      * @see {@link https://docs.mux.com/guides/stream-videos-in-4k}
      * @defaultValue '1080p'
@@ -99,8 +92,7 @@ export const UploadConfig = z
     if (v.video_quality === 'basic') {
       return {
         ...v,
-        max_resolution_tier: '1080p',
-        mp4_support: 'none',
+        max_resolution_tier: '1080p'
       } as typeof v;
     }
 

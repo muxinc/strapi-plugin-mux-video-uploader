@@ -435,32 +435,6 @@ function FormBody(props: {
                   </Field.Root>
                 </Box>
               </Grid.Item>
-              <Grid.Item col={6} s={12} direction="column" alignItems="start">
-                <Box padding={4} width="100%">
-                  <Field.Root>
-                    <Field.Label>
-                      {formatMessage({
-                        id: getTranslation('Common.mp4_support-label'),
-                        defaultMessage: 'Allow downloading via MP4',
-                      })}
-                    </Field.Label>
-                    <Toggle
-                      name="mp4_support"
-                      value={values.mp4_support}
-                      onLabel="on"
-                      offLabel="off"
-                      checked={values.mp4_support === 'standard'}
-                      disabled={values.video_quality === 'basic'}
-                      onChange={(e: any) => {
-                        setFieldValue(
-                          'mp4_support',
-                          (e.target.checked ? 'standard' : 'none') as typeof values.mp4_support
-                        );
-                      }}
-                    />
-                  </Field.Root>
-                </Box>
-              </Grid.Item>
             </Grid.Root>
           </Accordion.Content>
         </Accordion.Item>

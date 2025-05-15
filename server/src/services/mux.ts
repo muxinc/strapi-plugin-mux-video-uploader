@@ -6,13 +6,6 @@ import { Config } from '../utils';
 
 export interface UploadRequestConfig {
   /**
-   * Enable static renditions by setting this to 'standard'. Can be overwritten on a per-asset basis.
-   * @see {@link https://docs.mux.com/guides/video/enable-static-mp4-renditions#why-enable-mp4-support}
-   * @defaultValue 'none'
-   */
-  mp4_support?: 'none' | 'standard';
-
-  /**
    * Max resolution tier can be used to control the maximum resolution_tier your asset is encoded, stored, and streamed at.
    * @see {@link https://docs.mux.com/guides/stream-videos-in-4k}
    * @defaultValue '1080p'
@@ -70,9 +63,8 @@ const muxService = () => ({
     return video.uploads.create({
       cors_origin: corsOrigin,
       new_asset_settings: {
-        input: uploadConfigToNewAssetInput(config, storedTextTracks),
-        playback_policy: [config.signed ? 'signed' : 'public'],
-        mp4_support: config.mp4_support,
+        inputs: uploadConfigToNewAssetInput(config, storedTextTracks),
+        playback_policies: [config.signed ? 'signed' : 'public'],
         video_quality: config.video_quality,
         max_resolution_tier: config.max_resolution_tier,
       },
@@ -91,9 +83,8 @@ const muxService = () => ({
     const { video } = await getMuxClient();
 
     return video.assets.create({
-      input: uploadConfigToNewAssetInput(config, storedTextTracks, url) || [],
-      playback_policy: [config.signed ? 'signed' : 'public'],
-      mp4_support: config.mp4_support,
+      inputs: uploadConfigToNewAssetInput(config, storedTextTracks, url) || [],
+      playback_policies: [config.signed ? 'signed' : 'public'],
       video_quality: config.video_quality,
       max_resolution_tier: config.max_resolution_tier,
     });
