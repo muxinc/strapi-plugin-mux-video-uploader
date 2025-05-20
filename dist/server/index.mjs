@@ -1100,6 +1100,8 @@ const routes$1 = [
     }
   },
   {
+    method: "GET",
+    path: "/mux-video-uploader/sign/:documentId",
     handler: "mux.signMuxPlaybackId",
     config: {
       prefix: false

@@ -29,6 +29,8 @@ declare const routes: ({
         policies?: undefined;
     };
 } | {
+    method: string;
+    path: string;
     handler: string;
     config: {
         prefix: boolean;
@@ -36,8 +38,6 @@ declare const routes: ({
         auth?: undefined;
         description?: undefined;
     };
-    method?: undefined;
-    path?: undefined;
 } | {
     method: string;
     path: string;

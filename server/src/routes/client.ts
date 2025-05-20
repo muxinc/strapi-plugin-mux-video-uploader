@@ -66,6 +66,8 @@ const routes = [
     },
   },
   {
+    method: 'GET',
+    path: '/mux-video-uploader/sign/:documentId',
     handler: 'mux.signMuxPlaybackId',
     config: {
       prefix: false,
