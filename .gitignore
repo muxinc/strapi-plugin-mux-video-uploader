@@ -13,4 +13,5 @@ npm-debug.log
 *.js
 !strapi-server.js
 .env
+dist/
 install-state.gz
