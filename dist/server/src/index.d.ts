@@ -62,7 +62,6 @@ declare const _default: {
                 handler: string;
                 config: {
                     policies: any[];
-                    prefix: boolean;
                     auth?: undefined;
                     description?: undefined;
                 };
@@ -72,7 +71,6 @@ declare const _default: {
                 handler: string;
                 config: {
                     auth: boolean;
-                    prefix: boolean;
                     policies?: undefined;
                     description?: undefined;
                 };
@@ -82,7 +80,6 @@ declare const _default: {
                 handler: string;
                 config: {
                     auth: boolean;
-                    prefix: boolean;
                     description: string;
                     policies?: undefined;
                 };
@@ -91,7 +88,6 @@ declare const _default: {
                 path: string;
                 handler: string;
                 config: {
-                    prefix: boolean;
                     policies?: undefined;
                     auth?: undefined;
                     description?: undefined;
@@ -102,7 +98,6 @@ declare const _default: {
                 handler: string;
                 config: {
                     policies: any[];
-                    prefix: boolean;
                     auth: boolean;
                     description?: undefined;
                 };
@@ -112,7 +107,6 @@ declare const _default: {
                 handler: string;
                 config: {
                     policies: any[];
-                    prefix: boolean;
                     description: string;
                     auth?: undefined;
                 };
@@ -126,7 +120,6 @@ declare const _default: {
                 handler: string;
                 config: {
                     policies: any[];
-                    prefix: boolean;
                     auth?: undefined;
                     description?: undefined;
                 };
@@ -136,7 +129,6 @@ declare const _default: {
                 handler: string;
                 config: {
                     auth: boolean;
-                    prefix: boolean;
                     policies?: undefined;
                     description?: undefined;
                 };
@@ -146,7 +138,6 @@ declare const _default: {
                 handler: string;
                 config: {
                     auth: boolean;
-                    prefix: boolean;
                     description: string;
                     policies?: undefined;
                 };
@@ -155,7 +146,6 @@ declare const _default: {
                 path: string;
                 handler: string;
                 config: {
-                    prefix: boolean;
                     policies?: undefined;
                     auth?: undefined;
                     description?: undefined;
@@ -166,7 +156,6 @@ declare const _default: {
                 handler: string;
                 config: {
                     policies: any[];
-                    prefix: boolean;
                     auth: boolean;
                     description?: undefined;
                 };
@@ -176,7 +165,6 @@ declare const _default: {
                 handler: string;
                 config: {
                     policies: any[];
-                    prefix: boolean;
                     description: string;
                     auth?: undefined;
                 };

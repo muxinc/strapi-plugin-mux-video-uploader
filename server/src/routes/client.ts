@@ -5,7 +5,6 @@ const routes = [
     handler: 'mux.postDirectUpload',
     config: {
       policies: [],
-      prefix: false,
     },
   },
   {
@@ -14,7 +13,6 @@ const routes = [
     handler: 'mux.postRemoteUpload',
     config: {
       policies: [],
-      prefix: false,
     },
   },
   {
@@ -23,7 +21,6 @@ const routes = [
     handler: 'mux.deleteMuxAsset',
     config: {
       policies: [],
-      prefix: false,
     },
   },
   {
@@ -32,7 +29,6 @@ const routes = [
     handler: 'mux.muxWebhookHandler',
     config: {
       auth: false,
-      prefix: false,
     },
   },
   {
@@ -41,7 +37,6 @@ const routes = [
     handler: 'mux.thumbnail',
     config: {
       auth: false,
-      prefix: false,
       description: 'Proxies thumbnail requests to load correctly within the Strapi Admin Dashboard',
     },
   },
@@ -51,7 +46,6 @@ const routes = [
     handler: 'mux.storyboard',
     config: {
       auth: false,
-      prefix: false,
       description: 'Proxies storyboard requests to load correctly within the Strapi Admin Dashboard',
     },
   },
@@ -61,7 +55,6 @@ const routes = [
     handler: 'mux.animated',
     config: {
       auth: false,
-      prefix: false,
       description: 'Proxies animated requests to load correctly within the Strapi Admin Dashboard',
     },
   },
@@ -69,9 +62,7 @@ const routes = [
     method: 'GET',
     path: '/mux-video-uploader/sign/:documentId',
     handler: 'mux.signMuxPlaybackId',
-    config: {
-      prefix: false,
-    },
+    config: {},
   },
   {
     method: 'GET',
@@ -79,7 +70,6 @@ const routes = [
     handler: 'mux.textTrack',
     config: {
       policies: [],
-      prefix: false,
       auth: false,
     },
   },
@@ -89,7 +79,6 @@ const routes = [
     handler: 'mux-asset.find',
     config: {
       policies: [],
-      prefix: false,
     },
   },
   {
@@ -98,7 +87,6 @@ const routes = [
     handler: 'mux-asset.count',
     config: {
       policies: [],
-      prefix: false,
     },
   },
   {
@@ -107,7 +95,6 @@ const routes = [
     handler: 'mux-asset.findOne',
     config: {
       policies: [],
-      prefix: false,
     },
   },
   {
@@ -116,7 +103,6 @@ const routes = [
     handler: 'mux-asset.getByAssetId',
     config: {
       policies: [],
-      prefix: false,
       description: 'Get mux assets by asset ID',
     },
   },
@@ -126,7 +112,6 @@ const routes = [
     handler: 'mux-asset.getByPlaybackId',
     config: {
       policies: [],
-      prefix: false,
       description: 'Get mux asset by playback ID',
     },
   },
@@ -136,7 +121,6 @@ const routes = [
     handler: 'mux-asset.create',
     config: {
       policies: [],
-      prefix: false,
     },
   },
   {
@@ -145,7 +129,6 @@ const routes = [
     handler: 'mux-asset.update',
     config: {
       policies: [],
-      prefix: false,
     },
   },
   {
@@ -154,7 +137,6 @@ const routes = [
     handler: 'mux-asset.del',
     config: {
       policies: [],
-      prefix: false,
     },
   },
   {
@@ -163,7 +145,6 @@ const routes = [
     handler: 'mux-settings.isConfigured',
     config: {
       policies: [],
-      prefix: false,
     },
   },
 ];
