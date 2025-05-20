@@ -1,7 +1,7 @@
 const routes = [
   {
     method: 'POST',
-    path: '/mux-video-uploader/direct-upload',
+    path: '/direct-upload',
     handler: 'mux.postDirectUpload',
     config: {
       policies: [],
@@ -9,7 +9,7 @@ const routes = [
   },
   {
     method: 'POST',
-    path: '/mux-video-uploader/remote-upload',
+    path: '/remote-upload',
     handler: 'mux.postRemoteUpload',
     config: {
       policies: [],
@@ -17,7 +17,7 @@ const routes = [
   },
   {
     method: 'DELETE',
-    path: '/mux-video-uploader/mux-asset/:documentId',
+    path: '/mux-asset/:documentId',
     handler: 'mux.deleteMuxAsset',
     config: {
       policies: [],
@@ -25,7 +25,7 @@ const routes = [
   },
   {
     method: 'POST',
-    path: '/mux-video-uploader/webhook-handler',
+    path: '/webhook-handler',
     handler: 'mux.muxWebhookHandler',
     config: {
       auth: false,
@@ -33,7 +33,7 @@ const routes = [
   },
   {
     method: 'GET',
-    path: '/mux-video-uploader/thumbnail/:documentId',
+    path: '/thumbnail/:documentId',
     handler: 'mux.thumbnail',
     config: {
       auth: false,
@@ -42,7 +42,7 @@ const routes = [
   },
   {
     method: 'GET',
-    path: '/mux-video-uploader/storyboard/:documentId',
+    path: '/storyboard/:documentId',
     handler: 'mux.storyboard',
     config: {
       auth: false,
@@ -51,7 +51,7 @@ const routes = [
   },
   {
     method: 'GET',
-    path: '/mux-video-uploader/animated/:documentId',
+    path: '/animated/:documentId',
     handler: 'mux.animated',
     config: {
       auth: false,
@@ -60,13 +60,13 @@ const routes = [
   },
   {
     method: 'GET',
-    path: '/mux-video-uploader/sign/:documentId',
+    path: '/sign/:documentId',
     handler: 'mux.signMuxPlaybackId',
     config: {},
   },
   {
     method: 'GET',
-    path: '/mux-video-uploader/mux-text-tracks/:documentId',
+    path: '/mux-text-tracks/:documentId',
     handler: 'mux.textTrack',
     config: {
       policies: [],
@@ -75,7 +75,7 @@ const routes = [
   },
   {
     method: 'GET',
-    path: '/mux-video-uploader/mux-asset',
+    path: '/mux-asset',
     handler: 'mux-asset.find',
     config: {
       policies: [],
@@ -83,7 +83,7 @@ const routes = [
   },
   {
     method: 'GET',
-    path: '/mux-video-uploader/mux-asset/count',
+    path: '/mux-asset/count',
     handler: 'mux-asset.count',
     config: {
       policies: [],
@@ -91,7 +91,7 @@ const routes = [
   },
   {
     method: 'GET',
-    path: '/mux-video-uploader/mux-asset/:documentId',
+    path: '/mux-asset/:documentId',
     handler: 'mux-asset.findOne',
     config: {
       policies: [],
@@ -99,7 +99,7 @@ const routes = [
   },
   {
     method: 'GET',
-    path: '/mux-video-uploader/mux-asset/asset/:assetId',
+    path: '/mux-asset/asset/:assetId',
     handler: 'mux-asset.getByAssetId',
     config: {
       policies: [],
@@ -108,7 +108,7 @@ const routes = [
   },
   {
     method: 'GET',
-    path: '/mux-video-uploader/mux-asset/playback/:playbackId',
+    path: '/mux-asset/playback/:playbackId',
     handler: 'mux-asset.getByPlaybackId',
     config: {
       policies: [],
@@ -117,7 +117,7 @@ const routes = [
   },
   {
     method: 'POST',
-    path: '/mux-video-uploader/mux-asset',
+    path: '/mux-asset',
     handler: 'mux-asset.create',
     config: {
       policies: [],
@@ -125,7 +125,7 @@ const routes = [
   },
   {
     method: 'PUT',
-    path: '/mux-video-uploader/mux-asset/:documentId',
+    path: '/mux-asset/:documentId',
     handler: 'mux-asset.update',
     config: {
       policies: [],
@@ -133,7 +133,7 @@ const routes = [
   },
   {
     method: 'DELETE',
-    path: '/mux-video-uploader/mux-asset/:documentId',
+    path: '/mux-asset/:documentId',
     handler: 'mux-asset.del',
     config: {
       policies: [],
@@ -141,7 +141,7 @@ const routes = [
   },
   {
     method: 'GET',
-    path: '/mux-video-uploader/mux-settings',
+    path: '/mux-settings',
     handler: 'mux-settings.isConfigured',
     config: {
       policies: [],
