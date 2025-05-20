@@ -196,7 +196,7 @@ const contentTypes = {
   "mux-asset": { schema: muxAsset$1 },
   "mux-text-track": { schema: muxTextTrack }
 };
-const pluginId$1 = "mux-video-uploader";
+const pluginId$1 = PLUGIN_NAME;
 const ASSET_MODEL = `plugin::${pluginId$1}.mux-asset`;
 const TEXT_TRACK_MODEL = `plugin::${pluginId$1}.mux-text-track`;
 const resolveMuxAsset = async (filters) => {

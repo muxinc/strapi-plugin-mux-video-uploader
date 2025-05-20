@@ -1,6 +1,7 @@
 import { MuxService } from '../services/mux';
+import { PLUGIN_NAME } from '../constants';
 
-const pluginId = 'mux-video-uploader';
+const pluginId = PLUGIN_NAME;
 
 export type ServiceName = 'mux';
 
