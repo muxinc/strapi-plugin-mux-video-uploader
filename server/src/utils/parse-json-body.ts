@@ -1,20 +1,21 @@
 import { Context } from 'koa';
+import { ZodType, Schema, infer as ZodInfer } from 'zod';
 
 interface ParsedRequest<
-  BodySchema extends Zod.Schema,
-  ParamsSchema extends Zod.Schema,
-  QuerySchema extends Zod.Schema,
+  BodySchema extends ZodType<any>,
+  ParamsSchema extends ZodType<any>,
+  QuerySchema extends ZodType<any>,
 > {
-  body?: Zod.infer<BodySchema>;
-  params?: Zod.infer<ParamsSchema>;
-  query?: Zod.infer<QuerySchema>;
+  body?: ZodInfer<BodySchema>;
+  params?: ZodInfer<ParamsSchema>;
+  query?: ZodInfer<QuerySchema>;
 }
 
-export function parseRequest<BS extends Zod.Schema, PS extends Zod.Schema, QS extends Zod.Schema>(
+export function parseRequest<BS extends ZodType<any>, PS extends ZodType<any>, QS extends ZodType<any>>(
   ctx: Context,
-  bodySchema: BS,
-  paramsSchema: PS,
-  querySchema: QS
+  bodySchema: BS | null,
+  paramsSchema: PS | null,
+  querySchema: QS | null
 ): ParsedRequest<BS, PS, QS> {
   let bodyObject;
 
