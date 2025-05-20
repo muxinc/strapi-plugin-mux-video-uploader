@@ -47,6 +47,7 @@ declare const _default: {
             storyboard: (ctx: import("koa").Context) => Promise<void>;
             signMuxPlaybackId: (ctx: import("koa").Context) => Promise<void>;
             textTrack: (ctx: import("koa").Context) => Promise<void>;
+            animated: (ctx: import("koa").Context) => Promise<void>;
         };
         'mux-settings': {
             isConfigured: (ctx: import("koa").Context) => Promise<void>;
@@ -150,8 +151,6 @@ declare const _default: {
                     policies?: undefined;
                 };
             } | {
-                method: string;
-                path: string;
                 handler: string;
                 config: {
                     prefix: boolean;
@@ -159,6 +158,8 @@ declare const _default: {
                     auth?: undefined;
                     description?: undefined;
                 };
+                method?: undefined;
+                path?: undefined;
             } | {
                 method: string;
                 path: string;

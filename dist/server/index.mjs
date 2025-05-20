@@ -636,28 +636,94 @@ const processWebhookEvent = async (webhookEvent) => {
 };
 const thumbnail = async (ctx) => {
   const { documentId } = ctx.params;
-  const { token } = ctx.query;
-  let imageUrl = `https://image.mux.com/${documentId}/thumbnail.jpg`;
+  const { token, time, width, height, rotate, fit_mode, flip_v, flip_h, format = "jpg" } = ctx.query;
+  let imageUrl = `https://image.mux.com/${documentId}/thumbnail.${format}`;
+  const queryParams = new URLSearchParams();
   if (token) {
-    imageUrl += `?token=${token}`;
+    queryParams.append("token", token);
+  }
+  if (time !== void 0) {
+    queryParams.append("time", time);
+  }
+  if (width !== void 0) {
+    queryParams.append("width", width);
+  }
+  if (height !== void 0) {
+    queryParams.append("height", height);
+  }
+  if (rotate !== void 0) {
+    queryParams.append("rotate", rotate);
+  }
+  if (fit_mode !== void 0) {
+    queryParams.append("fit_mode", fit_mode);
+  }
+  if (flip_v !== void 0) {
+    queryParams.append("flip_v", flip_v);
+  }
+  if (flip_h !== void 0) {
+    queryParams.append("flip_h", flip_h);
+  }
+  const queryString = queryParams.toString();
+  if (queryString) {
+    imageUrl += `?${queryString}`;
   }
   const response = await axios.get(imageUrl, {
     responseType: "stream"
   });
-  ctx.response.set("content-type", "image/jpeg");
+  const contentType = `image/${format}`;
+  ctx.response.set("content-type", contentType);
   ctx.body = response.data;
 };
 const storyboard = async (ctx) => {
   const { documentId } = ctx.params;
-  const { token } = ctx.query;
-  let imageUrl = `https://image.mux.com/${documentId}/storyboard.vtt?format=webp`;
+  const { token, format = "webp" } = ctx.query;
+  const extension = ctx.path.endsWith(".json") ? "json" : "vtt";
+  let imageUrl = `https://image.mux.com/${documentId}/storyboard.${extension}`;
+  const queryParams = new URLSearchParams();
+  queryParams.append("format", format);
   if (token) {
-    imageUrl += `&token=${token}`;
+    queryParams.append("token", token);
+  }
+  imageUrl += `?${queryParams.toString()}`;
+  const response = await axios.get(imageUrl, {
+    responseType: "stream"
+  });
+  const contentType = `application/${extension}`;
+  ctx.response.set("content-type", contentType);
+  ctx.body = response.data;
+};
+const animated = async (ctx) => {
+  const { documentId } = ctx.params;
+  const { token, start, end, width, height, fps, format = "gif" } = ctx.query;
+  let imageUrl = `https://image.mux.com/${documentId}/animated.${format}`;
+  const queryParams = new URLSearchParams();
+  if (start !== void 0) {
+    queryParams.append("start", start);
+  }
+  if (end !== void 0) {
+    queryParams.append("end", end);
+  }
+  if (width !== void 0) {
+    queryParams.append("width", width);
+  }
+  if (height !== void 0) {
+    queryParams.append("height", height);
+  }
+  if (fps !== void 0) {
+    queryParams.append("fps", fps);
+  }
+  if (token) {
+    queryParams.append("token", token);
+  }
+  const queryString = queryParams.toString();
+  if (queryString) {
+    imageUrl += `?${queryString}`;
   }
   const response = await axios.get(imageUrl, {
     responseType: "stream"
   });
-  ctx.response.set("content-type", "text/vtt");
+  const contentType = `image/${format}`;
+  ctx.response.set("content-type", contentType);
   ctx.body = response.data;
 };
 async function parseUploadRequest(ctx) {
@@ -785,7 +851,8 @@ const mux = {
   thumbnail,
   storyboard,
   signMuxPlaybackId,
-  textTrack
+  textTrack,
+  animated
 };
 const isConfigured = async (ctx) => {
   const { accessTokenId, secretKey, webhookSigningSecret } = await getConfig();
@@ -1024,7 +1091,15 @@ const routes$1 = [
   },
   {
     method: "GET",
-    path: "/mux-video-uploader/sign/:documentId",
+    path: "/mux-video-uploader/animated/:documentId",
+    handler: "mux.animated",
+    config: {
+      auth: false,
+      prefix: false,
+      description: "Proxies animated requests to load correctly within the Strapi Admin Dashboard"
+    }
+  },
+  {
     handler: "mux.signMuxPlaybackId",
     config: {
       prefix: false

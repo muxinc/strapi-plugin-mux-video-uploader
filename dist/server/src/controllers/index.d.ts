@@ -27,6 +27,7 @@ declare const _default: {
         storyboard: (ctx: import("koa").Context) => Promise<void>;
         signMuxPlaybackId: (ctx: import("koa").Context) => Promise<void>;
         textTrack: (ctx: import("koa").Context) => Promise<void>;
+        animated: (ctx: import("koa").Context) => Promise<void>;
     };
     'mux-settings': {
         isConfigured: (ctx: import("koa").Context) => Promise<void>;

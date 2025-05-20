@@ -64,45 +64,180 @@ const processWebhookEvent = async (webhookEvent: any) => {
   }
 };
 
-// Do not go gentle into that good night,
-// Old age should burn and rave at close of day;
-// Rage, rage against the dying of the light.
+/**
+ * Get a thumbnail from a video
+ * @docs https://www.mux.com/docs/guides/get-images-from-a-video
+ * @param {string} documentId - The ID of the video to get the thumbnail from
+ * @param {string} token - The token to use to get the thumbnail
+ * @param {string} time - The time of the thumbnail to get
+ * @param {string} width - The width of the thumbnail to get
+ * @param {string} height - The height of the thumbnail to get
+ * @param {string} rotate - The rotation of the thumbnail to get
+ * @param {string} fit_mode - The fit mode of the thumbnail to get
+ * @param {string} flip_v - The flip vertical of the thumbnail to get
+ * @param {string} flip_h - The flip horizontal of the thumbnail to get
+ * @param {string} format - The format of the thumbnail to get
+ */
 const thumbnail = async (ctx: Context) => {
   const { documentId } = ctx.params;
-  const { token } = ctx.query;
+  const { token, time, width, height, rotate, fit_mode, flip_v, flip_h, format = 'jpg' } = ctx.query;
 
-  let imageUrl = `https://image.mux.com/${documentId}/thumbnail.jpg`;
+  let imageUrl = `https://image.mux.com/${documentId}/thumbnail.${format}`;
 
+  const queryParams = new URLSearchParams();
+
+  // Add token if provided
   if (token) {
-    imageUrl += `?token=${token}`;
+    queryParams.append('token', token as string);
+  }
+
+  // Add optional parameters if provided
+  if (time !== undefined) {
+    queryParams.append('time', time as string);
+  }
+
+  if (width !== undefined) {
+    queryParams.append('width', width as string);
+  }
+
+  if (height !== undefined) {
+    queryParams.append('height', height as string);
+  }
+
+  if (rotate !== undefined) {
+    queryParams.append('rotate', rotate as string);
+  }
+
+  if (fit_mode !== undefined) {
+    queryParams.append('fit_mode', fit_mode as string);
+  }
+
+  if (flip_v !== undefined) {
+    queryParams.append('flip_v', flip_v as string);
+  }
+
+  if (flip_h !== undefined) {
+    queryParams.append('flip_h', flip_h as string);
+  }
+
+  // Append query parameters if any exist
+  const queryString = queryParams.toString();
+  if (queryString) {
+    imageUrl += `?${queryString}`;
   }
 
   const response = await axios.get(imageUrl, {
     responseType: 'stream',
   });
 
-  ctx.response.set('content-type', 'image/jpeg');
+  // Set the appropriate content type based on requested format
+  const contentType = `image/${format}`;
+
+  ctx.response.set('content-type', contentType);
   ctx.body = response.data;
 };
 
-// Though wise men at their end know dark is right,
-// Because their words had forked no lightning they
-// Do not go gentle into that good night.
+/**
+ * Get a storyboard from a video
+ * @docs https://www.mux.com/docs/guides/player-advanced-usage#custom-storyboards
+ * @param {string} documentId - The ID of the video to get the storyboard from
+ * @param {string} token - The token to use to get the storyboard
+ * @param {string} format - The format of the storyboard to get
+ * @returns {Promise<void>}
+ */
 const storyboard = async (ctx: Context) => {
   const { documentId } = ctx.params;
-  const { token } = ctx.query;
+  const { token, format = 'webp' } = ctx.query;
 
-  let imageUrl = `https://image.mux.com/${documentId}/storyboard.vtt?format=webp`;
+  // Determine the file extension based on the path parameter
+  const extension = ctx.path.endsWith('.json') ? 'json' : 'vtt';
 
+  // Build the base URL
+  let imageUrl = `https://image.mux.com/${documentId}/storyboard.${extension}`;
+
+  // Build query parameters
+  const queryParams = new URLSearchParams();
+
+  // Add format parameter (defaults to webp if not specified)
+  queryParams.append('format', format as string);
+
+  // Add token if provided
   if (token) {
-    imageUrl += `&token=${token}`;
+    queryParams.append('token', token as string);
+  }
+
+  // Append all query parameters
+  imageUrl += `?${queryParams.toString()}`;
+
+  const response = await axios.get(imageUrl, {
+    responseType: 'stream',
+  });
+
+  // Set the appropriate content type based on the requested extension
+  const contentType = `application/${extension}`;
+  ctx.response.set('content-type', contentType);
+  ctx.body = response.data;
+};
+
+/**
+ * Get an animated GIF or WebP from a video
+ * @docs https://www.mux.com/docs/guides/get-images-from-a-video#get-an-animated-gif-from-a-video
+ * @param {string} documentId - The ID of the video to get the animated GIF or WebP from
+ * @param {string} token - The token to use to get the animated GIF or WebP
+ * @param {string} start - The start time of the animated GIF or WebP
+ * @param {string} end - The end time of the animated GIF or WebP
+ * @param {string} width - The width of the animated GIF or WebP
+ * @param {string} height - The height of the animated GIF or WebP
+ */
+const animated = async (ctx: Context) => {
+  const { documentId } = ctx.params;
+  const { token, start, end, width, height, fps, format = 'gif' } = ctx.query;
+
+  // Build the base URL
+  let imageUrl = `https://image.mux.com/${documentId}/animated.${format}`;
+
+  // Build query parameters
+  const queryParams = new URLSearchParams();
+
+  // Add optional parameters if provided
+  if (start !== undefined) {
+    queryParams.append('start', start as string);
+  }
+
+  if (end !== undefined) {
+    queryParams.append('end', end as string);
+  }
+
+  if (width !== undefined) {
+    queryParams.append('width', width as string);
+  }
+
+  if (height !== undefined) {
+    queryParams.append('height', height as string);
+  }
+
+  if (fps !== undefined) {
+    queryParams.append('fps', fps as string);
+  }
+
+  // Add token if provided
+  if (token) {
+    queryParams.append('token', token as string);
+  }
+
+  // Append query parameters if any exist
+  const queryString = queryParams.toString();
+  if (queryString) {
+    imageUrl += `?${queryString}`;
   }
 
   const response = await axios.get(imageUrl, {
     responseType: 'stream',
   });
 
-  ctx.response.set('content-type', 'text/vtt');
+  // Set the appropriate content type based on the requested format
+  const contentType = `image/${format}`;
+  ctx.response.set('content-type', contentType);
   ctx.body = response.data;
 };
 
@@ -317,4 +452,5 @@ export default {
   storyboard,
   signMuxPlaybackId,
   textTrack,
+  animated,
 };

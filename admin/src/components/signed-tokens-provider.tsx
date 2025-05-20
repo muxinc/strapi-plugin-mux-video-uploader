@@ -10,10 +10,12 @@ export const SignedTokensContext = React.createContext<{
   video: SignFunction;
   thumbnail: SignFunction;
   storyboard: SignFunction;
+  animated: SignFunction;
 }>({
   video: async () => null,
   thumbnail: async () => null,
   storyboard: async () => null,
+  animated: async () => null,
 });
 
 export function useSignedTokens() {
@@ -41,12 +43,19 @@ export default function SignedTokensProvider({ muxAsset, children }: React.Props
     return data.token;
   };
 
+  const animated: SignFunction = async function (muxAsset) {
+    const { data } = await get(`${PLUGIN_ID}/sign/${muxAsset.playback_id}?type=animated`);
+
+    return data.token;
+  };
+
   return (
     <SignedTokensContext.Provider
       value={{
         video,
         thumbnail,
         storyboard,
+        animated,
       }}
     >
       {children}

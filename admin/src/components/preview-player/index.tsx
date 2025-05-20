@@ -20,8 +20,8 @@ const PreviewPlayer = (props: { muxAsset?: MuxAsset }) => {
     'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
   );
   const [storyboardUrl, setStoryboardUrl] = React.useState<string>();
-
-  const { video, thumbnail, storyboard } = useSignedTokens();
+  const [animatedUrl, setAnimatedUrl] = React.useState<string>();
+  const { video, thumbnail, storyboard, animated } = useSignedTokens();
 
   const init = async (muxAsset: MuxAsset) => {
     const { playback_id } = muxAsset;
@@ -29,9 +29,11 @@ const PreviewPlayer = (props: { muxAsset?: MuxAsset }) => {
       const videoToken = await video(muxAsset);
       const thumbnailToken = await thumbnail(muxAsset);
       const storyboardToken = await storyboard(muxAsset);
+      const animatedToken = await animated(muxAsset);
       setVideoToken(videoToken);
       setPosterUrl(`/${PLUGIN_ID}/thumbnail/${playback_id}?token=${thumbnailToken}`);
       setStoryboardUrl(`/${PLUGIN_ID}/storyboard/${playback_id}?token=${storyboardToken}`);
+      setAnimatedUrl(`/${PLUGIN_ID}/animated/${playback_id}?token=${animatedToken}`);
     } else if (muxAsset.playback_id !== null) {
       setPosterUrl(`/${PLUGIN_ID}/thumbnail/${playback_id}`);
     }

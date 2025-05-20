@@ -6,7 +6,7 @@ import React from "react";
 import { useIntl } from "react-intl";
 import styled from "styled-components";
 import { WarningCircle, Lock, Earth, Plus, Download, Trash, Pencil, Duplicate } from "@strapi/icons";
-import { P as PLUGIN_ID, g as getTranslation, p as pluginPermissions } from "./index-RQzhDFbW.mjs";
+import { P as PLUGIN_ID, g as getTranslation, p as pluginPermissions } from "./index-Dxg7o-8h.mjs";
 import { Duration } from "luxon";
 import { createUpload } from "@mux/upchunk";
 import { useFormik } from "formik";
@@ -28,7 +28,8 @@ const secondsToFormattedString = (seconds) => {
 const SignedTokensContext = React.createContext({
   video: async () => null,
   thumbnail: async () => null,
-  storyboard: async () => null
+  storyboard: async () => null,
+  animated: async () => null
 });
 function useSignedTokens() {
   return React.useContext(SignedTokensContext);
@@ -47,13 +48,18 @@ function SignedTokensProvider({ muxAsset, children }) {
     const { data } = await get(`${PLUGIN_ID}/sign/${muxAsset2.playback_id}?type=storyboard`);
     return data.token;
   };
+  const animated = async function(muxAsset2) {
+    const { data } = await get(`${PLUGIN_ID}/sign/${muxAsset2.playback_id}?type=animated`);
+    return data.token;
+  };
   return /* @__PURE__ */ jsx(
     SignedTokensContext.Provider,
     {
       value: {
         video,
         thumbnail,
-        storyboard
+        storyboard,
+        animated
       },
       children
     }
@@ -1228,16 +1234,19 @@ const PreviewPlayer = (props) => {
     "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
   );
   const [storyboardUrl, setStoryboardUrl] = React.useState();
-  const { video, thumbnail, storyboard } = useSignedTokens();
+  const [animatedUrl, setAnimatedUrl] = React.useState();
+  const { video, thumbnail, storyboard, animated } = useSignedTokens();
   const init = async (muxAsset2) => {
     const { playback_id } = muxAsset2;
     if (muxAsset2.playback_id !== null && muxAsset2.signed) {
       const videoToken2 = await video(muxAsset2);
       const thumbnailToken = await thumbnail(muxAsset2);
       const storyboardToken = await storyboard(muxAsset2);
+      const animatedToken = await animated(muxAsset2);
       setVideoToken(videoToken2);
       setPosterUrl(`/${PLUGIN_ID}/thumbnail/${playback_id}?token=${thumbnailToken}`);
       setStoryboardUrl(`/${PLUGIN_ID}/storyboard/${playback_id}?token=${storyboardToken}`);
+      setAnimatedUrl(`/${PLUGIN_ID}/animated/${playback_id}?token=${animatedToken}`);
     } else if (muxAsset2.playback_id !== null) {
       setPosterUrl(`/${PLUGIN_ID}/thumbnail/${playback_id}`);
     }
@@ -1766,4 +1775,4 @@ const App = () => {
 export {
   App as default
 };
-//# sourceMappingURL=App-C2JzbO7Y.mjs.map
+//# sourceMappingURL=App-C2q3pJPm.mjs.map
