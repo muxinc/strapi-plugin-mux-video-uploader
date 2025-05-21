@@ -508,6 +508,15 @@ const del = async (ctx) => {
   const { documentId } = ctx.params;
   return await strapi.documents(ASSET_MODEL).delete(documentId);
 };
+const getByUploadId = async (ctx) => {
+  const { uploadId } = ctx.params;
+  if (!uploadId) {
+    return ctx.badRequest("Upload ID is required");
+  }
+  return await strapi.db.query(ASSET_MODEL).findOne({
+    where: { upload_id: uploadId }
+  });
+};
 const getByAssetId = async (ctx) => {
   const { assetId } = ctx.params;
   if (!assetId) {
@@ -533,6 +542,7 @@ const muxAsset = {
   create,
   update,
   del,
+  getByUploadId,
   getByAssetId,
   getByPlaybackId
 };
@@ -974,6 +984,15 @@ const routes$2 = [
   },
   {
     method: "GET",
+    path: "/mux-asset/upload/:uploadId",
+    handler: "mux-asset.getByUploadId",
+    config: {
+      policies: [],
+      description: "Get mux assets by asset ID"
+    }
+  },
+  {
+    method: "GET",
     path: "/mux-asset/asset/:assetId",
     handler: "mux-asset.getByAssetId",
     config: {
@@ -1123,6 +1142,15 @@ const routes$1 = [
     handler: "mux-asset.findOne",
     config: {
       policies: []
+    }
+  },
+  {
+    method: "GET",
+    path: "/mux-asset/upload/:uploadId",
+    handler: "mux-asset.getByUploadId",
+    config: {
+      policies: [],
+      description: "Get mux assets by asset ID"
     }
   },
   {

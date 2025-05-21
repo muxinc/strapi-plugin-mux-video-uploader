@@ -85,6 +85,21 @@ const del = async (ctx: Context) => {
 };
 
 /**
+ * Get mux asset by upload ID
+ */
+const getByUploadId = async (ctx: Context) => {
+  const { uploadId } = ctx.params;
+
+  if (!uploadId) {
+    return ctx.badRequest('Upload ID is required');
+  }
+
+  return await strapi.db.query(ASSET_MODEL).findOne({
+    where: { upload_id: uploadId },
+  });
+};
+
+/**
  * Get mux assets by asset ID
  */
 const getByAssetId = async (ctx: Context) => {
@@ -121,6 +136,7 @@ export default {
   create,
   update,
   del,
+  getByUploadId,
   getByAssetId,
   getByPlaybackId,
 };

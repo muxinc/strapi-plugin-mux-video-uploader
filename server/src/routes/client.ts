@@ -102,6 +102,15 @@ const routes = [
   },
   {
     method: 'GET',
+    path: '/mux-asset/upload/:uploadId',
+    handler: 'mux-asset.getByUploadId',
+    config: {
+      policies: [],
+      description: 'Get mux assets by asset ID',
+    },
+  },
+  {
+    method: 'GET',
     path: '/mux-asset/asset/:assetId',
     handler: 'mux-asset.getByAssetId',
     config: {

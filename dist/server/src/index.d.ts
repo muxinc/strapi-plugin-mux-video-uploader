@@ -35,6 +35,7 @@ declare const _default: {
                 documentId: string;
                 entries: import("@strapi/types/dist/modules/documents").AnyDocument[];
             }>;
+            getByUploadId: (ctx: import("koa").Context) => Promise<any>;
             getByAssetId: (ctx: import("koa").Context) => Promise<any>;
             getByPlaybackId: (ctx: import("koa").Context) => Promise<any>;
         };
