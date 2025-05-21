@@ -5,6 +5,7 @@ const routes = [
     handler: 'mux.postDirectUpload',
     config: {
       policies: [],
+      auth: false,
     },
   },
   {
@@ -13,6 +14,7 @@ const routes = [
     handler: 'mux.postRemoteUpload',
     config: {
       policies: [],
+      auth: false,
     },
   },
   {
@@ -21,6 +23,7 @@ const routes = [
     handler: 'mux.deleteMuxAsset',
     config: {
       policies: [],
+      auth: false,
     },
   },
   {

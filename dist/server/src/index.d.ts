@@ -120,7 +120,7 @@ declare const _default: {
                 handler: string;
                 config: {
                     policies: any[];
-                    auth?: undefined;
+                    auth: boolean;
                     description?: undefined;
                 };
             } | {
@@ -156,7 +156,7 @@ declare const _default: {
                 handler: string;
                 config: {
                     policies: any[];
-                    auth: boolean;
+                    auth?: undefined;
                     description?: undefined;
                 };
             } | {
