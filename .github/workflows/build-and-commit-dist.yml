@@ -3,7 +3,8 @@ name: Build and Commit Dist
 on:
   push:
     branches:
-      - main
+      - master
+  workflow_dispatch:
 
 jobs:
   build:
@@ -12,6 +13,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Needed to push changes back
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -19,15 +22,15 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm ci
+        run: yarn install --frozen-lockfile
 
       - name: Build plugin
-        run: npm run build
+        run: yarn build
 
       - name: Commit and push dist
         run: |
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'actions@github.com'
           git add dist -f
-          git commit -m 'chore(ci): update dist [skip ci]' || echo "No changes to commit"
-          git push origin main
+          git diff --cached --quiet && echo "No changes to commit" || git commit -m 'chore(ci): update dist [skip ci]'
+          git push origin master
