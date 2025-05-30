@@ -1216,7 +1216,7 @@ const routes = {
   }
 };
 const name = "strapi-plugin-mux-video-uploader";
-const version = "3.0.1";
+const version = "3.1.0";
 const description = "This plugin allows you to upload your content to Mux and use it with Strapi.";
 const license = "MIT";
 const type = "commonjs";
