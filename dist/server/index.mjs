@@ -1048,8 +1048,7 @@ const routes$1 = [
     path: "/direct-upload",
     handler: "mux.postDirectUpload",
     config: {
-      policies: [],
-      auth: false
+      policies: []
     }
   },
   {
@@ -1057,8 +1056,7 @@ const routes$1 = [
     path: "/remote-upload",
     handler: "mux.postRemoteUpload",
     config: {
-      policies: [],
-      auth: false
+      policies: []
     }
   },
   {
@@ -1066,8 +1064,7 @@ const routes$1 = [
     path: "/mux-asset/:documentId",
     handler: "mux.deleteMuxAsset",
     config: {
-      policies: [],
-      auth: false
+      policies: []
     }
   },
   {

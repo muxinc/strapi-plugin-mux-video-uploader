@@ -4,7 +4,7 @@ declare const routes: ({
     handler: string;
     config: {
         policies: any[];
-        auth: boolean;
+        auth?: undefined;
         description?: undefined;
     };
 } | {
@@ -40,7 +40,7 @@ declare const routes: ({
     handler: string;
     config: {
         policies: any[];
-        auth?: undefined;
+        auth: boolean;
         description?: undefined;
     };
 } | {
