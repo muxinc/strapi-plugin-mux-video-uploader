@@ -62,6 +62,18 @@ export const UploadConfig = z
     mp4_support: z.enum(['none', 'standard']).default('none'),
 
     /**
+     * Static renditions configuration using the new API (replaces mp4_support)
+     * @see {@link https://docs.mux.com/guides/enable-static-mp4-renditions}
+     */
+    static_renditions: z
+      .array(
+        z.object({
+          resolution: z.enum(['highest', 'audio-only']),
+        })
+      )
+      .optional(),
+
+    /**
      * Max resolution tier can be used to control the maximum resolution_tier your asset is encoded, stored, and streamed at.
      * @see {@link https://docs.mux.com/guides/stream-videos-in-4k}
      * @defaultValue '1080p'
@@ -101,6 +113,7 @@ export const UploadConfig = z
         ...v,
         max_resolution_tier: '1080p',
         mp4_support: 'none',
+        static_renditions: undefined, // Basic quality doesn't support static renditions
       } as typeof v;
     }
 

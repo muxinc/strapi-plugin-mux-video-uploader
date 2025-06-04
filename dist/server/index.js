@@ -262,6 +262,15 @@ const UploadConfig = zod.z.object({
    */
   mp4_support: zod.z.enum(["none", "standard"]).default("none"),
   /**
+   * Static renditions configuration using the new API (replaces mp4_support)
+   * @see {@link https://docs.mux.com/guides/enable-static-mp4-renditions}
+   */
+  static_renditions: zod.z.array(
+    zod.z.object({
+      resolution: zod.z.enum(["highest", "audio-only"])
+    })
+  ).optional(),
+  /**
    * Max resolution tier can be used to control the maximum resolution_tier your asset is encoded, stored, and streamed at.
    * @see {@link https://docs.mux.com/guides/stream-videos-in-4k}
    * @defaultValue '1080p'
@@ -292,7 +301,9 @@ const UploadConfig = zod.z.object({
     return {
       ...v,
       max_resolution_tier: "1080p",
-      mp4_support: "none"
+      mp4_support: "none",
+      static_renditions: void 0
+      // Basic quality doesn't support static renditions
     };
   }
   return v;
@@ -618,6 +629,88 @@ const processWebhookEvent = async (webhookEvent) => {
             aspect_ratio: data.aspect_ratio,
             isReady: true,
             asset_data: data
+          }
+        }
+      ];
+    }
+    case "video.asset.updated": {
+      const muxAsset2 = await resolveMuxAsset({ asset_id: data.id });
+      return [
+        muxAsset2.id,
+        {
+          data: {
+            asset_data: data
+          }
+        }
+      ];
+    }
+    case "video.asset.static_renditions.ready": {
+      const muxAsset2 = await resolveMuxAsset({ asset_id: data.id });
+      return [
+        muxAsset2.id,
+        {
+          data: {
+            asset_data: data
+          }
+        }
+      ];
+    }
+    case "video.asset.static_rendition.ready": {
+      const muxAsset2 = await resolveMuxAsset({ asset_id: data.asset_id });
+      const completeAssetData = await getService("mux").getAssetById(data.asset_id);
+      return [
+        muxAsset2.id,
+        {
+          data: {
+            asset_data: completeAssetData
+          }
+        }
+      ];
+    }
+    case "video.asset.static_rendition.created": {
+      const muxAsset2 = await resolveMuxAsset({ asset_id: data.asset_id });
+      const completeAssetData = await getService("mux").getAssetById(data.asset_id);
+      return [
+        muxAsset2.id,
+        {
+          data: {
+            asset_data: completeAssetData
+          }
+        }
+      ];
+    }
+    case "video.asset.static_rendition.errored": {
+      const muxAsset2 = await resolveMuxAsset({ asset_id: data.asset_id });
+      const completeAssetData = await getService("mux").getAssetById(data.asset_id);
+      return [
+        muxAsset2.id,
+        {
+          data: {
+            asset_data: completeAssetData
+          }
+        }
+      ];
+    }
+    case "video.asset.static_rendition.skipped": {
+      const muxAsset2 = await resolveMuxAsset({ asset_id: data.asset_id });
+      const completeAssetData = await getService("mux").getAssetById(data.asset_id);
+      return [
+        muxAsset2.id,
+        {
+          data: {
+            asset_data: completeAssetData
+          }
+        }
+      ];
+    }
+    case "video.asset.static_rendition.deleted": {
+      const muxAsset2 = await resolveMuxAsset({ asset_id: data.asset_id });
+      const completeAssetData = await getService("mux").getAssetById(data.asset_id);
+      return [
+        muxAsset2.id,
+        {
+          data: {
+            asset_data: completeAssetData
           }
         }
       ];
@@ -1350,15 +1443,20 @@ const muxService = () => ({
   }) {
     const { video } = await getMuxClient();
     const encodingTier = config2.video_quality === "basic" ? "baseline" : "smart";
+    const newAssetSettings = {
+      input: uploadConfigToNewAssetInput(config2, storedTextTracks),
+      playback_policy: [config2.signed ? "signed" : "public"],
+      encoding_tier: encodingTier,
+      max_resolution_tier: config2.max_resolution_tier
+    };
+    if (config2.static_renditions && config2.static_renditions.length > 0) {
+      newAssetSettings.static_renditions = config2.static_renditions;
+    } else if (config2.mp4_support && config2.mp4_support !== "none") {
+      newAssetSettings.mp4_support = config2.mp4_support;
+    }
     return video.uploads.create({
       cors_origin: corsOrigin,
-      new_asset_settings: {
-        input: uploadConfigToNewAssetInput(config2, storedTextTracks),
-        playback_policy: [config2.signed ? "signed" : "public"],
-        mp4_support: config2.mp4_support,
-        encoding_tier: encodingTier,
-        max_resolution_tier: config2.max_resolution_tier
-      }
+      new_asset_settings: newAssetSettings
     });
   },
   async createRemoteAsset({
@@ -1368,13 +1466,18 @@ const muxService = () => ({
   }) {
     const { video } = await getMuxClient();
     const encodingTier = config2.video_quality === "basic" ? "baseline" : "smart";
-    return video.assets.create({
+    const assetParams = {
       input: uploadConfigToNewAssetInput(config2, storedTextTracks, url) || [],
       playback_policy: [config2.signed ? "signed" : "public"],
-      mp4_support: config2.mp4_support,
       encoding_tier: encodingTier,
       max_resolution_tier: config2.max_resolution_tier
-    });
+    };
+    if (config2.static_renditions && config2.static_renditions.length > 0) {
+      assetParams.static_renditions = config2.static_renditions;
+    } else if (config2.mp4_support && config2.mp4_support !== "none") {
+      assetParams.mp4_support = config2.mp4_support;
+    }
+    return video.assets.create(assetParams);
   },
   async deleteAsset(assetId) {
     const { video } = await getMuxClient();

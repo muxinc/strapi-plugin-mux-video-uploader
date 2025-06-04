@@ -37,6 +37,100 @@ const processWebhookEvent = async (webhookEvent: any) => {
         },
       ] as const;
     }
+    // Handle asset updated webhook (e.g., when static renditions status changes)
+    case 'video.asset.updated': {
+      const muxAsset = await resolveMuxAsset({ asset_id: data.id });
+      return [
+        muxAsset.id,
+        {
+          data: {
+            asset_data: data,
+          },
+        },
+      ] as const;
+    }
+    // Handle legacy static_renditions.ready webhook (deprecated mp4_support)
+    case 'video.asset.static_renditions.ready': {
+      const muxAsset = await resolveMuxAsset({ asset_id: data.id });
+      return [
+        muxAsset.id,
+        {
+          data: {
+            asset_data: data,
+          },
+        },
+      ] as const;
+    }
+    // Handle new static_rendition.ready webhook (static_renditions API)
+    case 'video.asset.static_rendition.ready': {
+      const muxAsset = await resolveMuxAsset({ asset_id: data.asset_id });
+      // Fetch the complete asset data from Mux API to get updated static renditions
+      const completeAssetData = await getService('mux').getAssetById(data.asset_id);
+      return [
+        muxAsset.id,
+        {
+          data: {
+            asset_data: completeAssetData,
+          },
+        },
+      ] as const;
+    }
+    // Handle static_rendition.created webhook
+    case 'video.asset.static_rendition.created': {
+      const muxAsset = await resolveMuxAsset({ asset_id: data.asset_id });
+      // Fetch the complete asset data from Mux API to get updated static renditions
+      const completeAssetData = await getService('mux').getAssetById(data.asset_id);
+      return [
+        muxAsset.id,
+        {
+          data: {
+            asset_data: completeAssetData,
+          },
+        },
+      ] as const;
+    }
+    // Handle static_rendition.errored webhook
+    case 'video.asset.static_rendition.errored': {
+      const muxAsset = await resolveMuxAsset({ asset_id: data.asset_id });
+      // Fetch the complete asset data from Mux API to get updated static renditions
+      const completeAssetData = await getService('mux').getAssetById(data.asset_id);
+      return [
+        muxAsset.id,
+        {
+          data: {
+            asset_data: completeAssetData,
+          },
+        },
+      ] as const;
+    }
+    // Handle static_rendition.skipped webhook
+    case 'video.asset.static_rendition.skipped': {
+      const muxAsset = await resolveMuxAsset({ asset_id: data.asset_id });
+      // Fetch the complete asset data from Mux API to get updated static renditions
+      const completeAssetData = await getService('mux').getAssetById(data.asset_id);
+      return [
+        muxAsset.id,
+        {
+          data: {
+            asset_data: completeAssetData,
+          },
+        },
+      ] as const;
+    }
+    // Handle static_rendition.deleted webhook
+    case 'video.asset.static_rendition.deleted': {
+      const muxAsset = await resolveMuxAsset({ asset_id: data.asset_id });
+      // Fetch the complete asset data from Mux API to get updated static renditions
+      const completeAssetData = await getService('mux').getAssetById(data.asset_id);
+      return [
+        muxAsset.id,
+        {
+          data: {
+            asset_data: completeAssetData,
+          },
+        },
+      ] as const;
+    }
     case 'video.upload.errored': {
       const muxAsset = await resolveMuxAsset({ upload_id: data.id });
       return [

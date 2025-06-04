@@ -5,6 +5,9 @@ declare const _default: {
         getDirectUploadUrl({ config, storedTextTracks, corsOrigin, }: {
             config: {
                 mp4_support?: "none" | "standard";
+                static_renditions?: {
+                    resolution?: "highest" | "audio-only";
+                }[];
                 max_resolution_tier?: "2160p" | "1440p" | "1080p";
                 video_quality?: "basic" | "plus";
                 signed?: boolean;
@@ -34,6 +37,9 @@ declare const _default: {
             storedTextTracks: import("../../../types/shared-types").StoredTextTrack[];
             config: {
                 mp4_support?: "none" | "standard";
+                static_renditions?: {
+                    resolution?: "highest" | "audio-only";
+                }[];
                 max_resolution_tier?: "2160p" | "1440p" | "1080p";
                 video_quality?: "basic" | "plus";
                 signed?: boolean;
