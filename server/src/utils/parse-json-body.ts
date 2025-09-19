@@ -1,4 +1,5 @@
 import { Context } from 'koa';
+import * as Zod from 'zod';
 
 interface ParsedRequest<
   BodySchema extends Zod.Schema,
