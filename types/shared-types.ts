@@ -73,7 +73,7 @@ export const UploadConfig = z
      * @see {@link https://docs.mux.com/guides/use-video-quality-levels}
      * @defaultValue 'plus'
      */
-    video_quality: z.enum(['basic', 'plus']).default('plus'),
+    video_quality: z.enum(['basic', 'plus', 'premium']).default('basic'),
 
     /**
      * Whether or not to use signed URLs, making the asset private
@@ -95,17 +95,6 @@ export const UploadConfig = z
 
     upload_type: z.enum(['file', 'url']).default('file'),
   })
-  .transform((v) => {
-    if (v.video_quality === 'basic') {
-      return {
-        ...v,
-        max_resolution_tier: '1080p',
-        mp4_support: 'none',
-      } as typeof v;
-    }
-
-    return v;
-  });
 
 export type RequestedUploadConfig = z.input<typeof UploadConfig>;
 export type ParsedUploadConfig = z.infer<typeof UploadConfig>;

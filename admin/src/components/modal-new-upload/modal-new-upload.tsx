@@ -366,6 +366,12 @@ function FormBody(props: {
                           defaultMessage: 'Plus',
                         })}
                       </Radio.Item>
+                       <Radio.Item value="premium">
+                        {formatMessage({
+                          id: getTranslation('Common.video_quality_premium-label'),
+                          defaultMessage: 'Premium',
+                        })}
+                      </Radio.Item>
                     </Radio.Group>
                   </Field.Root>
                 </Box>
@@ -384,7 +390,6 @@ function FormBody(props: {
                       onValueChange={(value: any) => setFieldValue('max_resolution_tier', value)}
                       value={values.max_resolution_tier}
                       style={{ marginTop: '0.5rem' }}
-                      disabled={values.video_quality === 'basic'}
                     >
                       <Radio.Item value="2160p">2160p (4k)</Radio.Item>
                       <Radio.Item value="1440p">1440p (2k)</Radio.Item>
@@ -444,7 +449,6 @@ function FormBody(props: {
                       onLabel="on"
                       offLabel="off"
                       checked={values.mp4_support === 'standard'}
-                      disabled={values.video_quality === 'basic'}
                       onChange={(e: any) => {
                         setFieldValue(
                           'mp4_support',
