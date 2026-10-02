@@ -219,47 +219,29 @@ const deleteMuxAsset = async (ctx: Context) => {
   ctx.send(result);
 };
 
+// Set by koa-body when strapi::body has includeUnparsed enabled
+const UNPARSED_BODY = Symbol.for('unparsedBody');
+
 const muxWebhookHandler = async (ctx: Context) => {
-  const body = ctx.request.body;
-  const sigHttpHeader = ctx.request.headers['mux-signature'];
+  const rawBody = (ctx.request.body as Record<symbol, unknown> | undefined)?.[UNPARSED_BODY];
 
-  const config = await Config.getConfig();
-
-  if (
-    sigHttpHeader === undefined ||
-    sigHttpHeader === '' ||
-    (Array.isArray(sigHttpHeader) && sigHttpHeader.length < 0)
-  ) {
-    ctx.throw(401, 'Webhook signature is missing');
+  if (typeof rawBody !== 'string') {
+    strapi.log.error(
+      '[mux-video-uploader] Webhook rejected: the raw request body is unavailable. Set `includeUnparsed: true` on `strapi::body` in config/middlewares.'
+    );
+    ctx.throw(500, 'Webhook could not be verified');
   }
 
-  if (Array.isArray(sigHttpHeader) && sigHttpHeader.length > 1) {
-    ctx.throw(401, 'we have an unexpected amount of signatures');
+  let event;
+
+  try {
+    event = await getService('mux').unwrapWebhook(rawBody, ctx.request.headers);
+  } catch (error) {
+    strapi.log.warn(`[mux-video-uploader] Webhook rejected: ${error instanceof Error ? error.message : error}`);
+    ctx.throw(401, 'Invalid webhook signature');
   }
 
-  let sig;
-
-  if (Array.isArray(sigHttpHeader)) {
-    sig = sigHttpHeader[0];
-  } else {
-    sig = sigHttpHeader;
-  }
-
-  // TODO: Currently commented out because we should be using the raw request body for verfiying
-  // Webhook signatures, NOT JSON.stringify.  Strapi does not currently allow for access to the
-  // Koa.js request (the middleware used for parsing requests).
-
-  // let isSigValid;
-
-  // try {
-  //   isSigValid = Webhooks.verifyHeader(JSON.stringify(body), sig, config.webhook_signing_secret);
-  // } catch(err) {
-  //   ctx.throw(403, err);
-
-  //   return;
-  // }
-
-  const outcome = await processWebhookEvent(body);
+  const outcome = await processWebhookEvent(event);
 
   if (outcome === undefined) {
     ctx.send('ignored');
