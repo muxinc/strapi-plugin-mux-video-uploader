@@ -1,3 +1,5 @@
+import type { IncomingHttpHeaders } from 'node:http';
+
 import Mux from '@mux/ts';
 
 import { ParsedUploadConfig, StoredTextTrack, uploadConfigToNewAssetInput } from '../../../types/shared-types';
@@ -83,7 +85,6 @@ const muxService = () => ({
   }) {
     const { video } = await getMuxClient();
 
-
     return video.assets.create({
       inputs: uploadConfigToNewAssetInput(config, storedTextTracks, url) || [],
       playback_policy: [config.signed ? 'signed' : 'public'],
@@ -127,6 +128,13 @@ const muxService = () => ({
     const { video } = await getMuxClient();
 
     return await Promise.all(tracks.map((track) => video.assets.createTrack(assetId, track)));
+  },
+
+  async unwrapWebhook(rawBody: string, headers: IncomingHttpHeaders) {
+    const { webhooks } = await getMuxClient();
+    const { webhookSigningSecret } = await Config.getConfig();
+
+    return webhooks.unwrap(rawBody, headers, webhookSigningSecret);
   },
 
   async deleteAssetTextTracks(assetId: string, trackIds: string[]) {

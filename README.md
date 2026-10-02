@@ -94,7 +94,9 @@ module.exports = ({env}) => ({
 
 ## 🪝 Webhooks
 
-**Please note**: We've currently disabled webhook signature verification as there is not a way to access the raw request body from the Koa.js middleware (which [Strapi](https://strapi.io/) is using for parsing requests). This is needed to ensure that we are verifying the signature and that the request JSON payload has properties in the same order that was used for generating the signature.
+The plugin verifies every webhook's signature with your `webhookSigningSecret` and rejects requests that don't match, so make sure it matches the signing secret shown for this webhook in the [Mux Dashboard](https://dashboard.mux.com/settings/webhooks).
+
+Verification needs the raw request body, so the plugin turns on `includeUnparsed` for the `strapi::body` middleware listed in your `config/middlewares` file. If you've set `includeUnparsed: false` there, the plugin rejects webhooks and logs an error.
 
 When setting up your Webhook configuration in the [Mux Dashboard](https://dashboard.mux.com/settings/webhooks), the "URL to notify" field should be in the format of—
 
