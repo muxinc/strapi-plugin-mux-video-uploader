@@ -1,4 +1,4 @@
-import Mux from '@mux/mux-node';
+import Mux from '@mux/ts';
 
 import { ParsedUploadConfig, StoredTextTrack, uploadConfigToNewAssetInput } from '../../../types/shared-types';
 import pluginPkg from '../../../package.json';

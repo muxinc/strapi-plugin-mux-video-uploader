@@ -1,4 +1,4 @@
-import type Mux from '@mux/mux-node';
+import type Mux from '@mux/ts';
 import { ParsedCustomTextTrack } from '../../../../types/shared-types';
 
 export interface MuxAsset extends MuxAssetUpdate {
