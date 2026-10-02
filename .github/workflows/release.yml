@@ -23,7 +23,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          registry-url: 'https://registry.npmjs.org'
 
       # OIDC publishing needs npm 11.5.1+, newer than Node 22's
       - name: Upgrade npm
