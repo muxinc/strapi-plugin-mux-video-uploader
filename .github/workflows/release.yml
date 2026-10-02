@@ -4,25 +4,36 @@ on:
   release:
     types: [published]
   workflow_dispatch:
-    branches:
-      - master
+
+permissions:
+  contents: read
+  id-token: write # npm trusted publishing (OIDC)
 
 jobs:
   release:
     name: Release
+    # Manual runs publish only from the default branch
+    if: github.event_name == 'release' || github.ref_name == github.event.repository.default_branch
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      - name: Setup Node.js 18.x
-        uses: actions/setup-node@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: '18.x'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: '22'
+
+      # OIDC publishing needs npm 11.5.1+, newer than Node 22's
+      - name: Upgrade npm
+        run: npm install -g npm@11.6.2
+
+      # Use the Yarn pinned in package.json's packageManager
+      - name: Enable Corepack
+        run: corepack enable
 
       - name: Install Dependencies
-        run: yarn
+        run: yarn install --frozen-lockfile
 
       - name: Create Build
         run: yarn build
@@ -30,7 +41,5 @@ jobs:
       - name: Verify Build
         run: yarn verify
 
-      - name: Publish to NPM
-        run: yarn publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
+      - name: Publish to npm
+        run: npm publish

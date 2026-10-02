@@ -3,6 +3,11 @@
   "version": "3.0.2",
   "description": "This plugin allows you to upload your content to Mux and use it with Strapi.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/muxinc/strapi-plugin-mux-video-uploader.git"
+  },
+  "packageManager": "yarn@1.22.22",
   "type": "commonjs",
   "strapi": {
     "name": "mux-video-uploader",
