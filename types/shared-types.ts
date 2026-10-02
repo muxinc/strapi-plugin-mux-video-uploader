@@ -1,4 +1,4 @@
-import type Mux from '@mux/mux-node';
+import type Mux from '@mux/ts';
 import { z } from 'zod';
 import { storedTextTrackToMuxTrack } from '../server/src/utils/text-tracks';
 
@@ -129,10 +129,10 @@ export function uploadConfigToNewAssetInput(
   config: ParsedUploadConfig,
   storedTextTracks: StoredTextTrack[] = [],
   url?: string
-): Mux.Video.Assets.AssetCreateParams.Input[] | undefined {
-  const inputs: Mux.Video.Assets.AssetCreateParams.Input[] = [];
+): Mux.Video.Assets.InputSettings[] | undefined {
+  const inputs: Mux.Video.Assets.InputSettings[] = [];
 
-  const base: Mux.Video.Assets.AssetCreateParams.Input = {};
+  const base: Mux.Video.Assets.InputSettings = {};
 
   if (config.upload_type === 'url') {
     base.url = url;

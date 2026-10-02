@@ -1,4 +1,4 @@
-import type Mux from '@mux/mux-node';
+import type Mux from '@mux/ts';
 import { z } from 'zod';
 import { getService } from '.';
 import { ParsedCustomTextTrack, StoredTextTrack, TextTrackFile } from '../../../types/shared-types';
