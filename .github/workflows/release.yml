@@ -29,6 +29,10 @@ jobs:
       - name: Upgrade npm
         run: npm install -g npm@11.6.2
 
+      # Use the Yarn pinned in package.json's packageManager
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
 

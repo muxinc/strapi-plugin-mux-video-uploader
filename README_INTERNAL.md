@@ -1,6 +1,12 @@
 # Setting up your dev environment
 
-Start by installing the (dev) dependencies—
+Enable [Corepack](https://nodejs.org/api/corepack.html) once so `yarn` runs the version pinned in `package.json`—
+
+```
+% corepack enable
+```
+
+Then install the (dev) dependencies—
 
 ```
 % yarn install
