@@ -46,6 +46,26 @@ yarn add strapi-plugin-mux-video-uploader@2.8.4
 
 ## ⚙️ Configuration
 
+In your Strapi project, enable the _mux-video-uploader_ plugin in the `config/plugin.js` file.
+
+```js
+module.exports = ({ env }) => ({
+  //...
+  "mux-video-uploader": {
+    enabled: true,
+  },
+  //...
+});
+```
+
+Once the plugin declaration is added, run the build command to rebuild the Strapi Admin UI.
+
+```sh
+npm run build
+# or
+yarn build
+```
+
 In order for this plugin to communicate with [Mux](https://mux.com), some configuration values need to be set for the plugin before it can be used.
 
 **Starting in v3.0.0 of this plugin, we have switch to Strapi's File Based Config**.  To increase the portability of clustered deployments, we have switched to this paradigm to manage app configs.  This means that setting the configurations using the Settings view in the [Strapi](https://strapi.io/) Admin UI will no longer be available.
