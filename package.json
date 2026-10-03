@@ -35,7 +35,7 @@
     "verify": "strapi-plugin verify",
     "watch": "strapi-plugin watch",
     "watch:link": "strapi-plugin watch:link",
-    "preprepare": "husky install"
+    "prepare": "husky install"
   },
   "dependencies": {
     "@mux/mux-player-react": "^3.6.0",
