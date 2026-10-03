@@ -22,7 +22,8 @@ const processWebhookEvent = async (webhookEvent: any) => {
         },
       ] as const;
     }
-    case 'video.asset.ready': {
+    case 'video.asset.ready':
+    case 'video.asset.updated': {
       const muxAsset = await resolveMuxAsset({ asset_id: data.id });
       return [
         muxAsset.id,
