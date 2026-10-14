@@ -382,22 +382,28 @@ const robotsService = () => ({
     });
   },
 
-  /** The account's directives. `complete` is false when there may be more than one listing returns. */
-  async listDirectives(): Promise<{ directives: RobotsDirectiveSummary[]; complete: boolean }> {
-    try {
+  /**
+   * `complete` is false when there may be more directives than one listing returns. `timeoutMs`
+   * replaces the client's 60 s for callers that can't wait that long.
+   */
+  async listDirectives({ timeoutMs }: { timeoutMs?: number } = {}): Promise<{
+    directives: RobotsDirectiveSummary[];
+    complete: boolean;
+  }> {
+    return callMux(async () => {
       const { robots } = await getMuxClient();
-      const listed = (await robots.directives.list({ limit: MAX_ROWS })).data ?? [];
+      const listed =
+        (await robots.directives.list({ limit: DIRECTIVES_PAGE_SIZE }, timeoutMs ? { timeout: timeoutMs } : undefined))
+          .data ?? [];
 
       return {
         directives: listed.map((directive) => ({ id: directive.id, name: directive.name || directive.id })),
-        complete: listed.length < MAX_ROWS,
+        complete: listed.length < DIRECTIVES_PAGE_SIZE,
       };
-    } catch (error) {
-      throw RobotsRequestError.fromMux(classifyMuxError(error));
-    }
+    });
   },
 
-  /** "Nothing is running — let me try again": drops a placeholder Mux never confirmed. */
+  /** Drops a placeholder Mux never confirmed, once the person says nothing is running. */
   async dismissPending(row: RobotsJobRow): Promise<void> {
     await withAssetLock(row.asset_id, async () => {
       await robotJobs().delete({

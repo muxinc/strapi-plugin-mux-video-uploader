@@ -25,6 +25,7 @@ import { SUPPORTED_MUX_LANGUAGES, type RequestedUploadData } from '../../../../t
 import { getTranslation } from '../../utils/getTranslation';
 import usePluginIntl from '../../utils/use-plugin-intl';
 import { FileInput } from '../file-input';
+import AutomationSection from './automation-section';
 import CustomTextTrackForm from './custom-text-track-form';
 import { generateUploadInfo, NEW_UPLOAD_INITIAL_VALUES } from './new-upload';
 import UploadError from './upload-error';
@@ -553,6 +554,11 @@ function FormBody(props: {
           </Accordion.Content>
         </Accordion.Item>
       </Accordion.Root>
+
+      <AutomationSection
+        value={values.directives}
+        onChange={(directiveIds) => setFieldValue('directives', directiveIds)}
+      />
     </Box>
   );
 }

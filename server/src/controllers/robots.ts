@@ -138,10 +138,21 @@ export default {
     ctx.status = 204;
   }),
 
+  /** When Mux can't be read, the configured ids still come back with the reason: uploads attach them as they are. */
   listDirectives: withRobotsErrors(async (ctx) => {
     const { defaultDirectiveIds = [] } = await Config.getConfig();
-    const { directives, complete } = await getService('robots').listDirectives();
 
-    ctx.send({ directives, complete, defaultDirectiveIds });
+    try {
+      const { directives, complete } = await getService('robots').listDirectives();
+      ctx.send({ directives, complete, defaultDirectiveIds });
+    } catch (error) {
+      if (!(error instanceof RobotsRequestError)) throw error;
+      ctx.send({
+        directives: [],
+        complete: false,
+        defaultDirectiveIds,
+        error: { reason: error.reason, message: error.message },
+      });
+    }
   }),
 };

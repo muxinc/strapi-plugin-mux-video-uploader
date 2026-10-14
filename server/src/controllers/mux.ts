@@ -3,6 +3,8 @@ import { Context } from 'koa';
 import { z } from 'zod';
 
 import { StoredTextTrack, UploadConfig, UploadDataWithoutFile } from '../../../types/shared-types';
+import { PLUGIN_NAME } from '../constants';
+import { resolveUploadDirectives } from '../robots/upload-directives';
 import { getService } from '../utils';
 import { parseRequest } from '../utils/parse-json-body';
 import { storeTextTracks } from '../utils/text-tracks';
@@ -64,20 +66,27 @@ async function parseUploadRequest(ctx: Context) {
 
   const storedTextTracks = await storeTextTracks(custom_text_tracks);
 
+  const directives = await resolveUploadDirectives({
+    canRunRobots: !!ctx.state?.userAbility?.can(`plugin::${PLUGIN_NAME}.robots.run`),
+    requested: config.data.directives,
+  });
+
   return {
     storedTextTracks,
+    directives,
     config: config.data,
     params,
   };
 }
 
 const postDirectUpload = async (ctx: Context) => {
-  const { config, storedTextTracks, params } = await parseUploadRequest(ctx);
+  const { config, storedTextTracks, directives, params } = await parseUploadRequest(ctx);
 
   const result = await getService('mux').getDirectUploadUrl({
     config,
     storedTextTracks,
     corsOrigin: ctx.request.header.origin,
+    directives,
   });
 
   const data = {
@@ -92,7 +101,7 @@ const postDirectUpload = async (ctx: Context) => {
 };
 
 const postRemoteUpload = async (ctx: Context) => {
-  const { config, storedTextTracks, params } = await parseUploadRequest(ctx);
+  const { config, storedTextTracks, directives, params } = await parseUploadRequest(ctx);
 
   if (params.body?.upload_type !== 'url' || !params.body.url) {
     // ctx.badRequest's type seems to be off - we're following the official example: https://docs.strapi.io/dev-docs/error-handling#controllers-and-middlewares
@@ -101,7 +110,12 @@ const postRemoteUpload = async (ctx: Context) => {
     return;
   }
 
-  const result = await getService('mux').createRemoteAsset({ config, storedTextTracks, url: params.body.url });
+  const result = await getService('mux').createRemoteAsset({
+    config,
+    storedTextTracks,
+    url: params.body.url,
+    directives,
+  });
 
   const data = {
     asset_id: result.id,

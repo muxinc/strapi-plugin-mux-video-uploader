@@ -191,9 +191,9 @@ export interface RobotsDirectivesResponse {
   /** False when Mux has more directives than one listing returns, so a missing id proves nothing. */
   complete: boolean;
   defaultDirectiveIds: string[];
+  /** Set when Mux couldn't be read: `directives` is then empty and incomplete. */
+  error?: RobotsErrorBody['error'];
 }
-
-// --- Request bodies of the plugin's Robots routes ---
 
 export const RobotsCreateJobBody = z.object({
   workflow: z.string(),

@@ -33,6 +33,21 @@ describe('Mux client', () => {
 });
 
 describe('uploads', () => {
+  it('attaches Robots directives to both kinds of upload when there are any', async () => {
+    const directives = [{ id: 'drv_a' }];
+
+    await muxService().getDirectUploadUrl({ config: config(), storedTextTracks: [], directives });
+    await muxService().createRemoteAsset({
+      config: config({ upload_type: 'url' }),
+      storedTextTracks: [],
+      url: 'https://x/y.mp4',
+      directives,
+    });
+
+    expect(mux.client.video.uploads.create.mock.calls[0][0].new_asset_settings.directives).toEqual(directives);
+    expect(mux.client.video.assets.create.mock.calls[0][0].directives).toEqual(directives);
+  });
+
   it('creates a direct upload with inputs and playback_policies', async () => {
     await muxService().getDirectUploadUrl({ config: config({ signed: true }), storedTextTracks: [] });
 

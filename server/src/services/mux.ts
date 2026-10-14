@@ -58,10 +58,12 @@ const muxService = () => ({
     config,
     storedTextTracks = [],
     corsOrigin = '*',
+    directives = [],
   }: {
     config: ParsedUploadConfig;
     storedTextTracks: StoredTextTrack[];
     corsOrigin?: string;
+    directives?: Array<{ id: string }>;
   }): Promise<Mux.Video.Uploads.Upload> {
     const { video } = await getMuxClient();
 
@@ -73,6 +75,7 @@ const muxService = () => ({
         mp4_support: config.mp4_support,
         video_quality: config.video_quality,
         max_resolution_tier: config.max_resolution_tier,
+        ...(directives.length ? { directives } : {}),
       },
     });
   },
@@ -81,10 +84,12 @@ const muxService = () => ({
     url,
     config,
     storedTextTracks,
+    directives = [],
   }: {
     url: string;
     storedTextTracks: StoredTextTrack[];
     config: ParsedUploadConfig;
+    directives?: Array<{ id: string }>;
   }) {
     const { video } = await getMuxClient();
 
@@ -94,6 +99,7 @@ const muxService = () => ({
       mp4_support: config.mp4_support,
       video_quality: config.video_quality,
       max_resolution_tier: config.max_resolution_tier,
+      ...(directives.length ? { directives } : {}),
     });
   },
 
