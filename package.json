@@ -30,8 +30,9 @@
   ],
   "scripts": {
     "build": "strapi-plugin build",
-    "test:ts:back": "run -T tsc -p server/tsconfig.json",
-    "test:ts:front": "run -T tsc -p admin/tsconfig.json",
+    "test": "vitest run",
+    "test:ts:back": "tsc -p server/tsconfig.json --noEmit",
+    "test:ts:front": "tsc -p admin/tsconfig.json --noEmit",
     "verify": "strapi-plugin verify",
     "watch": "strapi-plugin watch",
     "watch:link": "strapi-plugin watch:link",
@@ -66,7 +67,8 @@
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2",
     "styled-components": "^6.1.13",
-    "typescript": "^5.6.2"
+    "typescript": "^5.6.2",
+    "vitest": "^3.2.7"
   },
   "peerDependencies": {
     "@strapi/sdk-plugin": "^5.2.6",
