@@ -11,7 +11,7 @@ import {
   Tooltip,
   Typography,
 } from '@strapi/design-system';
-import { unstable_useContentManagerContext, useForm } from '@strapi/strapi/admin';
+import { unstable_useContentManagerContext, useForm, useNotification } from '@strapi/strapi/admin';
 import { useNavigate } from 'react-router-dom';
 
 import type { RobotsEntryVideosResponse, RobotsSummarizeOutput } from '../../../../types/robots';
@@ -214,9 +214,52 @@ function PanelBody({
       )}
 
       {applying && summary && (
-        <ApplyDialog summary={summary} fields={targetFields} onClose={() => setApplying(false)} />
+        <EntryApplyDialog summary={summary} fields={targetFields} onClose={() => setApplying(false)} />
       )}
     </Flex>
+  );
+}
+
+/** Writes into the entry's form as unsaved changes: nothing reaches Mux or the mux-asset until the entry is saved. */
+function EntryApplyDialog({
+  summary,
+  fields,
+  onClose,
+}: {
+  summary: RobotsSummarizeOutput;
+  fields: EntryFieldOption[];
+  onClose: () => void;
+}) {
+  const { t } = useRobotsIntl();
+  const { toggleNotification } = useNotification();
+  const values = useForm('MuxRobotsApplySummary', (state) => state.values) as Record<string, unknown>;
+  const onChange = useForm('MuxRobotsApplySummary', (state) => state.onChange);
+
+  const apply = (applied: Record<string, unknown>) => {
+    for (const [name, value] of Object.entries(applied)) onChange(name, value);
+
+    toggleNotification({
+      type: 'success',
+      message: t(
+        'Robots.apply.done',
+        'Applied {count, plural, one {# generated value} other {# generated values}}. Save the entry to keep them.',
+        {
+          count: Object.keys(applied).length,
+        }
+      ),
+    });
+  };
+
+  return (
+    <ApplyDialog
+      title={t('Robots.apply.title', 'Apply summary to this entry')}
+      help={t('Robots.apply.help', 'Pick a field for each output, or leave it on Do not apply.')}
+      summary={summary}
+      fields={fields}
+      values={values}
+      onApply={apply}
+      onClose={onClose}
+    />
   );
 }
 

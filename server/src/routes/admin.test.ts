@@ -32,7 +32,6 @@ describe('admin routes', () => {
     ['GET', '/robots/jobs/:id', 'read'],
     ['DELETE', '/robots/pending/:id', 'robots.run'],
     ['GET', '/robots/directives', 'read'],
-    ['POST', '/mux-asset/:asset/apply-title', 'update'],
     ['POST', '/mux-asset/:asset/playback-id', 'update'],
   ])('%s %s requires the plugin %s permission', (method, path, action) => {
     expect(requiredActions(findRoute(method, path))).toEqual([`plugin::mux-video-uploader.${action}`]);
@@ -66,6 +65,10 @@ describe('admin routes', () => {
     );
 
     expect(unprotected.map((route) => `${route.method} ${route.path}`)).toEqual([]);
+  });
+
+  it('has no route that sets the title from a summary: Apply summary fills the details form instead', () => {
+    expect(adminRoutes.filter((route) => route.path.endsWith('/apply-title'))).toEqual([]);
   });
 
   it('has a single route per method and path, so the one written first is the one that runs', () => {

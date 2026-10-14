@@ -10,45 +10,28 @@ import {
   minLengthProblem,
   muxAssetRelationFields,
   plainTextOf,
-  toAssetTitle,
   truncateAtWord,
   valueForField,
 } from './robots-format';
 
-describe('toAssetTitle', () => {
-  it('trims and collapses whitespace', () => {
-    expect(toAssetTitle('  Building   a video\n pipeline  ')).toBe('Building a video pipeline');
-  });
-
-  it('keeps a title of up to 255 characters as it is', () => {
+describe('truncateAtWord', () => {
+  it('keeps text that fits as it is', () => {
     const title = `${'word '.repeat(50)}abcd`;
 
     expect(title).toHaveLength(254);
-    expect(toAssetTitle(title)).toBe(title);
+    expect(truncateAtWord(title, 255)).toBe(title);
   });
 
-  it('cuts a longer title at the last space before 254 characters and adds an ellipsis', () => {
-    const title = toAssetTitle('lorem '.repeat(60));
+  it('cuts longer text at the last space before the limit and adds an ellipsis', () => {
+    const title = truncateAtWord('lorem '.repeat(60).trim(), 255);
 
     expect(title).toHaveLength(252);
-    expect(title!.endsWith('lorem…')).toBe(true);
-    expect(title!.length).toBeLessThanOrEqual(255);
+    expect(title.endsWith('lorem…')).toBe(true);
+    expect(truncateAtWord('A walkthrough of uploading and encoding video', 20)).toBe('A walkthrough of…');
   });
 
   it('cuts a single long word where it must', () => {
-    expect(toAssetTitle('x'.repeat(300))).toBe(`${'x'.repeat(254)}…`);
-  });
-
-  it('returns null for anything shorter than 3 characters', () => {
-    expect(toAssetTitle('  ok ')).toBeNull();
-    expect(toAssetTitle('')).toBeNull();
-    expect(toAssetTitle(undefined)).toBeNull();
-    expect(toAssetTitle('Yes')).toBe('Yes');
-  });
-
-  it('cuts to another length when a field allows fewer characters', () => {
-    expect(truncateAtWord('A walkthrough of uploading and encoding video', 20)).toBe('A walkthrough of…');
-    expect(toAssetTitle('A walkthrough of uploading and encoding video', 20)).toBe('A walkthrough of…');
+    expect(truncateAtWord('x'.repeat(300), 255)).toBe(`${'x'.repeat(254)}…`);
   });
 });
 
@@ -93,6 +76,26 @@ describe('Apply summary mapping', () => {
     ]);
     expect(tags.compatible.map((candidate) => candidate.name)).toEqual(['tags']);
     expect(valueForField(summary.tags, field('tags'))).toEqual(['video', 'mux']);
+  });
+
+  it('offers a field restricted to one output for that output only', () => {
+    const own: EntryFieldOption[] = [
+      { name: 'title', label: 'Title', type: 'string', maxLength: 255, minLength: 3, onlyFor: 'title' },
+      { name: 'description', label: 'Description', type: 'text', onlyFor: 'description' },
+      { name: 'tags', label: 'Tags', type: 'json', onlyFor: 'tags' },
+    ];
+    const rows = buildApplyRows(summary, own);
+
+    expect(rows.map((row) => [row.key, row.compatible.map((candidate) => candidate.name)])).toEqual([
+      ['title', ['title']],
+      ['description', ['description']],
+      ['tags', ['tags']],
+    ]);
+    expect(defaultTargets(rows, { title: 'A video', description: '', tags: [] })).toEqual({
+      title: '',
+      description: 'description',
+      tags: 'tags',
+    });
   });
 
   it('skips outputs the summary has no value for', () => {

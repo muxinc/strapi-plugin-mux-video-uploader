@@ -167,49 +167,6 @@ describe('Robots routes', () => {
   });
 });
 
-describe('Use as video title', () => {
-  const summary = (title: unknown) =>
-    fake.db.seed(ROBOT_JOB_MODEL, [jobRow({ mux_id: 'rjob_s', status: 'completed', outputs: { title } })]);
-
-  it('sets the title from the stored summary, cut to fit', async () => {
-    summary(`  ${'word '.repeat(80)} `);
-    const ctx = request({ body: { job_id: 'rjob_s' } });
-
-    await muxAssetController.applyTitle(ctx as any);
-
-    expect(ctx.status).toBe(200);
-    expect(ctx.body.asset.title).toHaveLength(255);
-    expect(ctx.body.asset.title.endsWith('word…')).toBe(true);
-  });
-
-  it('ignores any title in the request body', async () => {
-    summary('From Mux');
-    const ctx = request({ body: { job_id: 'rjob_s', title: 'From the browser' } });
-
-    await muxAssetController.applyTitle(ctx as any);
-
-    expect(fake.db.rows(ASSET_MODEL)[0].title).toBe('From Mux');
-  });
-
-  it('refuses a title shorter than 3 characters', async () => {
-    summary('Hi');
-    const ctx = request({ body: { job_id: 'rjob_s' } });
-
-    await muxAssetController.applyTitle(ctx as any);
-
-    expect(ctx.status).toBe(400);
-    expect(fake.db.rows(ASSET_MODEL)[0].title).toBe('A video');
-  });
-
-  it("refuses a job that isn't a summary of this video", async () => {
-    const ctx = request({ body: { job_id: 'rjob_other' } });
-
-    await muxAssetController.applyTitle(ctx as any);
-
-    expect(ctx.status).toBe(404);
-  });
-});
-
 describe('Create playback ID', () => {
   it("creates one with the asset's policy and stores the fresh asset", async () => {
     await fake.db.query(ASSET_MODEL).update({ where: { id: assetRowId }, data: { playback_id: null } });

@@ -39,20 +39,11 @@ const SLOW_SYNC_MS = 1000;
 interface RobotsTabProps {
   muxAsset: MuxAsset;
   canRun: boolean;
-  canUpdate: boolean;
-  /** Called after a job completes: it may have added tracks, chapters or a title. */
+  /** Called after a job completes: it may have added tracks, chapters, a description or tags. */
   onAssetMayHaveChanged: () => void;
-  /** "Use as video title" saved the title. */
-  onAssetUpdated: (asset: MuxAsset) => void;
 }
 
-export default function RobotsTab({
-  muxAsset,
-  canRun,
-  canUpdate,
-  onAssetMayHaveChanged,
-  onAssetUpdated,
-}: RobotsTabProps) {
+export default function RobotsTab({ muxAsset, canRun, onAssetMayHaveChanged }: RobotsTabProps) {
   const api = useRobotsApi();
   const { t } = useRobotsIntl();
   const { toggleNotification } = useNotification();
@@ -439,15 +430,7 @@ export default function RobotsTab({
         blockedReason={directiveWaiting}
       />
 
-      <OutputViewer
-        row={viewing}
-        api={api}
-        assetRowId={muxAsset.id}
-        canUpdate={canUpdate}
-        onRowLoaded={replaceRow}
-        onTitleApplied={onAssetUpdated}
-        onClose={() => setViewing(undefined)}
-      />
+      <OutputViewer row={viewing} api={api} onRowLoaded={replaceRow} onClose={() => setViewing(undefined)} />
     </Flex>
   );
 }

@@ -132,15 +132,6 @@ const routes = [
   },
   {
     method: 'POST',
-    path: '/mux-video-uploader/mux-asset/:asset/apply-title',
-    handler: 'mux-asset.applyTitle',
-    config: {
-      policies: [can('update')],
-      prefix: false,
-    },
-  },
-  {
-    method: 'POST',
     path: '/mux-video-uploader/mux-asset/:asset/playback-id',
     handler: 'mux-asset.createPlaybackId',
     config: {

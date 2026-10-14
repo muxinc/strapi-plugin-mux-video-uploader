@@ -38,8 +38,6 @@ export function useRobotsApi() {
       listDirectives: async () => (await get<RobotsDirectivesResponse>(`${PLUGIN_ID}/robots/directives`)).data,
       listEntryVideos: async (query: URLSearchParams) =>
         (await get<RobotsEntryVideosResponse>(`${PLUGIN_ID}/robots/entry-videos?${query.toString()}`)).data,
-      applyTitle: async (assetRowId: number, jobId: string) =>
-        (await post<{ asset: MuxAsset }>(`${PLUGIN_ID}/mux-asset/${assetRowId}/apply-title`, { job_id: jobId })).data,
       createPlaybackId: async (assetRowId: number) =>
         (await post<{ asset: MuxAsset }>(`${PLUGIN_ID}/mux-asset/${assetRowId}/playback-id`, {})).data,
       getAsset: async (assetRowId: number) => (await get<MuxAsset>(`${PLUGIN_ID}/mux-asset/${assetRowId}`)).data,

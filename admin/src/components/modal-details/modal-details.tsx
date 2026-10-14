@@ -13,21 +13,26 @@ import {
   Modal,
   Status,
   Tabs,
+  Tag,
   Textarea,
+  Tooltip,
   Typography,
 } from '@strapi/design-system';
 import { useFetchClient, useNotification } from '@strapi/strapi/admin';
-import { Duplicate, Trash, WarningCircle } from '@strapi/icons';
+import { Cross, Duplicate, Trash, WarningCircle } from '@strapi/icons';
 
 import { MuxAsset, MuxAssetUpdate } from '../../../../server/src/content-types/mux-asset/types';
+import type { EntryFieldOption } from '../../../../types/robots-format';
 import usePluginIntl from '../../utils/use-plugin-intl';
 import CustomTextTrackForm from '../modal-new-upload/custom-text-track-form';
 import PreviewPlayer from '../preview-player';
 import { robotsErrorOf, useRobotsApi } from '../robots/api';
 import RobotsErrorBoundary from '../robots/error-boundary';
+import { useRobotsIntl } from '../robots/intl';
 import Note from '../robots/note';
 import RobotsTab from '../robots/robots-tab';
 import { useCanRunRobots } from '../robots/use-can-run-robots';
+import ApplyDialog from '../robots-panel/apply-dialog';
 import Summary from './summary';
 import { PLUGIN_ID } from '../../pluginId';
 
@@ -51,6 +56,7 @@ export default function ModalDetails(props: {
 
   const { del, put } = useFetchClient();
   const { formatMessage } = usePluginIntl();
+  const { t } = useRobotsIntl();
   const robotsApi = useRobotsApi();
 
   const deleteButtonRef = React.useRef<HTMLButtonElement>(null);
@@ -65,6 +71,7 @@ export default function ModalDetails(props: {
   const [tab, setTab] = React.useState<DetailsTab>(initialTab);
   const [robotsOpened, setRobotsOpened] = React.useState(initialTab === 'robots');
   const [creatingPlaybackId, setCreatingPlaybackId] = React.useState(false);
+  const [applyingSummary, setApplyingSummary] = React.useState(false);
 
   const [touchedFields, setTouchedFields] = React.useState<FormikTouched<MuxAssetUpdate>>({});
   const [showDeleteWarning, setShowDeleteWarning] = React.useState(false);
@@ -84,6 +91,7 @@ export default function ModalDetails(props: {
     setTouchedFields({});
     setTab(initialTab);
     setRobotsOpened(initialTab === 'robots');
+    setApplyingSummary(false);
   }, [props.muxAsset?.id]);
 
   React.useEffect(() => {
@@ -146,6 +154,8 @@ export default function ModalDetails(props: {
   const initialValues: MuxAssetUpdate = {
     id: formAsset?.id || 0,
     title: formAsset?.title || formAsset?.asset_id || formAsset?.createdAt,
+    description: formAsset?.description ?? '',
+    tags: Array.isArray(formAsset?.tags) ? formAsset.tags : [],
 
     // @ts-expect-error Due to changes in @mux/mux-node v8, where `TextTrack`, `VideoTrack` and `AudioTrack` were unified,
     // properties required to subtitles as text tracks are showing as optional and breaking the `custom_text_tracks` type.
@@ -159,6 +169,14 @@ export default function ModalDetails(props: {
     })),
   };
 
+  // Only what changed is sent, so a description or tags a summary wrote meanwhile survive the save.
+  const changesIn = (values: MuxAssetUpdate) => ({
+    title: !!touchedFields.title,
+    description: values.description !== initialValues.description,
+    tags: JSON.stringify(values.tags) !== JSON.stringify(initialValues.tags),
+    tracks: JSON.stringify(values.custom_text_tracks || []) !== JSON.stringify(initialValues.custom_text_tracks || []),
+  });
+
   const handleOnSubmit = async (
     values: MuxAssetUpdate,
     { setErrors, setSubmitting }: FormikHelpers<MuxAssetUpdate>
@@ -171,20 +189,21 @@ export default function ModalDetails(props: {
       return;
     }
 
-    const tracksModified =
-      JSON.stringify(values.custom_text_tracks || []) !== JSON.stringify(initialValues.custom_text_tracks || []);
+    const changed = changesIn(values);
 
     const data: MuxAssetUpdate = {
       id: formAsset?.id || 0,
-      title: touchedFields.title ? values.title : undefined,
-      custom_text_tracks: tracksModified ? values.custom_text_tracks : undefined,
+      title: changed.title ? values.title : undefined,
+      description: changed.description ? values.description || null : undefined,
+      tags: changed.tags ? values.tags : undefined,
+      custom_text_tracks: changed.tracks ? values.custom_text_tracks : undefined,
       // The server only deletes tracks this form showed, so a caption added meanwhile survives the save.
-      known_track_ids: tracksModified
+      known_track_ids: changed.tracks
         ? (initialValues.custom_text_tracks || []).flatMap((track) => track.stored_track?.id || [])
         : undefined,
     };
 
-    if (data.title || data.custom_text_tracks) {
+    if (Object.values(changed).some(Boolean)) {
       await put(`${PLUGIN_ID}/mux-asset/${formAsset?.id}`, data);
     }
 
@@ -208,9 +227,7 @@ export default function ModalDetails(props: {
     onSubmit: handleOnSubmit,
   });
 
-  const isDirty =
-    !!touchedFields.title ||
-    JSON.stringify(values.custom_text_tracks || []) !== JSON.stringify(initialValues.custom_text_tracks || []);
+  const isDirty = Object.values(changesIn(values)).some(Boolean);
 
   // A re-read can land several renders after it was asked for, so it reads the form as it is now.
   const current = React.useRef({ isDirty, latestAsset, formAsset });
@@ -225,9 +242,12 @@ export default function ModalDetails(props: {
     setLatestAsset(fresh);
     setAssetChanged(true);
 
+    const formFieldsOf = (asset?: MuxAsset) =>
+      JSON.stringify([asset?.asset_data?.tracks, asset?.description, asset?.tags]);
+
     if (!now.isDirty) {
       setFormAsset(fresh);
-    } else if (JSON.stringify(fresh.asset_data?.tracks) !== JSON.stringify(now.formAsset?.asset_data?.tracks)) {
+    } else if (formFieldsOf(fresh) !== formFieldsOf(now.formAsset)) {
       setChangedWhileEditing(true);
     }
   };
@@ -254,7 +274,41 @@ export default function ModalDetails(props: {
     }
   };
 
+  const applySummary = (applied: Record<string, unknown>) => {
+    for (const [name, value] of Object.entries(applied)) setFieldValue(name, value);
+    if ('title' in applied) setTouchedFields((touched) => ({ ...touched, title: true }));
+
+    toggleNotification({
+      type: 'success',
+      message: t(
+        'ModalDetails.apply-summary.done',
+        'Applied {count, plural, one {# generated value} other {# generated values}}. Click Finish to save them.',
+        {
+          count: Object.keys(applied).length,
+        }
+      ),
+    });
+  };
+
   if (!latestAsset) return null;
+
+  const summary = latestAsset.robots_outputs?.summarize;
+  const titleLabel = formatMessage('Common.title-label', 'Title');
+  const descriptionLabel = formatMessage('ModalDetails.description-label', 'Description');
+  const tagsLabel = formatMessage('ModalDetails.tags-label', 'Tags');
+
+  // The video's own fields, with the limits of `mux-asset`'s schema.
+  const summaryTargets: EntryFieldOption[] = [
+    { name: 'title', label: titleLabel, type: 'string', minLength: 3, maxLength: 255, onlyFor: 'title' },
+    { name: 'description', label: descriptionLabel, type: 'text', onlyFor: 'description' },
+    { name: 'tags', label: tagsLabel, type: 'json', onlyFor: 'tags' },
+  ];
+
+  const applySummaryButton = (
+    <Button variant="secondary" disabled={!summary || !enableUpdate} onClick={() => setApplyingSummary(true)}>
+      {formatMessage('ModalDetails.apply-summary', 'Apply summary')}
+    </Button>
+  );
 
   const aspect_ratio = latestAsset.aspect_ratio || latestAsset.asset_data?.aspect_ratio;
   const needsPlaybackId = latestAsset.isReady && !!latestAsset.asset_id && !latestAsset.playback_id;
@@ -404,7 +458,7 @@ export default function ModalDetails(props: {
                         <Note variant="warning">
                           {formatMessage(
                             'ModalDetails.changed-while-editing',
-                            'This video changed while you were editing (new captions or tracks). Save or discard your changes to see them.'
+                            'This video changed while you were editing (new captions, tracks, description or tags). Save or discard your changes to see them.'
                           )}
                         </Note>
                       </Box>
@@ -414,7 +468,7 @@ export default function ModalDetails(props: {
                       <Box paddingTop={4}>
                         <Box paddingBottom={4} width="100%">
                           <Field.Root id="with_field" error={errors.title}>
-                            <Field.Label>{formatMessage('Common.title-label', 'Title')}</Field.Label>
+                            <Field.Label>{titleLabel}</Field.Label>
                             <Field.Input
                               name="title"
                               hasError={errors.title !== undefined}
@@ -428,6 +482,53 @@ export default function ModalDetails(props: {
                             />
                             <Field.Error />
                           </Field.Root>
+                        </Box>
+                        <Box paddingBottom={4} width="100%">
+                          <Field.Root name="description">
+                            <Field.Label>{descriptionLabel}</Field.Label>
+                            <Textarea
+                              name="description"
+                              value={values.description ?? ''}
+                              disabled={!enableUpdate}
+                              onChange={handleChange}
+                            />
+                          </Field.Root>
+                        </Box>
+                        <Box paddingBottom={4} width="100%">
+                          <TagsField
+                            label={tagsLabel}
+                            tags={values.tags ?? []}
+                            disabled={!enableUpdate}
+                            onChange={(tags) => setFieldValue('tags', tags)}
+                          />
+                        </Box>
+                        <Box paddingBottom={4}>
+                          {summary ? (
+                            applySummaryButton
+                          ) : (
+                            <Tooltip
+                              label={formatMessage(
+                                'ModalDetails.apply-summary-disabled',
+                                'Run a Summarize job on this video to apply its title, description and tags.'
+                              )}
+                            >
+                              <span>{applySummaryButton}</span>
+                            </Tooltip>
+                          )}
+                          {applyingSummary && summary && (
+                            <ApplyDialog
+                              title={formatMessage('ModalDetails.apply-summary.title', 'Apply summary to this video')}
+                              help={formatMessage(
+                                'ModalDetails.apply-summary.help',
+                                "Pick a field for each output, or leave it on Do not apply. Nothing is sent to Mux: the values go into this video's fields, and Finish saves them."
+                              )}
+                              summary={summary}
+                              fields={summaryTargets}
+                              values={{ title: values.title, description: values.description, tags: values.tags }}
+                              onApply={applySummary}
+                              onClose={() => setApplyingSummary(false)}
+                            />
+                          )}
                         </Box>
                         <Box paddingBottom={4} width="100%">
                           <Summary muxAsset={latestAsset} />
@@ -489,9 +590,7 @@ export default function ModalDetails(props: {
                             <RobotsTab
                               muxAsset={latestAsset}
                               canRun={canRunRobots}
-                              canUpdate={enableUpdate}
                               onAssetMayHaveChanged={reloadAsset}
-                              onAssetUpdated={showFreshAsset}
                             />
                           </RobotsErrorBoundary>
                         </Box>
@@ -515,5 +614,65 @@ export default function ModalDetails(props: {
         </Modal.Content>
       </Modal.Root>
     </form>
+  );
+}
+
+/** An editable list of short strings: Enter or a comma adds what was typed, and each tag removes itself. */
+function TagsField({
+  label,
+  tags,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  tags: string[];
+  disabled: boolean;
+  onChange: (tags: string[]) => void;
+}) {
+  const { t } = useRobotsIntl();
+  const [draft, setDraft] = React.useState('');
+
+  // Splits on commas too, so a pasted list adds one tag per item.
+  const add = () => {
+    const added = draft
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter((tag, index, all) => tag && !tags.includes(tag) && all.indexOf(tag) === index);
+    setDraft('');
+    if (added.length > 0) onChange([...tags, ...added]);
+  };
+
+  return (
+    <Field.Root name="tags" hint={t('ModalDetails.tags-hint', 'Press Enter or type a comma to add a tag.')}>
+      <Field.Label>{label}</Field.Label>
+      {tags.length > 0 && (
+        <Flex gap={1} wrap="wrap" paddingBottom={1}>
+          {tags.map((tag, index) => (
+            <Tag
+              key={`${index}-${tag}`}
+              icon={<Cross />}
+              label={t('ModalDetails.remove-tag', 'Remove {tag}', { tag })}
+              disabled={disabled}
+              onClick={() => onChange(tags.filter((_, other) => other !== index))}
+            >
+              {tag}
+            </Tag>
+          ))}
+        </Flex>
+      )}
+      <Field.Input
+        value={draft}
+        disabled={disabled}
+        placeholder={t('ModalDetails.add-tag', 'Add a tag')}
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) => setDraft(event.target.value)}
+        onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
+          if (event.key !== 'Enter' && event.key !== ',') return;
+          event.preventDefault();
+          add();
+        }}
+        onBlur={add}
+      />
+      <Field.Hint />
+    </Field.Root>
   );
 }
