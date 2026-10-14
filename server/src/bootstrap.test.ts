@@ -19,4 +19,20 @@ describe('bootstrap', () => {
 
     expect(log.warn).not.toHaveBeenCalled();
   });
+
+  it('registers Run Robots beside the Read, Create, Update and Delete actions', async () => {
+    const { strapi } = installFakeStrapi();
+
+    await bootstrap({ strapi: strapi as any });
+
+    const [actions] = strapi.admin.services.permission.actionProvider.registerMany.mock.calls[0];
+    expect(actions.map((action: { uid: string }) => action.uid)).toEqual(
+      expect.arrayContaining(['read', 'create', 'update', 'delete', 'robots.run'])
+    );
+    expect(actions.find((action: { uid: string }) => action.uid === 'robots.run')).toMatchObject({
+      section: 'plugins',
+      displayName: 'Run Robots',
+      pluginName: 'mux-video-uploader',
+    });
+  });
 });

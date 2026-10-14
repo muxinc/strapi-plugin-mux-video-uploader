@@ -24,7 +24,7 @@ export interface UploadRequestConfig {
   signed?: 'true' | 'false';
 }
 
-const getMuxClient = async () => {
+export const getMuxClient = async () => {
   const { accessTokenId, secretKey } = await Config.getConfig();
 
   return new Mux({
@@ -95,6 +95,12 @@ const muxService = () => ({
       video_quality: config.video_quality,
       max_resolution_tier: config.max_resolution_tier,
     });
+  },
+
+  async createPlaybackId(assetId: string, policy: 'public' | 'signed') {
+    const { video } = await getMuxClient();
+
+    return video.assets.createPlaybackId(assetId, { policy });
   },
 
   async deleteAsset(assetId: string) {

@@ -1,9 +1,6 @@
-/**
- * Robots data shared by the admin and the server: statuses, the stored job row, the outputs kept on
- * the mux-asset, and what the plugin's Robots routes answer.
- *
- * Field names follow Mux's payloads (snake_case), like the rest of the plugin's stored data.
- */
+import { z } from 'zod';
+
+// Field names follow Mux's payloads (snake_case), like the rest of the plugin's stored data.
 
 export type RobotsJobStatus = 'pending' | 'processing' | 'completed' | 'errored' | 'cancelled';
 
@@ -193,3 +190,15 @@ export interface RobotsDirectivesResponse {
   complete: boolean;
   defaultDirectiveIds: string[];
 }
+
+// --- Request bodies of the plugin's Robots routes ---
+
+export const RobotsCreateJobBody = z.object({
+  workflow: z.string(),
+  /** The run form's values, keyed by catalog field name. */
+  values: z.record(z.unknown()).default({}),
+});
+
+export const RobotsRunDirectiveBody = z.object({ directive_id: z.string().min(1) });
+
+export const RobotsApplyTitleBody = z.object({ job_id: z.string().min(1) });
