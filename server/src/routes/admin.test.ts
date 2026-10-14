@@ -50,9 +50,19 @@ describe('admin routes', () => {
     expect(requiredActions(route)).toEqual([]);
   });
 
+  it('leaves the Apply summary route to the Content Manager read check in its controller', () => {
+    const route = findRoute('GET', '/robots/entry-videos');
+
+    expect(route?.handler).toBe('robots.entryVideos');
+    expect((route?.config as { auth?: boolean }).auth).toBeUndefined();
+  });
+
   it('protects every route that needs an admin session', () => {
     const unprotected = adminRoutes.filter(
-      (route) => (route.config as { auth?: boolean }).auth !== false && requiredActions(route).length === 0
+      (route) =>
+        (route.config as { auth?: boolean }).auth !== false &&
+        requiredActions(route).length === 0 &&
+        route.handler !== 'robots.entryVideos'
     );
 
     expect(unprotected.map((route) => `${route.method} ${route.path}`)).toEqual([]);

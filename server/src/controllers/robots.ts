@@ -2,6 +2,7 @@ import { Context } from 'koa';
 import { z } from 'zod';
 
 import { RobotsCreateJobBody, RobotsJobRow, RobotsRunDirectiveBody } from '../../../types/robots';
+import { muxAssetRelationFields } from '../../../types/robots-format';
 import { MuxAsset } from '../content-types/mux-asset/types';
 import { RobotsRequestError } from '../robots/errors';
 import { Config, getService } from '../utils';
@@ -69,6 +70,74 @@ export const withRobotsErrors =
 const userId = (ctx: Context) => (typeof ctx.state?.user?.id === 'number' ? ctx.state.user.id : null);
 
 export default {
+  /**
+   * The Mux videos an entry links to, with their newest summary, for the Content Manager's summary
+   * panel. Needs Content Manager read access to the entry, not the plugin's permissions.
+   */
+  entryVideos: async (ctx: Context) => {
+    const model = nonEmptyString(ctx.query.model);
+    const documentId = nonEmptyString(ctx.query.documentId);
+    const locale = nonEmptyString(ctx.query.locale);
+
+    const contentType = model ? strapi.contentType(model as any) : undefined;
+    if (!model || !documentId || !contentType) {
+      ctx.badRequest('ValidationError', { errors: { query: 'model and documentId are required' } });
+      return;
+    }
+
+    const permissionChecker = strapi
+      .plugin('content-manager')
+      .service('permission-checker')
+      .create({ userAbility: ctx.state.userAbility, model });
+
+    if (permissionChecker.cannot.read()) {
+      ctx.forbidden();
+      return;
+    }
+
+    // Only the Mux relations this role may read are loaded at all.
+    const fieldNames = muxAssetRelationFields(contentType.attributes).filter((name) =>
+      permissionChecker.can.read(null, name)
+    );
+    if (fieldNames.length === 0) {
+      ctx.send({ fields: [] });
+      return;
+    }
+
+    const entry = await strapi.documents(model as any).findOne({
+      documentId,
+      ...(locale ? { locale } : {}),
+      status: 'draft',
+      // `createdBy` lets "is creator" conditions apply, as in the Content Manager's own read.
+      populate: { ...Object.fromEntries(fieldNames.map((name) => [name, true])), createdBy: { fields: ['id'] } },
+    } as any);
+
+    if (entry && permissionChecker.cannot.read(entry)) {
+      ctx.forbidden();
+      return;
+    }
+
+    // Field permissions can have conditions on the entry, so they're checked again against it.
+    const readableFields = fieldNames.filter((name) => !permissionChecker.cannot.read(entry ?? undefined, name));
+
+    const fields = readableFields.map((name) => {
+      const related = (entry as Record<string, any> | null)?.[name];
+      const videos = (Array.isArray(related) ? related : related ? [related] : []) as MuxAsset[];
+
+      return {
+        name,
+        videos: videos.map((video) => ({
+          id: video.id,
+          title: video.title,
+          asset_id: video.asset_id,
+          summary: video.robots_outputs?.summarize ?? null,
+        })),
+      };
+    });
+
+    ctx.send({ fields });
+  },
+
   /** Polled while something runs, so it never calls Mux. */
   listJobs: withRobotsErrors(async (ctx) => {
     const muxAsset = await findMuxAsset(ctx);

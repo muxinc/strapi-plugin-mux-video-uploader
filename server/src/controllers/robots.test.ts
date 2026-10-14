@@ -178,7 +178,7 @@ describe('Use as video title', () => {
     await muxAssetController.applyTitle(ctx as any);
 
     expect(ctx.status).toBe(200);
-    expect(ctx.body.asset.title).toHaveLength(250);
+    expect(ctx.body.asset.title).toHaveLength(255);
     expect(ctx.body.asset.title.endsWith('word…')).toBe(true);
   });
 
