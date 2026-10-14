@@ -6,6 +6,8 @@ export interface Config {
   webhookSigningSecret?: string;
   playbackSigningId?: string;
   playbackSigningSecret?: string;
+  /** Robots directives attached to every new upload. */
+  defaultDirectiveIds?: string[];
 }
 
 type GetConfigFunction = () => Promise<Config>;

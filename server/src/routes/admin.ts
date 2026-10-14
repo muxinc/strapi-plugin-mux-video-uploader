@@ -130,6 +130,96 @@ const routes = [
       prefix: false,
     },
   },
+  {
+    method: 'POST',
+    path: '/mux-video-uploader/mux-asset/:asset/apply-title',
+    handler: 'mux-asset.applyTitle',
+    config: {
+      policies: [can('update')],
+      prefix: false,
+    },
+  },
+  {
+    method: 'POST',
+    path: '/mux-video-uploader/mux-asset/:asset/playback-id',
+    handler: 'mux-asset.createPlaybackId',
+    config: {
+      policies: [can('update')],
+      prefix: false,
+    },
+  },
+  {
+    method: 'GET',
+    path: '/mux-video-uploader/robots/assets/:asset/jobs',
+    handler: 'robots.listJobs',
+    config: {
+      policies: [can('read')],
+      prefix: false,
+    },
+  },
+  {
+    method: 'POST',
+    path: '/mux-video-uploader/robots/assets/:asset/sync',
+    handler: 'robots.sync',
+    config: {
+      policies: [can('read')],
+      prefix: false,
+    },
+  },
+  {
+    method: 'POST',
+    path: '/mux-video-uploader/robots/assets/:asset/jobs',
+    handler: 'robots.createJob',
+    config: {
+      policies: [can('robots.run')],
+      prefix: false,
+    },
+  },
+  {
+    method: 'POST',
+    path: '/mux-video-uploader/robots/assets/:asset/directive-runs',
+    handler: 'robots.runDirective',
+    config: {
+      policies: [can('robots.run')],
+      prefix: false,
+    },
+  },
+  {
+    method: 'POST',
+    path: '/mux-video-uploader/robots/jobs/:id/cancel',
+    handler: 'robots.cancelJob',
+    config: {
+      policies: [can('robots.run')],
+      prefix: false,
+    },
+  },
+  {
+    method: 'GET',
+    path: '/mux-video-uploader/robots/jobs/:id',
+    handler: 'robots.findJob',
+    config: {
+      policies: [can('read')],
+      prefix: false,
+    },
+  },
+  {
+    method: 'DELETE',
+    path: '/mux-video-uploader/robots/pending/:id',
+    handler: 'robots.dismissPending',
+    config: {
+      policies: [can('robots.run')],
+      prefix: false,
+    },
+  },
+  {
+    method: 'GET',
+    path: '/mux-video-uploader/robots/directives',
+    handler: 'robots.listDirectives',
+    config: {
+      policies: [can('read')],
+      prefix: false,
+    },
+  },
 ];
 
 export default routes;

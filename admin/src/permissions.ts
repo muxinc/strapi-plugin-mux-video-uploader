@@ -6,6 +6,7 @@ const mainRead = { action: `plugin::${PLUGIN_ID}.read`, subject: null };
 const mainCreate = { action: `plugin::${PLUGIN_ID}.create`, subject: null };
 const mainUpdate = { action: `plugin::${PLUGIN_ID}.update`, subject: null };
 const mainDelete = { action: `plugin::${PLUGIN_ID}.delete`, subject: null };
+const robotsRun = { action: `plugin::${PLUGIN_ID}.robots.run`, subject: null };
 
 const pluginPermissions = {
   // This permission regards the main component (App) and is used to tell
@@ -19,6 +20,7 @@ const pluginPermissions = {
   mainCreate,
   mainUpdate,
   mainDelete,
+  robotsRun,
 };
 
 export default pluginPermissions;

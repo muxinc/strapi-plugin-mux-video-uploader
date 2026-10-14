@@ -24,6 +24,16 @@ describe('admin routes', () => {
     ['POST', '/mux-asset', 'create'],
     ['PUT', '/mux-asset/:documentId', 'update'],
     ['GET', '/mux-settings', 'read'],
+    ['GET', '/robots/assets/:asset/jobs', 'read'],
+    ['POST', '/robots/assets/:asset/sync', 'read'],
+    ['POST', '/robots/assets/:asset/jobs', 'robots.run'],
+    ['POST', '/robots/assets/:asset/directive-runs', 'robots.run'],
+    ['POST', '/robots/jobs/:id/cancel', 'robots.run'],
+    ['GET', '/robots/jobs/:id', 'read'],
+    ['DELETE', '/robots/pending/:id', 'robots.run'],
+    ['GET', '/robots/directives', 'read'],
+    ['POST', '/mux-asset/:asset/apply-title', 'update'],
+    ['POST', '/mux-asset/:asset/playback-id', 'update'],
   ])('%s %s requires the plugin %s permission', (method, path, action) => {
     expect(requiredActions(findRoute(method, path))).toEqual([`plugin::mux-video-uploader.${action}`]);
   });

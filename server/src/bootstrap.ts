@@ -35,6 +35,13 @@ const bootstrap = async ({ strapi }: { strapi: Core.Strapi }) => {
       uid: 'delete',
       pluginName: PLUGIN_NAME,
     },
+    // Its own permission because running Robots spends Mux AI units. Seeing results needs only Read.
+    {
+      section: 'plugins',
+      displayName: 'Run Robots',
+      uid: 'robots.run',
+      pluginName: PLUGIN_NAME,
+    },
     // Settings
     {
       section: 'plugins',
