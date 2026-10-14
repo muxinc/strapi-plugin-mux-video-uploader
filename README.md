@@ -128,10 +128,12 @@ mux webhooks listen --forward-to http://localhost:1337/mux-video-uploader/webhoo
 [Mux Robots](https://www.mux.com/docs/guides/robots) runs AI workflows on your Mux videos. Each run consumes Mux AI units: see [Robots pricing](https://www.mux.com/docs/pricing/overview#mux-robots-pricing).
 
 - **Access token.** Robots needs an access token with the Robots permission (`robots:*`). Existing tokens can't gain new permissions, so create a new token in the [Mux Dashboard](https://dashboard.mux.com/settings/access-tokens) and use it for `accessTokenId` / `secretKey`. Robots must also be enabled for your Mux account.
-- **The Robots tab.** A video's details have a Robots tab: run any of the 12 workflows, run a directive, cancel a running job, and see every job and directive run on that video with its output. Results arrive through [webhooks](#-webhooks), so the tab updates on its own while something runs.
+- **The Robots tab.** A video's details have a Robots tab: run any of the 12 workflows, run a directive, cancel a running job, and see every job and directive run on that video with its output and the Mux AI units it consumed.
+- **How results arrive.** Mux sends every job and directive run update by [webhook](#-webhooks), and Strapi stores it. Opening the Robots tab reads Mux once, to pick up jobs started outside Strapi; after that the tab re-reads Strapi every 6 seconds while something runs, and stops when nothing does or the details close. Nothing polls Mux.
 - **Directives on upload.** List directive ids in `defaultDirectiveIds` and every new upload gets them. The upload form shows them checked; only people with the Run Robots permission can uncheck one. Create directives in the [Mux Dashboard](https://dashboard.mux.com).
-- **Stored results.** The newest summary and moderation scores are stored on the Mux Asset (`description`, `tags` and `robots_outputs`) and returned by the plugin's content API, so any role with `find` or `findOne` can read them, moderation scores included. "Use as video title" in a summary's output sets the video's title in Strapi. Captions, dubs and chapters are added to the Mux video itself.
-- **Apply summary.** Entries of content types with a relation to Mux Asset show a "Mux Robots" panel in the Content Manager. Apply summary writes the linked video's newest summary into the entry's own fields, as unsaved changes: you choose the target fields and save the entry. Only top-level relations are found (not ones inside components or dynamic zones), and the panel reads the saved entry, so a video linked in the form shows after you save.
+- **Description and tags.** When a summarize job completes, its description and tags replace the video's `description` and `tags`; the title never changes on its own. Both fields are shown and editable in the video's Details tab, and **Apply summary** there writes the newest summary's title, description or tags into the form, for you to review and save. It's disabled until the video has a completed summarize job.
+- **Stored results.** The newest summary and moderation scores are kept in the Mux Asset's `robots_outputs`. The plugin's content API returns `description`, `tags` and `robots_outputs`, so any role with `find` or `findOne` can read them, moderation scores included. Captions, dubs and chapters are added to the Mux video itself.
+- **Apply summary in entries.** Entries of content types with a relation to Mux Asset show a "Mux Robots" panel in the Content Manager. Apply summary writes the linked video's newest summary into the entry's own fields, as unsaved changes: you choose the target fields and save the entry. Only top-level relations are found (not ones inside components or dynamic zones), and the panel reads the saved entry, so a video linked in the form shows after you save.
 - **No automatic retries.** The plugin never repeats a request to Mux on its own, so a run is never started or billed twice by accident. If Mux doesn't answer, the run shows as "Not confirmed" until it appears or you tell the plugin nothing is running.
 - **One Strapi process.** The check that holds back a second run while Mux hasn't confirmed the first works within one Strapi process. With several instances behind a load balancer, two clicks that reach different instances can each start, and bill, a run.
 
@@ -141,7 +143,7 @@ The plugin's permissions are set per role in **Settings → Administration Panel
 
 - **Read**: see the plugin, its videos and their Robots results
 - **Create**: upload videos
-- **Update**: edit titles and captions, "Use as video title", and create a playback ID for a video that has none
+- **Update**: edit titles, descriptions, tags and captions, apply a summary to a video, and create a playback ID for a video that has none
 - **Delete**: delete videos
 - **Run Robots**: run workflows and directives, cancel jobs, and uncheck default directives when uploading. Running Robots consumes Mux AI units, so no role but Super Admin has it until you grant it.
 
@@ -151,11 +153,65 @@ Apply summary in the Content Manager follows the Content Manager's own permissio
 
 ## ⬆️ Upgrading to 3.2
 
-- **Webhook signatures are verified.** Set `webhookSigningSecret` to the signing secret of your webhook in the [Mux Dashboard](https://dashboard.mux.com/settings/webhooks). If it's missing or wrong, Mux webhooks are rejected with 401 and new uploads stay in "Preparing"; after fixing it, resend the failed events from Mux. The plugin turns on `includeUnparsed` for `strapi::body` to read the raw body; if your app sets `includeUnparsed: false`, webhooks fail with 500 and a log message.
+Upgrading keeps every video and caption you have: Strapi only adds tables, columns and indexes (see [Data stored by the plugin](#-data-stored-by-the-plugin)), and nothing is deleted or rewritten. There's no migration to run.
+
+1. Update the package, then rebuild the admin—
+
+   ```bash
+   npm install strapi-plugin-mux-video-uploader@^3.2.0
+   npm run build
+   ```
+
+2. Check that `webhookSigningSecret` matches the signing secret of your webhook in the [Mux Dashboard](https://dashboard.mux.com/settings/webhooks). Webhooks are now verified: with a missing or wrong secret they're rejected with 401 and new uploads stay in "Preparing".
+3. If your app's `config/middlewares` sets `includeUnparsed: false` on `strapi::body`, remove that option. The plugin turns it on to read the raw body webhooks are signed over; with it off, webhooks fail with 500 and a log message.
+4. Start Strapi. It creates the `muxrobotjobs` table and the new `muxassets` columns and indexes on its own.
+5. If webhooks were rejected while the secret was wrong, resend them from Mux, for example with `mux webhooks events replay`.
+6. To use Mux Robots: create an access token with the Robots permission (see [Mux Robots](#-mux-robots)), grant **Run Robots** to the roles that should run workflows, and optionally list directive ids in `defaultDirectiveIds`.
+
+What behaves differently—
+
 - **The admin API enforces the plugin's permissions.** The admin panel already applied Read, Create, Update and Delete; calls made directly to the plugin's admin API by roles without them now get a 403.
+- **Failed requests to Mux aren't retried.** A retried create could start a second billed Robots job, so every call to Mux is made once and its error is shown as is.
+- **Saving a video's details only deletes caption tracks the form showed.** Calls made directly to the update API delete a track only when its id is listed in `known_track_ids`.
 - **Custom caption files have unguessable URLs.** Mux downloads each custom caption file from a public URL that now names the stored file by its `documentId` instead of a sequential id, and gets the right file: before, every caption URL returned the first file stored.
 
-Strapi adds the new Mux Asset fields, the database indexes and the Robots jobs table when it starts. There's no migration to run.
+## 💾 Data stored by the plugin
+
+Besides Strapi's own columns (`id`, `document_id`, `created_at`, `updated_at`, `published_at`, `created_by_id`, `updated_by_id`), the plugin keeps three tables.
+
+**`muxassets`**: Mux Asset (`plugin::mux-video-uploader.mux-asset`), one row per video. Indexed on `asset_id` and `upload_id` (new in 3.2).
+
+| Column | Type | Holds |
+| --- | --- | --- |
+| `title` | string | The video's title in Strapi |
+| `upload_id`, `asset_id`, `playback_id` | string | Mux ids |
+| `signed` | boolean | Signed playback |
+| `is_ready` | boolean | Mux finished processing the video |
+| `error_message` | string | Mux's error for a failed upload or asset |
+| `duration`, `aspect_ratio` | decimal, string | From Mux |
+| `asset_data` | json | The Mux asset as last read: tracks, playback ids, renditions |
+| `description` | text | **New in 3.2.** Written by summarize jobs; editable |
+| `tags` | json | **New in 3.2.** A list of strings, written by summarize jobs; editable |
+| `robots_outputs` | json | **New in 3.2.** The newest `summarize` (`job_id`, `completed_at`, `title`, `description`, `tags`) and `moderate` (`job_id`, `completed_at`, `exceeds_threshold`, `max_scores`) results |
+
+**`muxrobotjobs`**: Mux Robot Job (`plugin::mux-video-uploader.mux-robot-job`), **new in 3.2**, hidden from the Content Manager. One row per Robots job or directive run Mux reports through webhooks, including runs on videos this Strapi doesn't have, so their results show if the video is added later. It also holds a short-lived row for each run started from Strapi until Mux confirms it. Rows are never deleted, so results outlive Mux's own retention. Indexed on `mux_id` and `asset_id`.
+
+| Column | Type | Holds |
+| --- | --- | --- |
+| `mux_id` | string | `rjob_…` or `drvrun_…`; empty until Mux confirms a run started from Strapi |
+| `is_directive_run` | boolean | A directive run rather than a job |
+| `workflow` | string | The workflow, e.g. `summarize` (jobs) |
+| `directive_id`, `directive_run_id` | string | The directive and run that started a job, or the run's directive |
+| `status` | string | `pending`, `processing`, `completed`, `errored`, `cancelled`; runs also `partial`; `requested` or `unconfirmed` while Mux hasn't confirmed a run |
+| `asset_id`, `mux_asset` | string, relation | The Mux asset, and the Mux Asset row when this Strapi has it |
+| `parameters`, `outputs`, `errors` | json | As Mux reported them |
+| `units_consumed` | integer | Mux AI units |
+| `run_data` | json | A directive run's steps and timestamps |
+| `mux_created_at`, `mux_updated_at` | datetime | Mux's timestamps |
+| `detail_loaded` | boolean | Outputs and units are stored |
+| `request_id`, `requested_at`, `requested_by` | string, datetime, integer | Who started a run from Strapi, and when |
+
+**`muxtexttracks`**: Mux Text Track (`plugin::mux-video-uploader.mux-text-track`), unchanged: custom caption files (`name`, `language_code`, `closed_captions`, `file`) kept so Mux can download them from `/mux-video-uploader/mux-text-tracks/:documentId`.
 
 ## 🤝 Contributing
 
