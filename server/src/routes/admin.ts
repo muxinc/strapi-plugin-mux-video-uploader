@@ -220,6 +220,16 @@ const routes = [
       prefix: false,
     },
   },
+  {
+    method: 'GET',
+    path: '/mux-video-uploader/robots/entry-videos',
+    handler: 'robots.entryVideos',
+    config: {
+      // Whoever can read the entry in the Content Manager: the controller checks it per model.
+      policies: [],
+      prefix: false,
+    },
+  },
 ];
 
 export default routes;

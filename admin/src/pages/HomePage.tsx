@@ -15,7 +15,7 @@ import { appendQueryParameter } from '../utils/url';
 import { PLUGIN_ID } from '../pluginId';
 import { SearchField, SearchVector, SortVector } from '../types';
 import Header from '../components/header';
-import ModalDetails from '../components/modal-details/modal-details';
+import ModalDetails, { DetailsTab } from '../components/modal-details/modal-details';
 import SignedTokensProvider from '../components/signed-tokens-provider';
 
 const ProtectedHomePage = () => (
@@ -58,6 +58,7 @@ const HomePage = () => {
   const [pages, setPages] = React.useState(1);
   const [page, setPage] = React.useState<number>();
   const [isDetailsOpen, setIsDetailsOpen] = React.useState<boolean>(false);
+  const [detailsTab, setDetailsTab] = React.useState<DetailsTab>('details');
 
   const loadMuxAssets = async () => {
     if (page === undefined) return;
@@ -127,6 +128,23 @@ const HomePage = () => {
     loadMuxAssets();
   }, [page, searchField, searchValue, pageLimit]);
 
+  // The Content Manager's Mux Robots panel links here with `?asset=<id>&tab=robots`.
+  React.useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const assetId = Number(params.get('asset'));
+    if (!Number.isInteger(assetId) || assetId <= 0 || selectedAsset?.id === assetId) return;
+
+    get(`${PLUGIN_ID}/mux-asset/${assetId}`)
+      .then(({ data }) => {
+        if (!data) return;
+        setDetailsTab(params.get('tab') === 'robots' ? 'robots' : 'details');
+        setSelectedAsset(data);
+      })
+      .catch(() => {
+        // An asset that no longer exists just leaves the list showing.
+      });
+  }, [location.search]);
+
   const permissions = React.useMemo(() => {
     return [pluginPermissions.mainCreate, pluginPermissions.mainUpdate, pluginPermissions.mainDelete];
   }, []);
@@ -152,11 +170,22 @@ const HomePage = () => {
     navigate(appendQueryParameter(location, { value: event?.target.value || '' }));
   };
 
-  const handleOnMuxAssetClick = (muxAsset: MuxAsset) => setSelectedAsset(muxAsset);
+  const handleOnMuxAssetClick = (muxAsset: MuxAsset) => {
+    setDetailsTab('details');
+    setSelectedAsset(muxAsset);
+  };
 
   const handleOnDetailsClose = (refresh: boolean) => {
     setIsDetailsOpen(false);
     setSelectedAsset(undefined);
+
+    const params = new URLSearchParams(location.search);
+    if (params.has('asset') || params.has('tab')) {
+      params.delete('asset');
+      params.delete('tab');
+      navigate({ ...location, search: params.toString() }, { replace: true });
+    }
+
     if (!refresh) return;
 
     loadMuxAssets();
@@ -224,6 +253,7 @@ const HomePage = () => {
           muxAsset={selectedAsset}
           enableUpdate={canUpdate}
           enableDelete={canDelete}
+          initialTab={detailsTab}
           onToggle={handleOnDetailsClose}
         />
       </Layouts.Root>

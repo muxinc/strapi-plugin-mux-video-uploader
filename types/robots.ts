@@ -269,3 +269,16 @@ export function firstErrorMessage(errors: unknown): string | undefined {
 
   return undefined;
 }
+
+/** A Mux video an entry links to, for the Content Manager's Apply summary panel. */
+export interface RobotsEntryVideo {
+  id: number;
+  title: string;
+  asset_id: string | null;
+  summary: RobotsSummarizeOutput | null;
+}
+
+export interface RobotsEntryVideosResponse {
+  /** One per top-level relation to Mux assets, in the content type's order. */
+  fields: Array<{ name: string; videos: RobotsEntryVideo[] }>;
+}
