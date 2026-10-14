@@ -30,6 +30,9 @@ const getMuxClient = async () => {
   return new Mux({
     tokenId: accessTokenId,
     tokenSecret: secretKey,
+    // A repeated create can start a second billed Robots job, or a second asset that runs its
+    // directives again.
+    maxRetries: 0,
     defaultHeaders: {
       'x-source-platform': `Strapi CMS | ${pluginPkg.version}`,
     },
@@ -65,8 +68,8 @@ const muxService = () => ({
     return video.uploads.create({
       cors_origin: corsOrigin,
       new_asset_settings: {
-        input: uploadConfigToNewAssetInput(config, storedTextTracks),
-        playback_policy: [config.signed ? 'signed' : 'public'],
+        inputs: uploadConfigToNewAssetInput(config, storedTextTracks),
+        playback_policies: [config.signed ? 'signed' : 'public'],
         mp4_support: config.mp4_support,
         video_quality: config.video_quality,
         max_resolution_tier: config.max_resolution_tier,
@@ -87,7 +90,7 @@ const muxService = () => ({
 
     return video.assets.create({
       inputs: uploadConfigToNewAssetInput(config, storedTextTracks, url) || [],
-      playback_policy: [config.signed ? 'signed' : 'public'],
+      playback_policies: [config.signed ? 'signed' : 'public'],
       mp4_support: config.mp4_support,
       video_quality: config.video_quality,
       max_resolution_tier: config.max_resolution_tier,
