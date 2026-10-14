@@ -1,9 +1,9 @@
 import React from 'react';
-import { Flex, IconButton, Td, Tr, Typography } from '@strapi/design-system';
+import { Td, TextButton, Tr, Typography } from '@strapi/design-system';
 import { ChevronDown, ChevronUp } from '@strapi/icons';
 
 import { workflowLabel } from '../../../../types/robots-catalog';
-import { isPlaceholderRow, RobotsJobRow, RobotsNodeState } from '../../../../types/robots';
+import { firstErrorMessage, isPlaceholderRow, RobotsJobRow, RobotsNodeState } from '../../../../types/robots';
 import { EM_DASH } from './format';
 import { Translate, useRobotsIntl } from './intl';
 import StatusBadge from './status-badge';
@@ -21,6 +21,13 @@ interface DirectiveRunTableProps {
   onDismiss: (row: RobotsJobRow) => void;
 }
 
+interface Step {
+  key: string;
+  workflow: string;
+  status?: string;
+  detail: string;
+}
+
 function nodeDetail(t: Translate, node: RobotsNodeState, jobs: RobotsJobRow[]) {
   if (node.reason) return node.reason;
   if (node.source_workflows?.length) {
@@ -35,29 +42,58 @@ function nodeDetail(t: Translate, node: RobotsNodeState, jobs: RobotsJobRow[]) {
   return EM_DASH;
 }
 
-function Steps({ nodes, jobs }: { nodes: RobotsNodeState[]; jobs: RobotsJobRow[] }) {
+/**
+ * Mux fills `node_states` only once a run completes. Until then, and for any job they don't cover,
+ * the steps are the jobs the run dispatched, with their live status.
+ */
+function stepsOf(t: Translate, run: RobotsJobRow, jobs: RobotsJobRow[]): Step[] {
+  const nodes = run.run_data?.node_states ?? [];
+  const covered = new Set(nodes.flatMap((node) => (node.job_id ? [node.job_id] : [])));
+
+  const nodeSteps = nodes.map((node, index) => ({
+    key: node.job_id ?? node.reference_id ?? `node-${index}`,
+    workflow: node.workflow_name ? workflowLabel(node.workflow_name) : (node.reference_id ?? `#${index + 1}`),
+    status: node.status,
+    detail: nodeDetail(t, node, jobs),
+  }));
+
+  // The jobs come newest first; a run's steps read oldest first.
+  const jobSteps = jobs
+    .filter((job) => !!run.mux_id && job.directive_run_id === run.mux_id && !covered.has(job.mux_id ?? ''))
+    .reverse()
+    .map((job) => ({
+      key: `job-${job.id}`,
+      workflow: workflowLabel(job.workflow),
+      status: job.status,
+      detail: (job.status === 'errored' && firstErrorMessage(job.errors)) || EM_DASH,
+    }));
+
+  return [...nodeSteps, ...jobSteps];
+}
+
+function Steps({ steps }: { steps: Step[] }) {
   const { t } = useRobotsIntl();
 
   const columns = [
-    t('Robots.runs.column.workflow', 'Workflow'),
-    t('Robots.runs.column.status', 'Status'),
-    t('Robots.runs.column.detail', 'Detail'),
+    { label: t('Robots.runs.column.workflow', 'Workflow'), width: '32%' },
+    { label: t('Robots.runs.column.status', 'Status'), width: '28%' },
+    { label: t('Robots.runs.column.detail', 'Detail'), width: '40%' },
   ];
 
   return (
-    <RobotsTable columns={columns} rowCount={nodes.length}>
-      {nodes.map((node, index) => (
-        <Tr key={node.job_id ?? node.reference_id ?? index}>
+    <RobotsTable columns={columns} rowCount={steps.length}>
+      {steps.map((step) => (
+        <Tr key={step.key}>
           <Td>
-            <Typography variant="omega">
-              {node.workflow_name ? workflowLabel(node.workflow_name) : (node.reference_id ?? `#${index + 1}`)}
+            <Typography variant="omega">{step.workflow}</Typography>
+          </Td>
+          <Td>
+            <StatusBadge status={step.status} />
+          </Td>
+          <Td>
+            <Typography variant="omega" style={{ overflowWrap: 'anywhere' }}>
+              {step.detail}
             </Typography>
-          </Td>
-          <Td>
-            <StatusBadge status={node.status} />
-          </Td>
-          <Td style={{ whiteSpace: 'normal' }}>
-            <Typography variant="omega">{nodeDetail(t, node, jobs)}</Typography>
           </Td>
         </Tr>
       ))}
@@ -85,23 +121,23 @@ export default function DirectiveRunTable({
   }
 
   const columns = [
-    t('Robots.runs.column.directive', 'Directive'),
-    t('Robots.runs.column.status', 'Status'),
-    t('Robots.runs.column.started', 'Started'),
-    t('Robots.runs.column.steps', 'Steps'),
+    { label: t('Robots.runs.column.directive', 'Directive'), width: '32%' },
+    { label: t('Robots.runs.column.status', 'Status'), width: '26%' },
+    { label: t('Robots.runs.column.started', 'Started'), width: '20%' },
+    { label: t('Robots.runs.column.steps', 'Steps'), width: '22%' },
   ];
 
   return (
     <RobotsTable columns={columns} rowCount={rows.length}>
       {rows.flatMap((row) => {
-        const nodes = row.run_data?.node_states ?? [];
+        const steps = stepsOf(t, row, jobs);
         const isExpanded = expandedId === row.id;
         const name = row.directive_id ? (directiveNames[row.directive_id] ?? row.directive_id) : EM_DASH;
 
         const main = (
           <Tr key={row.id}>
-            <Td style={{ whiteSpace: 'normal', wordBreak: 'break-word' }}>
-              <Typography variant="omega" textColor="neutral800">
+            <Td>
+              <Typography variant="omega" textColor="neutral800" style={{ overflowWrap: 'anywhere' }}>
                 {name}
               </Typography>
             </Td>
@@ -117,19 +153,21 @@ export default function DirectiveRunTable({
               {isPlaceholderRow(row) ? (
                 <PlaceholderCell row={row} nowMs={nowMs} canRun={canRun} onDismiss={onDismiss} />
               ) : (
-                <Flex gap={1} alignItems="center">
-                  <IconButton
-                    label={
-                      isExpanded ? t('Robots.runs.hide-steps', 'Hide steps') : t('Robots.runs.show-steps', 'Show steps')
-                    }
-                    variant="ghost"
-                    disabled={nodes.length === 0}
-                    onClick={() => setExpandedId(isExpanded ? undefined : row.id)}
-                  >
-                    {isExpanded ? <ChevronUp /> : <ChevronDown />}
-                  </IconButton>
-                  <Typography variant="omega">{nodes.length}</Typography>
-                </Flex>
+                <TextButton
+                  aria-expanded={isExpanded}
+                  title={
+                    isExpanded ? t('Robots.runs.hide-steps', 'Hide steps') : t('Robots.runs.show-steps', 'Show steps')
+                  }
+                  disabled={steps.length === 0}
+                  endIcon={isExpanded ? <ChevronUp /> : <ChevronDown />}
+                  onClick={() => setExpandedId(isExpanded ? undefined : row.id)}
+                >
+                  <Typography variant="omega">
+                    {t('Robots.runs.step-count', '{count, plural, one {# step} other {# steps}}', {
+                      count: steps.length,
+                    })}
+                  </Typography>
+                </TextButton>
               )}
             </Td>
           </Tr>
@@ -140,8 +178,8 @@ export default function DirectiveRunTable({
         return [
           main,
           <Tr key={`${row.id}-steps`}>
-            <Td colSpan={columns.length} style={{ whiteSpace: 'normal' }}>
-              <Steps nodes={nodes} jobs={jobs} />
+            <Td colSpan={columns.length}>
+              <Steps steps={steps} />
             </Td>
           </Tr>,
         ];
