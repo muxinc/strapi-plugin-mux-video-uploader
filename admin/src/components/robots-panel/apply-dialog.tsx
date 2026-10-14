@@ -11,7 +11,6 @@ import {
   Tr,
   Typography,
 } from '@strapi/design-system';
-import { useForm, useNotification } from '@strapi/strapi/admin';
 
 import type { RobotsSummarizeOutput } from '../../../../types/robots';
 import {
@@ -30,25 +29,32 @@ import { NONE } from '../robots/param-fields';
 import RobotsTable from '../robots/table';
 
 /**
- * Writes the summary into the entry's form as unsaved changes: nothing reaches Mux or the mux-asset
- * until the person saves the entry. A field can be the target of one output only.
+ * Lets the person pick a field for each output of a summary, and hands the chosen fields' new values to
+ * `onApply`. A field can be the target of one output only.
  */
 export default function ApplyDialog({
+  title,
+  help,
   summary,
   fields,
+  values,
+  onApply,
   onClose,
 }: {
+  title: string;
+  help: string;
   summary: RobotsSummarizeOutput;
   fields: EntryFieldOption[];
+  /** What each field holds now, by name. */
+  values: Record<string, unknown>;
+  /** The new value of each chosen field, by name. */
+  onApply: (values: Record<string, unknown>) => void;
   onClose: () => void;
 }) {
   const { t } = useRobotsIntl();
-  const { toggleNotification } = useNotification();
-  const values = useForm('MuxRobotsApplySummary', (state) => state.values) as Record<string, unknown>;
-  const onChange = useForm('MuxRobotsApplySummary', (state) => state.onChange);
 
   const rows = React.useMemo(() => buildApplyRows(summary, fields), [summary, fields]);
-  // Suggested once, from what the entry holds when the dialog opens; the person decides from there.
+  // Suggested once, from what the fields hold when the dialog opens; the person decides from there.
   const [targets, setTargets] = React.useState(() => defaultTargets(rows, values));
 
   const outputLabel: Record<EntryOutputKey, string> = {
@@ -62,7 +68,7 @@ export default function ApplyDialog({
 
   const columns = [
     t('Robots.apply.column.output', 'Output'),
-    t('Robots.apply.column.target', 'Target field'),
+    t('Robots.apply.column.target', 'Field'),
     t('Robots.apply.column.current', 'Current value'),
     t('Robots.apply.column.new', 'New value'),
   ];
@@ -73,14 +79,7 @@ export default function ApplyDialog({
   });
 
   const apply = () => {
-    for (const { row, field } of chosen) onChange(field.name, valueForField(row.value, field));
-
-    toggleNotification({
-      type: 'success',
-      message: t('Robots.apply.done', 'Applied {count} generated value(s). Save the entry to keep them.', {
-        count: chosen.length,
-      }),
-    });
+    onApply(Object.fromEntries(chosen.map(({ row, field }) => [field.name, valueForField(row.value, field)])));
     onClose();
   };
 
@@ -88,15 +87,12 @@ export default function ApplyDialog({
     <Modal.Root open onOpenChange={(open: boolean) => !open && onClose()}>
       <Modal.Content style={{ width: 'min(90vw, 96rem)', maxWidth: 'unset' }}>
         <Modal.Header>
-          <Modal.Title>{t('Robots.apply.title', 'Apply summary')}</Modal.Title>
+          <Modal.Title>{title}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Box paddingBottom={4}>
             <Typography variant="omega" textColor="neutral600">
-              {t(
-                'Robots.apply.help',
-                "Choose where each part of the summary goes. Fields that already hold something aren't selected for you."
-              )}
+              {help}
             </Typography>
           </Box>
           <RobotsTable columns={columns} rowCount={rows.length}>
@@ -121,14 +117,14 @@ export default function ApplyDialog({
 
               return (
                 <Tr key={row.key}>
-                  <Td style={{ verticalAlign: 'top' }}>
+                  <Td>
                     <Typography variant="omega" fontWeight="bold">
                       {outputLabel[row.key]}
                     </Typography>
                   </Td>
-                  <Td style={{ verticalAlign: 'top', whiteSpace: 'normal', minWidth: '20rem' }}>
+                  <Td style={{ whiteSpace: 'normal', minWidth: '20rem' }}>
                     <SingleSelect
-                      aria-label={t('Robots.apply.target-for', 'Target field for {output}', {
+                      aria-label={t('Robots.apply.target-for', 'Field for {output}', {
                         output: outputLabel[row.key],
                       })}
                       value={targets[row.key] || NONE}
@@ -158,13 +154,9 @@ export default function ApplyDialog({
                     )}
                     {suggestedHasContent && (
                       <Typography variant="pi" textColor="neutral600" tag="p">
-                        {t(
-                          'Robots.apply.has-content',
-                          '{field} already has content. Pick it as the target to replace it.',
-                          {
-                            field: row.suggested!.label,
-                          }
-                        )}
+                        {t('Robots.apply.has-content', '{field} already has content. Pick it to replace it.', {
+                          field: row.suggested!.label,
+                        })}
                       </Typography>
                     )}
                     {problem && (
@@ -173,7 +165,7 @@ export default function ApplyDialog({
                       </Typography>
                     )}
                   </Td>
-                  <Td style={{ verticalAlign: 'top', whiteSpace: 'normal' }}>
+                  <Td style={{ whiteSpace: 'normal' }}>
                     {suggestedApplied && (
                       <Flex direction="column" alignItems="start" gap={1}>
                         <Badge>{t('Robots.apply.already-applied', 'Already applied')}</Badge>
@@ -198,7 +190,7 @@ export default function ApplyDialog({
                         </Flex>
                       ))}
                   </Td>
-                  <Td style={{ verticalAlign: 'top', whiteSpace: 'normal' }}>
+                  <Td style={{ whiteSpace: 'normal' }}>
                     <Typography variant="omega">{preview}</Typography>
                   </Td>
                 </Tr>

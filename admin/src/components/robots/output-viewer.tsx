@@ -1,12 +1,10 @@
 import React from 'react';
 import copy from 'copy-to-clipboard';
-import { Box, Button, Dialog, Flex, IconButton, Loader, Modal, Tabs, Typography } from '@strapi/design-system';
+import { Box, Button, Flex, IconButton, Loader, Modal, Tabs, Typography } from '@strapi/design-system';
 import { Duplicate } from '@strapi/icons';
 import { useNotification } from '@strapi/strapi/admin';
 
-import type { MuxAsset } from '../../../../server/src/content-types/mux-asset/types';
 import { workflowLabel } from '../../../../types/robots-catalog';
-import { toAssetTitle } from '../../../../types/robots-format';
 import { firstErrorMessage, isTerminalRow, RobotsJobRow, unitsState } from '../../../../types/robots';
 import { RobotsApi, robotsErrorOf } from './api';
 import { EM_DASH, prettyJson, withoutTemporaryUrls } from './format';
@@ -19,11 +17,8 @@ import { Started } from './table';
 interface OutputViewerProps {
   row?: RobotsJobRow;
   api: RobotsApi;
-  assetRowId: number;
-  canUpdate: boolean;
   /** The row read in full from Mux, so the table stops saying "Not loaded". */
   onRowLoaded: (row: RobotsJobRow) => void;
-  onTitleApplied: (asset: MuxAsset) => void;
   onClose: () => void;
 }
 
@@ -42,9 +37,19 @@ const rawJob = (row: RobotsJobRow) =>
     errors: row.errors,
   });
 
-function JsonBlock({ value }: { value: unknown }) {
+function useCopy() {
   const { t } = useRobotsIntl();
   const { toggleNotification } = useNotification();
+
+  return (text: string) => {
+    copy(text);
+    toggleNotification({ type: 'success', message: t('Robots.output.copied', 'Copied to clipboard') });
+  };
+}
+
+function JsonBlock({ value }: { value: unknown }) {
+  const { t } = useRobotsIntl();
+  const copyText = useCopy();
   const text = prettyJson(value);
 
   if (!text)
@@ -53,14 +58,7 @@ function JsonBlock({ value }: { value: unknown }) {
   return (
     <Box position="relative">
       <Box position="absolute" top={2} right={2}>
-        <IconButton
-          label={t('Robots.output.copy-json', 'Copy JSON')}
-          variant="tertiary"
-          onClick={() => {
-            copy(text);
-            toggleNotification({ type: 'success', message: t('Robots.output.copied', 'Copied to clipboard') });
-          }}
-        >
+        <IconButton label={t('Robots.output.copy-json', 'Copy JSON')} variant="tertiary" onClick={() => copyText(text)}>
           <Duplicate />
         </IconButton>
       </Box>
@@ -77,15 +75,7 @@ function JsonBlock({ value }: { value: unknown }) {
   );
 }
 
-function Result({
-  row,
-  canUpdate,
-  onUseAsTitle,
-}: {
-  row: RobotsJobRow;
-  canUpdate: boolean;
-  onUseAsTitle: (title: string) => void;
-}) {
+function Result({ row }: { row: RobotsJobRow }) {
   const { t } = useRobotsIntl();
 
   if (row.status === 'errored') {
@@ -122,43 +112,14 @@ function Result({
     );
   }
 
-  const generatedTitle = row.workflow === 'summarize' && typeof outputs.title === 'string' ? outputs.title : undefined;
-  const title = toAssetTitle(generatedTitle);
-
-  return (
-    <>
-      {view.render(outputs, row, t)}
-      {generatedTitle !== undefined && canUpdate && (
-        <Flex gap={3} alignItems="center">
-          <Button variant="secondary" disabled={!title} onClick={() => title && onUseAsTitle(title)}>
-            {t('Robots.output.use-as-title', 'Use as video title')}
-          </Button>
-          {!title && (
-            <Typography variant="pi" textColor="neutral600">
-              {t('Robots.output.title-too-short', 'The generated title is shorter than 3 characters.')}
-            </Typography>
-          )}
-        </Flex>
-      )}
-    </>
-  );
+  return <>{view.render(outputs, row, t)}</>;
 }
 
-export default function OutputViewer({
-  row,
-  api,
-  assetRowId,
-  canUpdate,
-  onRowLoaded,
-  onTitleApplied,
-  onClose,
-}: OutputViewerProps) {
+export default function OutputViewer({ row, api, onRowLoaded, onClose }: OutputViewerProps) {
   const { t } = useRobotsIntl();
-  const { toggleNotification } = useNotification();
+  const copyText = useCopy();
   const [loaded, setLoaded] = React.useState<RobotsJobRow>();
   const [loadError, setLoadError] = React.useState<string>();
-  const [pendingTitle, setPendingTitle] = React.useState<string>();
-  const [savingTitle, setSavingTitle] = React.useState(false);
 
   const rowId = row?.id;
   const needsDetail = !!row && isTerminalRow(row) && !row.detail_loaded && row.status !== 'cancelled';
@@ -189,21 +150,7 @@ export default function OutputViewer({
   const shown = loaded?.id === row.id ? loaded : row;
   const isLoading = needsDetail && !loaded && !loadError;
   const units = unitsState(shown);
-
-  const applyTitle = async () => {
-    if (!pendingTitle || !shown.mux_id) return;
-    setSavingTitle(true);
-    try {
-      const { asset } = await api.applyTitle(assetRowId, shown.mux_id);
-      onTitleApplied(asset);
-      toggleNotification({ type: 'success', message: t('Robots.output.title-saved', 'Video title updated') });
-      setPendingTitle(undefined);
-    } catch (error) {
-      toggleNotification({ type: 'danger', message: robotsErrorOf(error).message });
-    } finally {
-      setSavingTitle(false);
-    }
-  };
+  const jobId = shown.mux_id;
 
   return (
     <Modal.Root open onOpenChange={(open: boolean) => !open && onClose()}>
@@ -215,13 +162,25 @@ export default function OutputViewer({
           <Flex gap={6} paddingBottom={4} wrap="wrap" alignItems="center">
             <StatusBadge status={shown.status} />
             <Typography variant="omega" textColor="neutral600">
-              {t('Robots.output.units', 'AI units')}:{' '}
+              {t('Robots.output.units', 'Mux AI units')}:{' '}
               {units.kind === 'count' ? units.units : isLoading ? t('Robots.loading', 'Loading…') : EM_DASH}
             </Typography>
             <Started iso={shown.mux_created_at} />
-            <Typography variant="pi" textColor="neutral600" style={{ wordBreak: 'break-all' }}>
-              {shown.mux_id}
-            </Typography>
+            {jobId && (
+              <Flex gap={1} alignItems="center">
+                <Typography variant="pi" textColor="neutral600" style={{ wordBreak: 'break-all' }}>
+                  {t('Robots.output.job-id', 'Job ID: {id}', { id: jobId })}
+                </Typography>
+                <IconButton
+                  label={t('Robots.output.copy-job-id', 'Copy job ID')}
+                  variant="ghost"
+                  size="S"
+                  onClick={() => copyText(jobId)}
+                >
+                  <Duplicate />
+                </IconButton>
+              </Flex>
+            )}
           </Flex>
           {isLoading ? (
             <Flex gap={2} alignItems="center">
@@ -238,7 +197,7 @@ export default function OutputViewer({
               </Tabs.List>
               <Tabs.Content value="result">
                 <Box paddingTop={4}>
-                  <Result row={shown} canUpdate={canUpdate} onUseAsTitle={setPendingTitle} />
+                  <Result row={shown} />
                 </Box>
               </Tabs.Content>
               <Tabs.Content value="raw">
@@ -256,32 +215,6 @@ export default function OutputViewer({
           </Button>
         </Modal.Footer>
       </Modal.Content>
-
-      <Dialog.Root open={!!pendingTitle} onOpenChange={(open: boolean) => !open && setPendingTitle(undefined)}>
-        <Dialog.Content>
-          <Dialog.Header>{t('Robots.output.use-as-title-confirm', 'Use as video title?')}</Dialog.Header>
-          <Dialog.Body>
-            <Flex direction="column" alignItems="stretch" gap={2}>
-              <Typography variant="omega">
-                {t('Robots.output.use-as-title-body', "The video's title in Strapi becomes:")}
-              </Typography>
-              <Typography variant="omega" fontWeight="bold">
-                {pendingTitle}
-              </Typography>
-            </Flex>
-          </Dialog.Body>
-          <Dialog.Footer>
-            <Dialog.Cancel>
-              <Button variant="tertiary" disabled={savingTitle}>
-                {t('Common.cancel-button', 'Cancel')}
-              </Button>
-            </Dialog.Cancel>
-            <Button onClick={applyTitle} loading={savingTitle}>
-              {t('Robots.output.use-as-title', 'Use as video title')}
-            </Button>
-          </Dialog.Footer>
-        </Dialog.Content>
-      </Dialog.Root>
     </Modal.Root>
   );
 }

@@ -203,8 +203,6 @@ export const RobotsCreateJobBody = z.object({
 
 export const RobotsRunDirectiveBody = z.object({ directive_id: z.string().min(1) });
 
-export const RobotsApplyTitleBody = z.object({ job_id: z.string().min(1) });
-
 /** How long the tab keeps polling an unfinished job or run before deciding Mux has lost it. */
 export const ROBOTS_STALE_MS = 6 * 60 * 60 * 1000;
 
@@ -247,7 +245,7 @@ export type RobotsUnitsState =
   | { kind: 'not-loaded' }
   | { kind: 'not-reported' };
 
-/** What the Units column says. Every blank says why it's blank. */
+/** What the Mux AI units column says. Every blank says why it's blank. */
 export function unitsState(row: RobotsJobRow): RobotsUnitsState {
   if (row.status === 'errored' || row.status === 'cancelled') return { kind: 'not-charged' };
   // Mux reports 0 units until a job finishes.

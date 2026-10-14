@@ -1,7 +1,3 @@
-/** `mux-asset.title` is required, 3–255 characters. */
-const ASSET_TITLE_MIN_LENGTH = 3;
-const ASSET_TITLE_MAX_LENGTH = 255;
-
 /**
  * Cuts `text` to at most `maxLength` characters on a word boundary, ending in "…". Text that fits is
  * returned as is.
@@ -20,23 +16,9 @@ export function truncateAtWord(text: string, maxLength: number): string {
   return `${base}…`;
 }
 
-const normalizeWhitespace = (text: string) => text.trim().replace(/\s+/g, ' ');
-
-/**
- * A generated title as `mux-asset.title` can store it, or `null` when too short. Robots'
- * `title_length` counts words and has no ceiling, so long titles are expected and cut on a word boundary.
- */
-export function toAssetTitle(raw: unknown, maxLength = ASSET_TITLE_MAX_LENGTH): string | null {
-  if (typeof raw !== 'string') return null;
-
-  const title = truncateAtWord(normalizeWhitespace(raw), maxLength);
-
-  return title.length < ASSET_TITLE_MIN_LENGTH ? null : title;
-}
-
 export type EntryOutputKey = 'title' | 'description' | 'tags';
 
-/** A top-level field of the entry, as the edit view shows it. */
+/** A field an output can go to: one of the entry's top-level fields, or one of the video's own. */
 export interface EntryFieldOption {
   name: string;
   /** The display name the edit view uses. */
@@ -45,6 +27,8 @@ export interface EntryFieldOption {
   type: string;
   maxLength?: number;
   minLength?: number;
+  /** Offered for this output only, instead of every output its type can hold. */
+  onlyFor?: EntryOutputKey;
 }
 
 const TEXT_TARGETS = ['string', 'text', 'richtext', 'blocks'];
@@ -96,7 +80,9 @@ export function buildApplyRows(
     if (value === undefined || value === null) continue;
     if (typeof value === 'string' ? value.trim() === '' : !Array.isArray(value) || value.length === 0) continue;
 
-    const compatible = fields.filter((field) => OUTPUT_TARGET_TYPES[key].includes(field.type));
+    const compatible = fields.filter(
+      (field) => OUTPUT_TARGET_TYPES[key].includes(field.type) && (!field.onlyFor || field.onlyFor === key)
+    );
     const byName = PREFILL_FIELD_NAMES[key]
       .map((name) => compatible.find((field) => field.name.toLowerCase() === name.toLowerCase()))
       .find(Boolean);
