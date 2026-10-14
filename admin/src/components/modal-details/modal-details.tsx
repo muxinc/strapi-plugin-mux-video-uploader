@@ -138,6 +138,10 @@ export default function ModalDetails(props: {
       id: muxAsset?.id || 0,
       title: touchedFields.title ? values.title : undefined,
       custom_text_tracks: tracksModified ? values.custom_text_tracks : undefined,
+      // The server only deletes tracks this form showed, so a caption added meanwhile survives the save.
+      known_track_ids: tracksModified
+        ? (initialValues.custom_text_tracks || []).flatMap((track) => track.stored_track?.id || [])
+        : undefined,
     };
 
     if (data.title || data.custom_text_tracks) {

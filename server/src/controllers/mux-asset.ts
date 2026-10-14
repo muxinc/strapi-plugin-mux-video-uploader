@@ -57,10 +57,14 @@ const update = async (ctx: Context) => {
   const { documentId } = ctx.params;
   const muxAsset = await resolveMuxAsset({ id: documentId });
 
-  const { title, custom_text_tracks } = <MuxAssetUpdate>ctx.request.body;
+  const { title, custom_text_tracks, known_track_ids } = <MuxAssetUpdate>ctx.request.body;
 
   /** Let Mux's webhook handlers notify us of track changes */
-  await updateTextTracks(muxAsset, custom_text_tracks);
+  await updateTextTracks(
+    muxAsset,
+    custom_text_tracks,
+    Array.isArray(known_track_ids) ? known_track_ids.filter((id) => typeof id === 'string') : []
+  );
 
   if (typeof title === 'string' && title) {
     await strapi.db.query(ASSET_MODEL).update({

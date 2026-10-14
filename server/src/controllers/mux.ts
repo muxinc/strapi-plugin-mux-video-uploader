@@ -222,9 +222,11 @@ const signMuxPlaybackId = async (ctx: Context) => {
 const textTrack = async (ctx: Context) => {
   const { documentId } = ctx.params;
 
-  // @ts-ignore - v5 migration
-  // const track = (await strapi.documents(TEXT_TRACK_MODEL).findOne(documentId)) as StoredTextTrack | undefined;
-  const track = (await strapi.db.query(TEXT_TRACK_MODEL).findOne(documentId)) as StoredTextTrack | undefined;
+  // The URL carries the stored track's `documentId` (see `getStrapiTextTrackUrl`), which can't be guessed.
+  const track =
+    typeof documentId === 'string' && documentId !== ''
+      ? ((await strapi.db.query(TEXT_TRACK_MODEL).findOne({ where: { documentId } })) as StoredTextTrack | null)
+      : null;
 
   if (!track) {
     ctx.notFound('mux-text-track.notFound');
