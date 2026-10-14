@@ -116,6 +116,8 @@ export interface RobotsJobRow {
   requested_at: string | null;
   /** Admin user id of whoever ran it from this Strapi. */
   requested_by: number | null;
+  /** When this Strapi stored the row. */
+  createdAt?: string | null;
 }
 
 /** The newest completed summarize on an asset, as stored in `robots_outputs.summarize`. */
@@ -202,3 +204,68 @@ export const RobotsCreateJobBody = z.object({
 export const RobotsRunDirectiveBody = z.object({ directive_id: z.string().min(1) });
 
 export const RobotsApplyTitleBody = z.object({ job_id: z.string().min(1) });
+
+/** How long the tab keeps polling an unfinished job or run before deciding Mux has lost it. */
+export const ROBOTS_STALE_MS = 6 * 60 * 60 * 1000;
+
+/** A placeholder reads "Starting…" this long after its request, then "Not confirmed". */
+export const ROBOTS_CONFIRM_GRACE_MS = 45 * 1000;
+
+const startedAtMs = (row: Pick<RobotsJobRow, 'mux_created_at' | 'requested_at' | 'createdAt'>) => {
+  const ms = Date.parse(row.mux_created_at ?? row.requested_at ?? row.createdAt ?? '');
+  return Number.isFinite(ms) ? ms : undefined;
+};
+
+export const isPlaceholderRow = (row: Pick<RobotsJobRow, 'mux_id' | 'status'>) =>
+  !row.mux_id && isPlaceholderStatus(row.status);
+
+/**
+ * Stays "starting" through the grace period even once the server knows Mux didn't answer: Mux may
+ * still have received the create, so a re-run isn't offered straight away.
+ */
+export function placeholderPhase(
+  row: Pick<RobotsJobRow, 'requested_at'>,
+  nowMs = Date.now()
+): 'starting' | 'unconfirmed' {
+  const requestedMs = Date.parse(row.requested_at ?? '');
+  return Number.isFinite(requestedMs) && nowMs - requestedMs < ROBOTS_CONFIRM_GRACE_MS ? 'starting' : 'unconfirmed';
+}
+
+/** A job or run Mux is still working on, recent enough that polling for it is worth it. */
+export function isUnfinishedRow(row: RobotsJobRow, nowMs = Date.now()) {
+  if (isPlaceholderRow(row) || isTerminalRow(row)) return false;
+
+  // A row nobody can date isn't followed: it would keep the tab polling for as long as it's open.
+  const startedMs = startedAtMs(row);
+  return startedMs !== undefined && nowMs - startedMs < ROBOTS_STALE_MS;
+}
+
+export type RobotsUnitsState =
+  | { kind: 'count'; units: number }
+  | { kind: 'not-charged' }
+  | { kind: 'not-counted-yet' }
+  | { kind: 'not-loaded' }
+  | { kind: 'not-reported' };
+
+/** What the Units column says. Every blank says why it's blank. */
+export function unitsState(row: RobotsJobRow): RobotsUnitsState {
+  if (row.status === 'errored' || row.status === 'cancelled') return { kind: 'not-charged' };
+  // Mux reports 0 units until a job finishes.
+  if (!isTerminalRow(row)) return { kind: 'not-counted-yet' };
+  if (typeof row.units_consumed === 'number') return { kind: 'count', units: row.units_consumed };
+  if (!row.detail_loaded) return { kind: 'not-loaded' };
+  return { kind: 'not-reported' };
+}
+
+/** The first error message Mux gave for a job, whichever shape `errors` has. */
+export function firstErrorMessage(errors: unknown): string | undefined {
+  const first = Array.isArray(errors) ? errors[0] : errors;
+  if (typeof first === 'string') return first;
+  if (!first || typeof first !== 'object') return undefined;
+
+  const { message, messages } = first as { message?: unknown; messages?: unknown };
+  if (typeof message === 'string' && message) return message;
+  if (Array.isArray(messages) && typeof messages[0] === 'string') return messages[0];
+
+  return undefined;
+}

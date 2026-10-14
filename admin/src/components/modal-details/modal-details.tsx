@@ -12,6 +12,7 @@ import {
   Link,
   Modal,
   Status,
+  Tabs,
   Textarea,
   Typography,
 } from '@strapi/design-system';
@@ -22,8 +23,21 @@ import { MuxAsset, MuxAssetUpdate } from '../../../../server/src/content-types/m
 import usePluginIntl from '../../utils/use-plugin-intl';
 import CustomTextTrackForm from '../modal-new-upload/custom-text-track-form';
 import PreviewPlayer from '../preview-player';
+import { robotsErrorOf, useRobotsApi } from '../robots/api';
+import RobotsErrorBoundary from '../robots/error-boundary';
+import Note from '../robots/note';
+import RobotsTab from '../robots/robots-tab';
+import { useCanRunRobots } from '../robots/use-can-run-robots';
 import Summary from './summary';
 import { PLUGIN_ID } from '../../pluginId';
+
+export type DetailsTab = 'details' | 'captions' | 'robots';
+
+/**
+ * The player is remounted when this changes, so it loads the new playback ID, tracks (captions,
+ * audio, chapters) and thumbnail.
+ */
+const playbackSignature = (muxAsset?: MuxAsset) => JSON.stringify([muxAsset?.playback_id, muxAsset?.asset_data]);
 
 export default function ModalDetails(props: {
   onToggle: (refresh: boolean) => void;
@@ -31,13 +45,26 @@ export default function ModalDetails(props: {
   muxAsset?: MuxAsset;
   enableUpdate: boolean;
   enableDelete: boolean;
+  initialTab?: DetailsTab;
 }) {
-  const { isOpen, muxAsset, enableUpdate, enableDelete, onToggle = () => {} } = props;
+  const { isOpen, enableUpdate, enableDelete, initialTab = 'details', onToggle = () => {} } = props;
 
   const { del, put } = useFetchClient();
   const { formatMessage } = usePluginIntl();
+  const robotsApi = useRobotsApi();
 
   const deleteButtonRef = React.useRef<HTMLButtonElement>(null);
+
+  // The player and the Robots tab follow the freshest copy of the video. The form keeps the copy it
+  // was filled from while it has unsaved changes, so a re-read never overwrites someone's edits.
+  const [latestAsset, setLatestAsset] = React.useState<MuxAsset | undefined>(props.muxAsset);
+  const [formAsset, setFormAsset] = React.useState<MuxAsset | undefined>(props.muxAsset);
+  const [changedWhileEditing, setChangedWhileEditing] = React.useState(false);
+  const [assetChanged, setAssetChanged] = React.useState(false);
+  const [playerKey, setPlayerKey] = React.useState(0);
+  const [tab, setTab] = React.useState<DetailsTab>(initialTab);
+  const [robotsOpened, setRobotsOpened] = React.useState(initialTab === 'robots');
+  const [creatingPlaybackId, setCreatingPlaybackId] = React.useState(false);
 
   const [touchedFields, setTouchedFields] = React.useState<FormikTouched<MuxAssetUpdate>>({});
   const [showDeleteWarning, setShowDeleteWarning] = React.useState(false);
@@ -46,19 +73,32 @@ export default function ModalDetails(props: {
 
   const { toggleNotification } = useNotification();
 
+  const canRunRobots = useCanRunRobots();
+
+  // The modal stays mounted between videos, so the state above is reset when another one opens.
   React.useEffect(() => {
-    if (!muxAsset) return;
+    setLatestAsset(props.muxAsset);
+    setFormAsset(props.muxAsset);
+    setChangedWhileEditing(false);
+    setAssetChanged(false);
+    setTouchedFields({});
+    setTab(initialTab);
+    setRobotsOpened(initialTab === 'robots');
+  }, [props.muxAsset?.id]);
+
+  React.useEffect(() => {
+    if (!latestAsset) return;
 
     setCodeSnippet(`<mux-player
-  playback-id="${muxAsset?.playback_id}"
+  playback-id="${latestAsset?.playback_id}"
   playback-token="TOKEN"
   env-key="ENV_KEY"
-  metadata-video-title="${muxAsset?.title}"
+  metadata-video-title="${latestAsset?.title}"
   controls
 />`);
-  }, [muxAsset]);
+  }, [latestAsset]);
 
-  const subtitles = (muxAsset?.asset_data?.tracks ?? []).filter(
+  const subtitles = (formAsset?.asset_data?.tracks ?? []).filter(
     (track: any) => track.type === 'text' && track.text_type === 'subtitles' && track.status !== 'errored'
   );
 
@@ -79,10 +119,10 @@ export default function ModalDetails(props: {
     setDeletingState('deleting');
     toggleDeleteWarning();
 
-    if (!muxAsset) return;
+    if (!latestAsset) return;
 
     try {
-      await del(`${PLUGIN_ID}/mux-asset/${muxAsset.id}`, {
+      await del(`${PLUGIN_ID}/mux-asset/${latestAsset.id}`, {
         params: {
           delete_on_mux: true,
         },
@@ -104,8 +144,8 @@ export default function ModalDetails(props: {
   };
 
   const initialValues: MuxAssetUpdate = {
-    id: muxAsset?.id || 0,
-    title: muxAsset?.title || muxAsset?.asset_id || muxAsset?.createdAt,
+    id: formAsset?.id || 0,
+    title: formAsset?.title || formAsset?.asset_id || formAsset?.createdAt,
 
     // @ts-expect-error Due to changes in @mux/mux-node v8, where `TextTrack`, `VideoTrack` and `AudioTrack` were unified,
     // properties required to subtitles as text tracks are showing as optional and breaking the `custom_text_tracks` type.
@@ -135,7 +175,7 @@ export default function ModalDetails(props: {
       JSON.stringify(values.custom_text_tracks || []) !== JSON.stringify(initialValues.custom_text_tracks || []);
 
     const data: MuxAssetUpdate = {
-      id: muxAsset?.id || 0,
+      id: formAsset?.id || 0,
       title: touchedFields.title ? values.title : undefined,
       custom_text_tracks: tracksModified ? values.custom_text_tracks : undefined,
       // The server only deletes tracks this form showed, so a caption added meanwhile survives the save.
@@ -145,7 +185,7 @@ export default function ModalDetails(props: {
     };
 
     if (data.title || data.custom_text_tracks) {
-      await put(`${PLUGIN_ID}/mux-asset/${muxAsset?.id}`, data);
+      await put(`${PLUGIN_ID}/mux-asset/${formAsset?.id}`, data);
     }
 
     setSubmitting(false);
@@ -153,10 +193,12 @@ export default function ModalDetails(props: {
     onToggle(true);
   };
 
+  const close = () => onToggle(assetChanged);
+
   const handleOnOpenChange = (open: boolean) => {
     if (open) return;
 
-    onToggle(false);
+    close();
   };
 
   const { errors, values, isSubmitting, handleChange, handleSubmit, setFieldValue } = useFormik<MuxAssetUpdate>({
@@ -166,9 +208,56 @@ export default function ModalDetails(props: {
     onSubmit: handleOnSubmit,
   });
 
-  if (!muxAsset) return null;
+  const isDirty =
+    !!touchedFields.title ||
+    JSON.stringify(values.custom_text_tracks || []) !== JSON.stringify(initialValues.custom_text_tracks || []);
 
-  const aspect_ratio = muxAsset.aspect_ratio || muxAsset.asset_data?.aspect_ratio;
+  // A re-read can land several renders after it was asked for, so it reads the form as it is now.
+  const current = React.useRef({ isDirty, latestAsset, formAsset });
+  current.current = { isDirty, latestAsset, formAsset };
+
+  const showFreshAsset = (fresh: MuxAsset) => {
+    if (!fresh) return;
+
+    const now = current.current;
+
+    if (playbackSignature(fresh) !== playbackSignature(now.latestAsset)) setPlayerKey((key) => key + 1);
+    setLatestAsset(fresh);
+    setAssetChanged(true);
+
+    if (!now.isDirty) {
+      setFormAsset(fresh);
+    } else if (JSON.stringify(fresh.asset_data?.tracks) !== JSON.stringify(now.formAsset?.asset_data?.tracks)) {
+      setChangedWhileEditing(true);
+    }
+  };
+
+  const reloadAsset = async () => {
+    const assetId = current.current.latestAsset?.id;
+    if (!assetId) return;
+    try {
+      showFreshAsset(await robotsApi.getAsset(assetId));
+    } catch {
+      // The next re-read, or reopening the video, catches up.
+    }
+  };
+
+  const createPlaybackId = async () => {
+    if (!latestAsset) return;
+    setCreatingPlaybackId(true);
+    try {
+      showFreshAsset((await robotsApi.createPlaybackId(latestAsset.id)).asset);
+    } catch (error) {
+      toggleNotification({ type: 'danger', message: robotsErrorOf(error).message });
+    } finally {
+      setCreatingPlaybackId(false);
+    }
+  };
+
+  if (!latestAsset) return null;
+
+  const aspect_ratio = latestAsset.aspect_ratio || latestAsset.asset_data?.aspect_ratio;
+  const needsPlaybackId = latestAsset.isReady && !!latestAsset.asset_id && !latestAsset.playback_id;
 
   return (
     <form>
@@ -191,7 +280,7 @@ export default function ModalDetails(props: {
               </Flex>
             ) : (
               <Grid.Root gap={4} style={{ alignItems: 'flex-start' }}>
-                <Grid.Item col={6} s={12} direction="column" alignItems="start">
+                <Grid.Item col={5} s={12} direction="column" alignItems="start">
                   <Box
                     background="neutral150"
                     style={{
@@ -202,7 +291,7 @@ export default function ModalDetails(props: {
                     }}
                     width="100%"
                   >
-                    <PreviewPlayer muxAsset={muxAsset} />
+                    <PreviewPlayer key={playerKey} muxAsset={latestAsset} />
 
                     <Dialog.Root open={showDeleteWarning}>
                       <Dialog.Trigger>
@@ -263,79 +352,159 @@ export default function ModalDetails(props: {
                     </Dialog.Root>
                   </Box>
 
-                  <Box width="100%">
-                    <Field.Root>
-                      <Field.Label>{formatMessage('Captions.title', 'Captions / subtitles')}</Field.Label>
-                      <CustomTextTrackForm
-                        custom_text_tracks={values.custom_text_tracks || []}
-                        modifyCustomTextTracks={(newTracks) => setFieldValue('custom_text_tracks', newTracks)}
-                        muxAsset={muxAsset}
-                      />
-                    </Field.Root>
-                  </Box>
-                </Grid.Item>
-                <Grid.Item col={6} s={12} direction="column" alignItems="start">
-                  {muxAsset.error_message ? (
+                  {needsPlaybackId && (
+                    <Box paddingBottom={4} width="100%">
+                      <Note
+                        variant="warning"
+                        action={
+                          enableUpdate ? (
+                            <Button variant="secondary" loading={creatingPlaybackId} onClick={createPlaybackId}>
+                              {formatMessage('ModalDetails.create-playback-id', 'Create playback ID')}
+                            </Button>
+                          ) : undefined
+                        }
+                      >
+                        {formatMessage(
+                          'ModalDetails.no-playback-id',
+                          "This video has no playback ID, so it can't be played."
+                        )}
+                      </Note>
+                    </Box>
+                  )}
+
+                  {latestAsset.error_message ? (
                     <Box paddingBottom={4} width="100%">
                       <Status variant="danger">
-                        <Typography>{muxAsset.error_message}</Typography>
+                        <Typography>{latestAsset.error_message}</Typography>
                       </Status>
                     </Box>
                   ) : null}
-                  <Box paddingBottom={4} width="100%">
-                    <Field.Root id="with_field" error={errors.title}>
-                      <Field.Label>{formatMessage('Common.title-label', 'Title')}</Field.Label>
-                      <Field.Input
-                        name="title"
-                        hasError={errors.title !== undefined}
-                        value={values.title}
-                        disabled={!enableUpdate}
-                        required
-                        onChange={(e: any) => {
-                          setTouchedFields({ ...touchedFields, title: true });
-                          handleChange(e);
-                        }}
-                      />
-                      <Field.Error />
-                    </Field.Root>
-                  </Box>
-                  <Box paddingBottom={4} width="100%">
-                    <Summary muxAsset={muxAsset} />
-                  </Box>
-                  <Box paddingBottom={4} width="100%">
-                    <Field.Root
-                      hint={
-                        <>
-                          {formatMessage('ModalDetails.powered-by-mux', 'Powered by mux-player.')}
-                          &nbsp;
-                          <Link href="https://docs.mux.com/guides/video/mux-player" isExternal>
-                            {formatMessage('ModalDetails.read-more', 'Read more about it')}
-                          </Link>
-                        </>
-                      }
-                    >
-                      <Field.Label style={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                        {formatMessage('ModalDetails.code-snippet', 'Code snippet')}
-                        <IconButton
-                          label="More actions"
-                          borderStyle="none"
-                          withTooltip={false}
-                          onClick={handleCopyCodeSnippet}
-                        >
-                          <Duplicate />
-                        </IconButton>
-                      </Field.Label>
-                      <Textarea name="codeSnippet" value={codeSnippet} rows={7} disabled />
-                      <Field.Hint />
-                    </Field.Root>
-                  </Box>
+                </Grid.Item>
+                <Grid.Item col={7} s={12} direction="column" alignItems="stretch">
+                  <Tabs.Root
+                    value={tab}
+                    onValueChange={(next: string) => {
+                      setTab(next as DetailsTab);
+                      if (next === 'robots') setRobotsOpened(true);
+                    }}
+                    variant="simple"
+                  >
+                    <Tabs.List aria-label={formatMessage('ModalDetails.header', 'Video details')}>
+                      <Tabs.Trigger value="details">
+                        {formatMessage('ModalDetails.tab-details', 'Details')}
+                      </Tabs.Trigger>
+                      <Tabs.Trigger value="captions">
+                        {formatMessage('ModalDetails.tab-captions', 'Captions')}
+                      </Tabs.Trigger>
+                      <Tabs.Trigger value="robots">{formatMessage('ModalDetails.tab-robots', 'Robots')}</Tabs.Trigger>
+                    </Tabs.List>
+
+                    {changedWhileEditing && (
+                      <Box paddingTop={4}>
+                        <Note variant="warning">
+                          {formatMessage(
+                            'ModalDetails.changed-while-editing',
+                            'This video changed while you were editing (new captions or tracks). Save or discard your changes to see them.'
+                          )}
+                        </Note>
+                      </Box>
+                    )}
+
+                    <Tabs.Content value="details">
+                      <Box paddingTop={4}>
+                        <Box paddingBottom={4} width="100%">
+                          <Field.Root id="with_field" error={errors.title}>
+                            <Field.Label>{formatMessage('Common.title-label', 'Title')}</Field.Label>
+                            <Field.Input
+                              name="title"
+                              hasError={errors.title !== undefined}
+                              value={values.title}
+                              disabled={!enableUpdate}
+                              required
+                              onChange={(e: any) => {
+                                setTouchedFields({ ...touchedFields, title: true });
+                                handleChange(e);
+                              }}
+                            />
+                            <Field.Error />
+                          </Field.Root>
+                        </Box>
+                        <Box paddingBottom={4} width="100%">
+                          <Summary muxAsset={latestAsset} />
+                        </Box>
+                        <Box paddingBottom={4} width="100%">
+                          <Field.Root
+                            hint={
+                              <>
+                                {formatMessage('ModalDetails.powered-by-mux', 'Powered by mux-player.')}
+                                &nbsp;
+                                <Link href="https://docs.mux.com/guides/video/mux-player" isExternal>
+                                  {formatMessage('ModalDetails.read-more', 'Read more about it')}
+                                </Link>
+                              </>
+                            }
+                          >
+                            <Field.Label style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+                              {formatMessage('ModalDetails.code-snippet', 'Code snippet')}
+                              <IconButton
+                                label="More actions"
+                                borderStyle="none"
+                                withTooltip={false}
+                                onClick={handleCopyCodeSnippet}
+                              >
+                                <Duplicate />
+                              </IconButton>
+                            </Field.Label>
+                            <Textarea name="codeSnippet" value={codeSnippet} rows={7} disabled />
+                            <Field.Hint />
+                          </Field.Root>
+                        </Box>
+                      </Box>
+                    </Tabs.Content>
+
+                    <Tabs.Content value="captions">
+                      <Box paddingTop={4} width="100%">
+                        <Field.Root>
+                          <Field.Label>{formatMessage('Captions.title', 'Captions / subtitles')}</Field.Label>
+                          <CustomTextTrackForm
+                            custom_text_tracks={values.custom_text_tracks || []}
+                            modifyCustomTextTracks={(newTracks) => setFieldValue('custom_text_tracks', newTracks)}
+                            muxAsset={formAsset}
+                          />
+                        </Field.Root>
+                      </Box>
+                    </Tabs.Content>
+
+                    {/* Kept mounted once opened, so a running job keeps being followed from the other tabs. */}
+                    <Tabs.Content value="robots" forceMount={robotsOpened ? true : undefined} hidden={tab !== 'robots'}>
+                      {robotsOpened && (
+                        <Box paddingTop={4}>
+                          <RobotsErrorBoundary
+                            title={formatMessage('Robots.crashed.title', "The Robots tab couldn't load")}
+                            message={formatMessage(
+                              'Robots.crashed.body',
+                              'Everything else on this video still works. Reopening the video usually clears this; if it doesn’t, the details are in the browser console.'
+                            )}
+                          >
+                            <RobotsTab
+                              muxAsset={latestAsset}
+                              canRun={canRunRobots}
+                              canUpdate={enableUpdate}
+                              onAssetMayHaveChanged={reloadAsset}
+                              onAssetUpdated={showFreshAsset}
+                            />
+                          </RobotsErrorBoundary>
+                        </Box>
+                      )}
+                    </Tabs.Content>
+                  </Tabs.Root>
                 </Grid.Item>
               </Grid.Root>
             )}
           </Modal.Body>
           <Modal.Footer>
             <Modal.Close>
-              <Button variant="tertiary" onClick={() => onToggle(false)} disabled={deletingState === 'deleting'}>
+              <Button variant="tertiary" onClick={close} disabled={deletingState === 'deleting'}>
                 {formatMessage('Common.cancel-button', 'Cancel')}
               </Button>
             </Modal.Close>
