@@ -22,8 +22,10 @@ function SimpleTable({ columns, rows }: { columns: string[]; rows: React.ReactNo
       {rows.map((cells, index) => (
         <Tr key={index}>
           {cells.map((cell, cellIndex) => (
-            <Td key={cellIndex} style={{ whiteSpace: 'normal', verticalAlign: 'top' }}>
-              <Typography variant="omega">{cell}</Typography>
+            <Td key={cellIndex}>
+              <Typography variant="omega" tag="div">
+                {cell}
+              </Typography>
             </Td>
           ))}
         </Tr>

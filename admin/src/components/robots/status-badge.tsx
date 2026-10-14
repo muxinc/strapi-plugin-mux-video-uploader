@@ -14,7 +14,7 @@ const COLORS: Record<Tone, { backgroundColor: string; textColor: string }> = {
   warning: { backgroundColor: 'warning100', textColor: 'warning700' },
 };
 
-/** Shared by jobs, directive runs and their steps, so the same outcome has the same colour everywhere. */
+/** Shared by jobs, directive runs and their steps, so the same outcome has the same color everywhere. */
 const TONES: Record<string, Tone> = {
   pending: 'neutral',
   processing: 'secondary',

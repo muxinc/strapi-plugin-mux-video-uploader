@@ -61,7 +61,7 @@ export function UnitsExhaustedNote() {
     >
       {t(
         'Robots.capability.units.body',
-        "Mux refused the last run because this account doesn't have enough AI units left for it. A cheaper workflow may still fit."
+        "Mux refused the last run because this account doesn't have enough Mux AI units left for it. A cheaper workflow may still fit."
       )}
     </Note>
   );

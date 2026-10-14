@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Button, Flex, Td, TextButton, Tr, Typography } from '@strapi/design-system';
+import { Button, Td, TextButton, Tr, Typography } from '@strapi/design-system';
 
 import { workflowLabel } from '../../../../types/robots-catalog';
 import {
@@ -26,6 +26,9 @@ interface JobTableProps {
   /** "Nothing is running — let me try again" on a placeholder Mux never confirmed. */
   onDismiss: (row: RobotsJobRow) => void;
 }
+
+/** A button's height is fixed, so its label can't wrap. */
+const NO_WRAP = { whiteSpace: 'nowrap' } as const;
 
 function unitsLabel(t: Translate, units: RobotsUnitsState) {
   switch (units.kind) {
@@ -55,11 +58,11 @@ export default function JobTable(props: JobTableProps) {
   }
 
   const columns = [
-    t('Robots.jobs.column.workflow', 'Workflow'),
-    t('Robots.jobs.column.status', 'Status'),
-    t('Robots.jobs.column.started', 'Started'),
-    t('Robots.jobs.column.units', 'Units'),
-    t('Robots.jobs.column.actions', 'Actions'),
+    { label: t('Robots.jobs.column.workflow', 'Workflow'), width: '26%' },
+    { label: t('Robots.jobs.column.status', 'Status'), width: '20%' },
+    { label: t('Robots.jobs.column.started', 'Started'), width: '17%' },
+    { label: t('Robots.jobs.column.units', 'Mux AI units'), width: '15%' },
+    { label: t('Robots.jobs.column.actions', 'Actions'), width: '22%' },
   ];
 
   return (
@@ -72,19 +75,24 @@ export default function JobTable(props: JobTableProps) {
 
         return (
           <Tr key={row.id}>
-            <Td style={{ whiteSpace: 'normal' }}>
+            <Td>
               <Typography variant="omega" textColor="neutral800">
                 {workflowLabel(row.workflow)}
               </Typography>
               {directiveName && (
-                <Typography variant="pi" textColor="neutral600" tag="p">
+                <Typography variant="pi" textColor="neutral600" tag="p" style={{ overflowWrap: 'anywhere' }}>
                   {t('Robots.jobs.from-directive', 'From directive {name}', { name: directiveName })}
                 </Typography>
               )}
             </Td>
             <StatusCell row={row} nowMs={nowMs}>
               {error && (
-                <Typography variant="pi" textColor="danger600" tag="p" style={{ maxWidth: '24rem' }}>
+                <Typography
+                  variant="pi"
+                  textColor="danger600"
+                  tag="p"
+                  style={{ maxWidth: '24rem', overflowWrap: 'anywhere' }}
+                >
                   {error}
                 </Typography>
               )}
@@ -93,7 +101,9 @@ export default function JobTable(props: JobTableProps) {
             <Td>
               {units.kind === 'not-loaded' ? (
                 <TextButton disabled={isLoadingDetail} onClick={() => props.onLoadDetail(row)}>
-                  {isLoadingDetail ? t('Robots.loading', 'Loading…') : unitsLabel(t, units)}
+                  <Typography variant="omega">
+                    {isLoadingDetail ? t('Robots.loading', 'Loading…') : unitsLabel(t, units)}
+                  </Typography>
                 </TextButton>
               ) : (
                 <Typography variant="omega" textColor="neutral800">
@@ -101,7 +111,7 @@ export default function JobTable(props: JobTableProps) {
                 </Typography>
               )}
             </Td>
-            <Td style={{ whiteSpace: 'normal' }}>
+            <Td>
               <JobActions {...props} row={row} isCancelling={cancellingIds.includes(row.id)} />
             </Td>
           </Tr>
@@ -129,7 +139,7 @@ function JobActions({
   if (row.status === 'pending' || row.status === 'processing') {
     if (!canRun) {
       return (
-        <Typography variant="pi" textColor="neutral600">
+        <Typography variant="omega" textColor="neutral600">
           {t('Robots.jobs.output-when-finished', 'Output appears when it finishes')}
         </Typography>
       );
@@ -141,6 +151,7 @@ function JobActions({
         variant="danger-light"
         loading={isCancelling}
         disabled={isCancelling}
+        style={NO_WRAP}
         onClick={() => onCancel(row)}
       >
         {t('Robots.jobs.cancel', 'Cancel')}
@@ -150,19 +161,15 @@ function JobActions({
 
   if (row.status === 'cancelled') {
     return (
-      <Typography variant="pi" textColor="neutral600">
+      <Typography variant="omega" textColor="neutral600">
         {t('Robots.jobs.nothing-to-view', 'Nothing to view — cancelled before it produced output')}
       </Typography>
     );
   }
 
   return (
-    <Flex>
-      <Box>
-        <Button size="S" variant="secondary" onClick={() => onViewOutput(row)}>
-          {t('Robots.jobs.view-output', 'View output')}
-        </Button>
-      </Box>
-    </Flex>
+    <Button size="S" variant="secondary" style={NO_WRAP} onClick={() => onViewOutput(row)}>
+      {t('Robots.jobs.view-output', 'View output')}
+    </Button>
   );
 }
