@@ -214,6 +214,12 @@ export function installFakeStrapi(options: InstallOptions = {}) {
 
   const fake: Record<string, any> = {
     db: { query: db.query },
+    /** Just what the plugin's own document calls need, on top of the same store. */
+    documents: (uid: string) => ({
+      create: ({ data }: { data: Record<string, unknown> }) => db.query(uid).create({ data }),
+      findMany: (params: FindParams = {}) => db.query(uid).findMany(params),
+      count: (params: FindParams = {}) => db.query(uid).count(params),
+    }),
     log,
     config: {
       server: { url: 'http://localhost:1337' },

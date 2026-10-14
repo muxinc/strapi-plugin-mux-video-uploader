@@ -206,7 +206,11 @@ export default function RobotsTab({
     directivesRequested.current = true;
     setDirectivesError(undefined);
     try {
-      setDirectives((await api.listDirectives()).directives);
+      const result = await api.listDirectives();
+      if (result.error) {
+        directivesRequested.current = false;
+        setDirectivesError(result.error.message);
+      } else setDirectives(result.directives);
     } catch (error) {
       directivesRequested.current = false;
       setDirectivesError(robotsErrorOf(error).message);
