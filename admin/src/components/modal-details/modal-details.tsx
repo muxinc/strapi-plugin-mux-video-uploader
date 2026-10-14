@@ -520,11 +520,12 @@ export default function ModalDetails(props: {
                               title={formatMessage('ModalDetails.apply-summary.title', 'Apply summary to this video')}
                               help={formatMessage(
                                 'ModalDetails.apply-summary.help',
-                                "Pick a field for each output, or leave it on Do not apply. Nothing is sent to Mux: the values go into this video's fields, and Finish saves them."
+                                "Check each output to apply. Nothing is sent to Mux: the values go into this video's fields, and Finish saves them."
                               )}
                               summary={summary}
                               fields={summaryTargets}
                               values={{ title: values.title, description: values.description, tags: values.tags }}
+                              fixedTargets
                               onApply={applySummary}
                               onClose={() => setApplyingSummary(false)}
                             />

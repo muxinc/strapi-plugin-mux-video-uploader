@@ -553,12 +553,11 @@ function FormBody(props: {
             </Box>
           </Accordion.Content>
         </Accordion.Item>
+        <AutomationSection
+          value={values.directives}
+          onChange={(directiveIds) => setFieldValue('directives', directiveIds)}
+        />
       </Accordion.Root>
-
-      <AutomationSection
-        value={values.directives}
-        onChange={(directiveIds) => setFieldValue('directives', directiveIds)}
-      />
     </Box>
   );
 }
