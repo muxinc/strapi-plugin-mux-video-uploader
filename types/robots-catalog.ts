@@ -153,7 +153,7 @@ export interface RobotsWorkflowDefinition {
   params: RobotsParamField[];
   /** Shown in the confirm step. */
   notes?: string[];
-  /** Needs Mux Data views accumulated before it has anything to analyse. */
+  /** Needs Mux Data views accumulated before it has anything to analyze. */
   requiresViewData?: boolean;
   /** Writes a track onto the Mux asset when it completes. */
   producesTrack?: boolean;
@@ -520,7 +520,7 @@ export const ROBOTS_CATALOG: RobotsWorkflowDefinition[] = [
         helpText:
           'Off, the video needs a caption track: selection reads the transcript. On, selection ' +
           'reads the picture instead and no captions are needed — at the cost of generating ' +
-          'or reusing Mux Shots, billed separately from Robots units. Not supported on ' +
+          'or reusing Mux Shots, billed separately from Mux AI units. Not supported on ' +
           'audio-only videos, which always read the transcript.',
         defaultValue: false,
       },
@@ -645,7 +645,7 @@ export const ROBOTS_CATALOG: RobotsWorkflowDefinition[] = [
           { value: 'focus', label: 'Focus' },
           { value: 'face_or_action', label: 'Face or action' },
           { value: 'composition', label: 'Composition' },
-          { value: 'contrast_color', label: 'Contrast and colour' },
+          { value: 'contrast_color', label: 'Contrast and color' },
           { value: 'brand_fit', label: 'Brand fit' },
         ],
       },
@@ -668,7 +668,7 @@ export const ROBOTS_CATALOG: RobotsWorkflowDefinition[] = [
     category: 'Insights',
     description: 'Turn accumulated viewing data into per-moment engagement insights.',
     requiresViewData: true,
-    notes: ['Needs Mux Data views on this asset. With no views recorded there is nothing to analyse.'],
+    notes: ['Needs Mux Data views on this asset. With no views recorded there is nothing to analyze.'],
     params: [],
   },
   {
@@ -932,19 +932,38 @@ export function assetContextFrom(asset?: AssetLike | null): RobotsAssetContext {
   return context;
 }
 
+/** What an asset lacks for a workflow. */
+export interface RobotsUnavailability {
+  reason: 'audio-only' | 'no-captions';
+  /** A workflow that gives the asset what it lacks. */
+  fix?: RobotsWorkflow;
+}
+
+/** What stops this asset running a workflow, or `undefined` when nothing does. */
+export function workflowUnavailability(
+  definition: RobotsWorkflowDefinition,
+  context: RobotsAssetContext = {}
+): RobotsUnavailability | undefined {
+  if (definition.requiresVideoTrack && context.isAudioOnly === true) return { reason: 'audio-only' };
+  if (definition.key === 'generate-chapters' && context.hasCaptions === false) {
+    return { reason: 'no-captions', fix: 'generate-premium-captions' };
+  }
+
+  return undefined;
+}
+
+const UNAVAILABLE_REASONS: Record<RobotsUnavailability['reason'], string> = {
+  'audio-only': 'is not available for audio-only videos',
+  'no-captions': 'needs a caption track',
+};
+
 /** Why this asset can't run a workflow, or `undefined` when it can. */
 export function workflowUnavailableReason(
   definition: RobotsWorkflowDefinition,
   context: RobotsAssetContext = {}
 ): string | undefined {
-  if (definition.requiresVideoTrack && context.isAudioOnly === true) return 'not available for audio-only';
-  if (definition.key === 'generate-chapters' && context.hasCaptions === false) return 'needs a caption track';
-
-  return undefined;
-}
-
-export function availableWorkflow(preferred: RobotsWorkflow, context: RobotsAssetContext = {}): RobotsWorkflow {
-  return workflowUnavailableReason(ROBOTS_CATALOG_BY_KEY[preferred], context) ? DEFAULT_ROBOTS_WORKFLOW : preferred;
+  const unavailability = workflowUnavailability(definition, context);
+  return unavailability && UNAVAILABLE_REASONS[unavailability.reason];
 }
 
 /**

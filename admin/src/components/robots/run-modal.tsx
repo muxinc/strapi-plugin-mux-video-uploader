@@ -12,7 +12,6 @@ import {
 } from '@strapi/design-system';
 
 import {
-  availableWorkflow,
   confirmWarnings,
   DEFAULT_ROBOTS_WORKFLOW,
   defaultParamValues,
@@ -20,11 +19,13 @@ import {
   ROBOTS_CATALOG_BY_KEY,
   ROBOTS_CATEGORIES,
   RobotsAssetContext,
+  RobotsUnavailability,
   RobotsWorkflow,
+  RobotsWorkflowDefinition,
   validateParams,
-  workflowUnavailableReason,
+  workflowUnavailability,
 } from '../../../../types/robots-catalog';
-import { useRobotsIntl } from './intl';
+import { Translate, useRobotsIntl } from './intl';
 import { PricingLink } from './links';
 import Note from './note';
 import ParamFields, { CaptionTrackOption } from './param-fields';
@@ -40,6 +41,50 @@ interface RunModalProps {
   context: RobotsAssetContext;
   captions: CaptionTrackOption[];
   blockedReason?: string;
+}
+
+const unavailableTitle = (t: Translate, unavailability: RobotsUnavailability) =>
+  unavailability.reason === 'audio-only'
+    ? t('Robots.run.unavailable.audio-only.title', 'Not available for audio-only videos')
+    : t('Robots.run.unavailable.no-captions.title', 'This video needs captions first');
+
+function UnavailableWorkflowNote({
+  definition,
+  unavailability,
+  onSwitch,
+}: {
+  definition: RobotsWorkflowDefinition;
+  unavailability: RobotsUnavailability;
+  onSwitch: (workflow: RobotsWorkflow) => void;
+}) {
+  const { t } = useRobotsIntl();
+  const fix = unavailability.fix ? ROBOTS_CATALOG_BY_KEY[unavailability.fix] : undefined;
+
+  return (
+    <Note
+      variant="warning"
+      title={unavailableTitle(t, unavailability)}
+      action={
+        fix && (
+          <Button variant="secondary" size="S" onClick={() => onSwitch(fix.key)}>
+            {t('Robots.run.unavailable.switch', 'Switch to {workflow}', { workflow: fix.label })}
+          </Button>
+        )
+      }
+    >
+      {unavailability.reason === 'audio-only'
+        ? t(
+            'Robots.run.unavailable.audio-only.body',
+            "{workflow} works from the video's picture, and this video is audio-only. Pick another workflow.",
+            { workflow: definition.label }
+          )
+        : t(
+            'Robots.run.unavailable.no-captions.body',
+            "{workflow} is made from the video's transcript, which comes from a caption track, and this video doesn't have one yet. Run {fix} first, or add captions in the Captions tab.",
+            { workflow: definition.label, fix: fix?.label ?? '' }
+          )}
+    </Note>
+  );
 }
 
 export default function RunModal({
@@ -58,9 +103,8 @@ export default function RunModal({
   const [submitting, setSubmitting] = React.useState(false);
   const [muxError, setMuxError] = React.useState<string>();
 
-  // Derived rather than stored: the asset's kind can arrive after a workflow was picked.
-  const workflow = availableWorkflow(selected, context);
-  const definition = ROBOTS_CATALOG_BY_KEY[workflow];
+  const definition = ROBOTS_CATALOG_BY_KEY[selected];
+  const unavailability = workflowUnavailability(definition, context);
 
   // Reset per workflow and per opening, so options from one workflow never leak into another.
   React.useEffect(() => {
@@ -83,7 +127,7 @@ export default function RunModal({
     if (submitting) return;
     setSubmitting(true);
 
-    const outcome = await onRun(workflow, values);
+    const outcome = await onRun(selected, values);
 
     if (!outcome.ok && outcome.reason === 'invalid-parameters') {
       setMuxError(outcome.message);
@@ -148,22 +192,27 @@ export default function RunModal({
               <Field.Root name="workflow" hint={definition.description}>
                 <Field.Label>{t('Robots.run.workflow', 'Workflow')}</Field.Label>
                 <SingleSelect
-                  value={workflow}
+                  value={selected}
                   onChange={(next: string | number) => setSelected(next as RobotsWorkflow)}
                 >
                   {ROBOTS_CATEGORIES.flatMap((category) =>
-                    ROBOTS_CATALOG.filter((candidate) => candidate.category === category).map((candidate) => {
-                      const unavailable = workflowUnavailableReason(candidate, context);
-                      return (
-                        <SingleSelectOption key={candidate.key} value={candidate.key} disabled={!!unavailable}>
-                          {`${category} · ${candidate.label}${unavailable ? ` (${unavailable})` : ''}`}
-                        </SingleSelectOption>
-                      );
-                    })
+                    ROBOTS_CATALOG.filter((candidate) => candidate.category === category).map((candidate) => (
+                      <SingleSelectOption key={candidate.key} value={candidate.key}>
+                        {`${category} · ${candidate.label}`}
+                      </SingleSelectOption>
+                    ))
                   )}
                 </SingleSelect>
                 <Field.Hint />
               </Field.Root>
+
+              {unavailability && (
+                <UnavailableWorkflowNote
+                  definition={definition}
+                  unavailability={unavailability}
+                  onSwitch={setSelected}
+                />
+              )}
 
               {(definition.producesTrack || definition.planRestricted || definition.requiresViewData) && (
                 <Flex gap={2} wrap="wrap">
@@ -185,7 +234,8 @@ export default function RunModal({
                 context={context}
               />
 
-              {errors.length > 0 && (
+              {/* The note above already says what the asset lacks; its errors would repeat it. */}
+              {!unavailability && errors.length > 0 && (
                 <Note variant="danger" title={t('Robots.run.fix-these', 'Fix these before running')}>
                   {errors.map((error) => (
                     <Box key={error}>{error}</Box>
@@ -219,9 +269,9 @@ export default function RunModal({
                 {t('Common.cancel-button', 'Cancel')}
               </Button>
               <Button
-                disabled={errors.length > 0 || !!blockedReason}
-                title={blockedReason ?? errors[0]}
-                onClick={() => errors.length === 0 && setConfirming(true)}
+                disabled={!!unavailability || errors.length > 0 || !!blockedReason}
+                title={blockedReason ?? (unavailability ? unavailableTitle(t, unavailability) : errors[0])}
+                onClick={() => !unavailability && errors.length === 0 && setConfirming(true)}
               >
                 {t('Robots.run.continue', 'Continue')}
               </Button>
