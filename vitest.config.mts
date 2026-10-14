@@ -4,8 +4,10 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['server/src/**/*.test.ts', 'types/**/*.test.ts'],
-    // Installs the fake global `strapi` before any plugin module is imported: some of them read it at load time.
     setupFiles: ['./test/setup.ts'],
+    // Each `vi.fn(impl)` gets its `impl` back before every test, so module-level mocks keep working
+    // while per-test stubs and recorded calls are dropped.
+    mockReset: true,
     restoreMocks: true,
   },
 });
