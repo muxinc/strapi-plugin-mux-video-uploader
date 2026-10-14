@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import {
   assetContextFrom,
-  availableWorkflow,
   buildRobotsParameters,
   confirmWarnings,
+  DEFAULT_ROBOTS_WORKFLOW,
   defaultParamValues,
   emptyQuestionRow,
   paramsFromFormValues,
@@ -14,6 +14,7 @@ import {
   robotsValuesSchema,
   validateParams,
   workflowByEventKey,
+  workflowUnavailability,
   workflowUnavailableReason,
 } from './robots-catalog';
 
@@ -48,17 +49,28 @@ describe('the catalog', () => {
   });
 
   it('opens on a workflow every asset can run', () => {
-    expect(availableWorkflow('find-scenes', { isAudioOnly: true })).toBe('summarize');
-    expect(workflowUnavailableReason(def('summarize'), { isAudioOnly: true, hasCaptions: false })).toBeUndefined();
+    expect(
+      workflowUnavailableReason(def(DEFAULT_ROBOTS_WORKFLOW), { isAudioOnly: true, hasCaptions: false })
+    ).toBeUndefined();
   });
 
   it('disables picture workflows on audio-only assets and chapters without captions', () => {
-    expect(workflowUnavailableReason(def('find-scenes'), { isAudioOnly: true })).toBe('not available for audio-only');
+    expect(workflowUnavailableReason(def('find-scenes'), { isAudioOnly: true })).toBe(
+      'is not available for audio-only videos'
+    );
     expect(workflowUnavailableReason(def('find-best-thumbnails'), { isAudioOnly: true })).toBe(
-      'not available for audio-only'
+      'is not available for audio-only videos'
     );
     expect(workflowUnavailableReason(def('generate-chapters'), { hasCaptions: false })).toBe('needs a caption track');
     expect(workflowUnavailableReason(def('find-scenes'), {})).toBeUndefined();
+  });
+
+  it('points chapters without captions at premium captions, and audio-only assets at nothing', () => {
+    expect(workflowUnavailability(def('generate-chapters'), { hasCaptions: false })).toEqual({
+      reason: 'no-captions',
+      fix: 'generate-premium-captions',
+    });
+    expect(workflowUnavailability(def('find-scenes'), { isAudioOnly: true })).toEqual({ reason: 'audio-only' });
   });
 });
 

@@ -284,7 +284,7 @@ const robotsService = () => ({
 
     const context = assetContextFrom(muxAsset.asset_data as any);
     const unavailable = workflowUnavailableReason(definition, context);
-    if (unavailable) throw new RobotsRequestError(400, 'invalid-parameters', `${definition.label} is ${unavailable}.`);
+    if (unavailable) throw new RobotsRequestError(400, 'invalid-parameters', `${definition.label} ${unavailable}.`);
 
     const errors = validateParams(definition, parsed.data, context);
     if (errors.length > 0) throw new RobotsRequestError(400, 'invalid-parameters', errors.join(' '));
