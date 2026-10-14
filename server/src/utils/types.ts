@@ -8,3 +8,4 @@ export type ServiceType<T> = T extends 'mux' ? MuxService : never;
 
 export const ASSET_MODEL = `plugin::${pluginId}.mux-asset` as const;
 export const TEXT_TRACK_MODEL = `plugin::${pluginId}.mux-text-track` as const;
+export const ROBOT_JOB_MODEL = `plugin::${pluginId}.mux-robot-job` as const;

@@ -1,4 +1,5 @@
 import type Mux from '@mux/ts';
+import type { RobotsOutputs } from '../../../../types/robots';
 import { ParsedCustomTextTrack } from '../../../../types/shared-types';
 
 export interface MuxAsset extends MuxAssetUpdate {
@@ -16,6 +17,9 @@ export interface MuxAsset extends MuxAssetUpdate {
   createdAt: string;
   updatedAt: string;
   asset_data?: Mux.Video.Assets.Asset;
+  description?: string | null;
+  tags?: string[] | null;
+  robots_outputs?: RobotsOutputs | null;
 }
 
 export interface MuxAssetUpdate {
