@@ -3,6 +3,7 @@ import {
   Badge,
   Box,
   Button,
+  Checkbox,
   Flex,
   Modal,
   SingleSelect,
@@ -38,6 +39,7 @@ export default function ApplyDialog({
   summary,
   fields,
   values,
+  fixedTargets = false,
   onApply,
   onClose,
 }: {
@@ -47,6 +49,8 @@ export default function ApplyDialog({
   fields: EntryFieldOption[];
   /** What each field holds now, by name. */
   values: Record<string, unknown>;
+  /** Each output has one field of its own (see `onlyFor`): a checkbox applies it, instead of a choice of field. */
+  fixedTargets?: boolean;
   /** The new value of each chosen field, by name. */
   onApply: (values: Record<string, unknown>) => void;
   onClose: () => void;
@@ -67,8 +71,9 @@ export default function ApplyDialog({
     targets[row.key] ? fields.find((field) => field.name === targets[row.key]) : undefined;
 
   const columns = [
+    ...(fixedTargets ? [t('Robots.apply.column.apply', 'Apply')] : []),
     t('Robots.apply.column.output', 'Output'),
-    t('Robots.apply.column.target', 'Field'),
+    ...(fixedTargets ? [] : [t('Robots.apply.column.target', 'Field')]),
     t('Robots.apply.column.current', 'Current value'),
     t('Robots.apply.column.new', 'New value'),
   ];
@@ -98,8 +103,10 @@ export default function ApplyDialog({
           <RobotsTable columns={columns} rowCount={rows.length}>
             {rows.map((row) => {
               const field = targetOf(row);
-              const current = field ? values[field.name] : undefined;
-              const problem = field ? minLengthProblem(row.value, field) : undefined;
+              // With fixed targets a row's field is known even while it's unchecked.
+              const shown = fixedTargets ? row.suggested : field;
+              const current = shown ? values[shown.name] : undefined;
+              const problem = shown ? minLengthProblem(row.value, shown) : undefined;
               const takenElsewhere = new Set(
                 Object.entries(targets)
                   .filter(([key, name]) => key !== row.key && name)
@@ -112,61 +119,103 @@ export default function ApplyDialog({
                 !!row.suggested &&
                 matchesGeneratedValue(values[row.suggested.name], row.value, row.suggested);
               const suggestedHasContent =
-                !field && !suggestedApplied && !!row.suggested && !isEmptyFieldValue(values[row.suggested.name]);
-              const preview = plainTextOf(field ? valueForField(row.value, field) : row.value);
+                !field &&
+                !suggestedApplied &&
+                !problem &&
+                !!row.suggested &&
+                !isEmptyFieldValue(values[row.suggested.name]);
+              const preview = plainTextOf(shown ? valueForField(row.value, shown) : row.value);
+              const outputName = (
+                <Typography variant="omega" fontWeight="bold">
+                  {outputLabel[row.key]}
+                </Typography>
+              );
+              const notes = (
+                <>
+                  {row.compatible.length === 0 && (
+                    <Typography variant="pi" textColor="neutral600" tag="p">
+                      {row.key === 'tags'
+                        ? t('Robots.apply.no-json-field', 'This entry has no JSON field to hold a list of tags.')
+                        : t('Robots.apply.no-text-field', 'This entry has no text field for it.')}
+                    </Typography>
+                  )}
+                  {suggestedHasContent && (
+                    <Typography variant="pi" textColor="neutral600" tag="p">
+                      {fixedTargets
+                        ? t('Robots.apply.has-content-check', '{field} already has content. Check it to replace it.', {
+                            field: row.suggested!.label,
+                          })
+                        : t('Robots.apply.has-content', '{field} already has content. Pick it to replace it.', {
+                            field: row.suggested!.label,
+                          })}
+                    </Typography>
+                  )}
+                  {problem && (
+                    <Typography variant="pi" textColor="danger600" tag="p">
+                      {problem}
+                    </Typography>
+                  )}
+                </>
+              );
 
               return (
                 <Tr key={row.key}>
-                  <Td>
-                    <Typography variant="omega" fontWeight="bold">
-                      {outputLabel[row.key]}
-                    </Typography>
-                  </Td>
-                  <Td style={{ whiteSpace: 'normal', minWidth: '20rem' }}>
-                    <SingleSelect
-                      aria-label={t('Robots.apply.target-for', 'Field for {output}', {
-                        output: outputLabel[row.key],
-                      })}
-                      value={targets[row.key] || NONE}
-                      onChange={(next: string | number) =>
-                        setTargets((previous) => ({ ...previous, [row.key]: next === NONE ? '' : String(next) }))
-                      }
-                    >
-                      <SingleSelectOption value={NONE}>
-                        {t('Robots.apply.do-not-apply', 'Do not apply')}
-                      </SingleSelectOption>
-                      {row.compatible.map((candidate) => (
-                        <SingleSelectOption
-                          key={candidate.name}
-                          value={candidate.name}
-                          disabled={takenElsewhere.has(candidate.name)}
+                  {fixedTargets ? (
+                    <>
+                      <Td>
+                        <Checkbox
+                          aria-label={t('Robots.apply.apply-output', 'Apply {output}', {
+                            output: outputLabel[row.key],
+                          })}
+                          checked={!!field}
+                          disabled={!row.suggested || !!problem}
+                          onCheckedChange={(next: boolean | 'indeterminate') =>
+                            setTargets((previous) => ({
+                              ...previous,
+                              [row.key]: next === true ? row.suggested!.name : '',
+                            }))
+                          }
+                          // Inline, so it sits on the row's first line of text like the cells beside it.
+                          style={{ display: 'inline-flex', verticalAlign: 'middle' }}
+                        />
+                      </Td>
+                      <Td style={{ whiteSpace: 'normal' }}>
+                        {outputName}
+                        {notes}
+                      </Td>
+                    </>
+                  ) : (
+                    <>
+                      <Td>{outputName}</Td>
+                      <Td style={{ whiteSpace: 'normal', minWidth: '20rem' }}>
+                        <SingleSelect
+                          aria-label={t('Robots.apply.target-for', 'Field for {output}', {
+                            output: outputLabel[row.key],
+                          })}
+                          value={targets[row.key] || NONE}
+                          onChange={(next: string | number) =>
+                            setTargets((previous) => ({ ...previous, [row.key]: next === NONE ? '' : String(next) }))
+                          }
                         >
-                          {candidate.label}
-                        </SingleSelectOption>
-                      ))}
-                    </SingleSelect>
-                    {row.compatible.length === 0 && (
-                      <Typography variant="pi" textColor="neutral600" tag="p">
-                        {row.key === 'tags'
-                          ? t('Robots.apply.no-json-field', 'This entry has no JSON field to hold a list of tags.')
-                          : t('Robots.apply.no-text-field', 'This entry has no text field for it.')}
-                      </Typography>
-                    )}
-                    {suggestedHasContent && (
-                      <Typography variant="pi" textColor="neutral600" tag="p">
-                        {t('Robots.apply.has-content', '{field} already has content. Pick it to replace it.', {
-                          field: row.suggested!.label,
-                        })}
-                      </Typography>
-                    )}
-                    {problem && (
-                      <Typography variant="pi" textColor="danger600" tag="p">
-                        {problem}
-                      </Typography>
-                    )}
-                  </Td>
+                          <SingleSelectOption value={NONE}>
+                            {t('Robots.apply.do-not-apply', 'Do not apply')}
+                          </SingleSelectOption>
+                          {row.compatible.map((candidate) => (
+                            <SingleSelectOption
+                              key={candidate.name}
+                              value={candidate.name}
+                              disabled={takenElsewhere.has(candidate.name)}
+                            >
+                              {candidate.label}
+                            </SingleSelectOption>
+                          ))}
+                        </SingleSelect>
+                        {notes}
+                      </Td>
+                    </>
+                  )}
                   <Td style={{ whiteSpace: 'normal' }}>
-                    {suggestedApplied && (
+                    {suggestedApplied && !fixedTargets && (
                       <Flex direction="column" alignItems="start" gap={1}>
                         <Badge>{t('Robots.apply.already-applied', 'Already applied')}</Badge>
                         <Typography variant="pi" textColor="neutral600">
@@ -174,12 +223,12 @@ export default function ApplyDialog({
                         </Typography>
                       </Flex>
                     )}
-                    {field &&
-                      (matchesGeneratedValue(current, row.value, field) ? (
+                    {shown &&
+                      (matchesGeneratedValue(current, row.value, shown) ? (
                         <Badge>{t('Robots.apply.already-applied', 'Already applied')}</Badge>
                       ) : isEmptyFieldValue(current) ? (
                         <Badge>{t('Robots.apply.empty', 'Empty')}</Badge>
-                      ) : (
+                      ) : field ? (
                         <Flex direction="column" alignItems="start" gap={1}>
                           <Badge backgroundColor="warning100" textColor="warning700">
                             {t('Robots.apply.will-be-replaced', 'Will be replaced')}
@@ -188,6 +237,10 @@ export default function ApplyDialog({
                             {plainTextOf(current)}
                           </Typography>
                         </Flex>
+                      ) : (
+                        <Typography variant="pi" textColor="neutral700">
+                          {plainTextOf(current)}
+                        </Typography>
                       ))}
                   </Td>
                   <Td style={{ whiteSpace: 'normal' }}>
