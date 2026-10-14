@@ -1,3 +1,4 @@
+import { handleRobotsEvent } from './robots';
 import type { WebhookEvent, WebhookOutcome } from './types';
 import { handleVideoEvent } from './video';
 
@@ -12,6 +13,7 @@ export async function dispatchWebhookEvent(event: WebhookEvent): Promise<Webhook
   const type = typeof event?.type === 'string' ? event.type : '';
 
   if (type.startsWith('video.')) return handleVideoEvent(event);
+  if (type.startsWith('robots.')) return handleRobotsEvent(event);
 
   return 'ignored';
 }
