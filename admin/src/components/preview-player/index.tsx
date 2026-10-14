@@ -46,6 +46,13 @@ const PreviewPlayer = (props: { muxAsset?: MuxAsset }) => {
   return (
     <MuxPlayerStyled
       playbackId={muxAsset.playback_id}
+      // Force the MSE (hls.js) engine instead of native HLS playback.
+      // With native playback the remote .m3u8 becomes the <video> src, which the
+      // Strapi admin's default CSP blocks (media-src is 'self' data: blob' only).
+      // Via MSE the src is a blob: URL, already allowed, and hls.js fetches the
+      // manifest and segments over XHR, which falls under connect-src ('self' https:).
+      // This keeps the player working without asking users to widen their CSP.
+      preferPlayback="mse"
       poster={posterUrl}
       playback-token={videoToken}
       // Disabled because even though we proxy this request, the images in the VTT still go against
