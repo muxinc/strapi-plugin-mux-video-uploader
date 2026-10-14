@@ -25,6 +25,8 @@ export interface MuxAssetUpdate {
   custom_text_tracks?: (Omit<ParsedCustomTextTrack, 'file'> & {
     file?: ParsedCustomTextTrack['file'];
   })[];
+  /** Ids of the text tracks the form was opened with. */
+  known_track_ids?: string[];
 }
 
 export interface GetMuxAssetsResponse {

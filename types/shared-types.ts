@@ -50,7 +50,7 @@ export const CustomTextTrack = z.object({
 
 export type ParsedCustomTextTrack = z.infer<typeof CustomTextTrack>;
 
-export type StoredTextTrack = ParsedCustomTextTrack & { id: string };
+export type StoredTextTrack = ParsedCustomTextTrack & { id: string; documentId: string };
 
 export const UploadConfig = z
   .object({
