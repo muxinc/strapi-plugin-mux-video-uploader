@@ -134,15 +134,21 @@ const HomePage = () => {
     const assetId = Number(params.get('asset'));
     if (!Number.isInteger(assetId) || assetId <= 0 || selectedAsset?.id === assetId) return;
 
+    let superseded = false;
+
     get(`${PLUGIN_ID}/mux-asset/${assetId}`)
       .then(({ data }) => {
-        if (!data) return;
+        if (!data || superseded) return;
         setDetailsTab(params.get('tab') === 'robots' ? 'robots' : 'details');
         setSelectedAsset(data);
       })
       .catch(() => {
         // An asset that no longer exists just leaves the list showing.
       });
+
+    return () => {
+      superseded = true;
+    };
   }, [location.search]);
 
   const permissions = React.useMemo(() => {

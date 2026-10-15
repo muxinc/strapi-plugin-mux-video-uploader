@@ -92,6 +92,7 @@ export default function ModalDetails(props: {
     setTab(initialTab);
     setRobotsOpened(initialTab === 'robots');
     setApplyingSummary(false);
+    setCreatingPlaybackId(false);
   }, [props.muxAsset?.id]);
 
   React.useEffect(() => {
@@ -234,9 +235,9 @@ export default function ModalDetails(props: {
   current.current = { isDirty, latestAsset, formAsset };
 
   const showFreshAsset = (fresh: MuxAsset) => {
-    if (!fresh) return;
-
     const now = current.current;
+    // A request can outlive the video it was made for: the modal may show another one by now.
+    if (!fresh || fresh.id !== now.latestAsset?.id) return;
 
     if (playbackSignature(fresh) !== playbackSignature(now.latestAsset)) setPlayerKey((key) => key + 1);
     setLatestAsset(fresh);
@@ -264,13 +265,14 @@ export default function ModalDetails(props: {
 
   const createPlaybackId = async () => {
     if (!latestAsset) return;
+    const assetId = latestAsset.id;
     setCreatingPlaybackId(true);
     try {
-      showFreshAsset((await robotsApi.createPlaybackId(latestAsset.id)).asset);
+      showFreshAsset((await robotsApi.createPlaybackId(assetId)).asset);
     } catch (error) {
       toggleNotification({ type: 'danger', message: robotsErrorOf(error).message });
     } finally {
-      setCreatingPlaybackId(false);
+      if (current.current.latestAsset?.id === assetId) setCreatingPlaybackId(false);
     }
   };
 
