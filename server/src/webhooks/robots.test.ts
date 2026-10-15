@@ -239,6 +239,19 @@ describe('Robots outputs on the asset', () => {
     });
   });
 
+  it('fills description and tags only while they are empty', async () => {
+    const { id } = seedAsset(fake.db, { description: 'Written by hand', tags: [] });
+
+    await dispatchWebhookEvent(jobEvent(summary('rjob_1', T0 + 60, 'First')));
+    await dispatchWebhookEvent(jobEvent(summary('rjob_2', T0 + 120, 'Second')));
+
+    expect(asset(id)).toMatchObject({
+      description: 'Written by hand',
+      tags: ['first', 'mux'],
+      robots_outputs: { summarize: { job_id: 'rjob_2', description: 'Second, described' } },
+    });
+  });
+
   it("doesn't let an older summary replace a newer one, whatever order they arrive in", async () => {
     const { id } = seedAsset(fake.db);
 
