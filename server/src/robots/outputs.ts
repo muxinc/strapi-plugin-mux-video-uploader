@@ -82,10 +82,15 @@ export async function writeOutputs(assetId: string, workflow: string, job: MuxJo
 
   const data: Record<string, unknown> = { robots_outputs: { ...outputs, [workflow]: slot } };
 
+  // Only empty fields are filled: what's already there, typed by someone or from an earlier summary,
+  // is replaced only through Apply summary.
   if (workflow === 'summarize') {
     const summary = slot as RobotsSummarizeOutput;
-    data.description = summary.description ?? null;
-    data.tags = summary.tags ?? null;
+    const hasDescription = typeof muxAsset.description === 'string' && muxAsset.description.trim() !== '';
+    const hasTags = Array.isArray(muxAsset.tags) && muxAsset.tags.length > 0;
+
+    if (!hasDescription && summary.description) data.description = summary.description;
+    if (!hasTags && summary.tags?.length) data.tags = summary.tags;
   }
 
   await strapi.db.query(ASSET_MODEL).update({ where: { id: muxAsset.id }, data });
