@@ -42,6 +42,9 @@ export type DetailsTab = 'details' | 'captions' | 'robots';
  * The player is remounted when this changes, so it loads the new playback ID, tracks (captions,
  * audio, chapters) and thumbnail.
  */
+/** Re-reads Strapi, which webhooks keep current, never Mux. */
+const PROCESSING_POLL_INTERVAL_MS = 5000;
+
 const playbackSignature = (muxAsset?: MuxAsset) => JSON.stringify([muxAsset?.playback_id, muxAsset?.asset_data]);
 
 export default function ModalDetails(props: {
@@ -291,6 +294,16 @@ export default function ModalDetails(props: {
       ),
     });
   };
+
+  // Nothing else tells the modal that Mux finished processing the video it shows. An interval rather
+  // than a chain of timeouts, so a failed read doesn't stop it.
+  const processing = !!latestAsset && !latestAsset.isReady && !latestAsset.error_message;
+  React.useEffect(() => {
+    if (!isOpen || !processing) return;
+
+    const timer = setInterval(reloadAsset, PROCESSING_POLL_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }, [isOpen, processing, latestAsset?.id]);
 
   if (!latestAsset) return null;
 
