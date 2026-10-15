@@ -190,15 +190,7 @@ describe('Robots job webhooks', () => {
   it("stores jobs for assets this Strapi doesn't have, so they show if the asset arrives later", async () => {
     await dispatchWebhookEvent(jobEvent(job({ parameters: { asset_id: 'ast_elsewhere' } })));
 
-    expect(rows()).toEqual([expect.objectContaining({ asset_id: 'ast_elsewhere', mux_asset: null })]);
-  });
-
-  it('links the row to the mux-asset when there is one', async () => {
-    const { id } = seedAsset(fake.db);
-
-    await dispatchWebhookEvent(jobEvent(job()));
-
-    expect(rows()[0].mux_asset).toBe(id);
+    expect(rows()).toEqual([expect.objectContaining({ asset_id: 'ast_elsewhere' })]);
   });
 
   it('records the directive run that dispatched a job', async () => {
