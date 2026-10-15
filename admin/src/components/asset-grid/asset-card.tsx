@@ -72,7 +72,7 @@ const AssetCard = (props: Props) => {
 
   React.useEffect(() => {
     init(muxAsset);
-  }, []);
+  }, [muxAsset.playback_id, muxAsset.signed]);
 
   const renderCardAssetStatus = React.useCallback(() => {
     if (muxAsset.error_message !== null) {
