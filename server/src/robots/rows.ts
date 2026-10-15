@@ -7,7 +7,6 @@ import {
   RobotsRunData,
   statusRank,
 } from '../../../types/robots';
-import { resolveMuxAssetOrNull } from '../utils/resolve-mux-asset';
 import { ROBOT_JOB_MODEL } from '../utils/types';
 import { compact, isRecord, nonEmptyString } from '../utils/values';
 
@@ -242,9 +241,5 @@ export async function upsertRobotsRow(incoming: IncomingRow, claim?: ClaimCriter
     })) as RobotsJobRow;
   }
 
-  const muxAsset = incoming.asset_id ? await resolveMuxAssetOrNull({ asset_id: incoming.asset_id }) : null;
-
-  return (await robotJobs().create({
-    data: { ...incoming, mux_asset: muxAsset?.id ?? null },
-  })) as RobotsJobRow;
+  return (await robotJobs().create({ data: incoming })) as RobotsJobRow;
 }

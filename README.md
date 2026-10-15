@@ -203,7 +203,7 @@ Besides Strapi's own columns (`id`, `document_id`, `created_at`, `updated_at`, `
 | `workflow` | string | The workflow, e.g. `summarize` (jobs) |
 | `directive_id`, `directive_run_id` | string | The directive and run that started a job, or the run's directive |
 | `status` | string | `pending`, `processing`, `completed`, `errored`, `cancelled`; runs also `partial`; `requested` or `unconfirmed` while Mux hasn't confirmed a run |
-| `asset_id`, `mux_asset` | string, relation | The Mux asset, and the Mux Asset row when this Strapi has it |
+| `asset_id` | string | The Mux asset id, matching a Mux Asset row's `asset_id` when this Strapi has the video |
 | `parameters`, `outputs`, `errors` | json | As Mux reported them |
 | `units_consumed` | integer | Mux AI units |
 | `run_data` | json | A directive run's steps and timestamps |

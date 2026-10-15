@@ -83,11 +83,7 @@ const requireReadyAsset = (muxAsset: MuxAsset) => {
  * Inserts the placeholder for a create, unless one is already waiting. A job placeholder blocks
  * running workflows; any placeholder blocks running directives.
  */
-async function insertPlaceholder(
-  assetId: string,
-  kind: 'job' | 'run',
-  data: Partial<RobotsJobRow> & { mux_asset: number }
-) {
+async function insertPlaceholder(assetId: string, kind: 'job' | 'run', data: Partial<RobotsJobRow>) {
   return withAssetLock(assetId, async () => {
     const waiting = (await robotJobs().findMany({
       where: {
@@ -295,7 +291,6 @@ const robotsService = () => ({
       workflow: definition.key,
       parameters,
       requested_by: userId,
-      mux_asset: muxAsset.id,
     });
 
     return createOnce(assetId, placeholder, 'job', async () => {
@@ -326,7 +321,6 @@ const robotsService = () => ({
     const placeholder = await insertPlaceholder(assetId, 'run', {
       directive_id: directiveId,
       requested_by: userId,
-      mux_asset: muxAsset.id,
     });
 
     return createOnce(assetId, placeholder, 'run', async () => {

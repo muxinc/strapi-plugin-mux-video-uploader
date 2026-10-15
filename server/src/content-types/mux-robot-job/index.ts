@@ -30,11 +30,6 @@ export default {
     directive_run_id: { type: 'string', maxLength: 255 },
     status: { type: 'string', maxLength: 32 },
     asset_id: { type: 'string', maxLength: 255 },
-    mux_asset: {
-      type: 'relation',
-      relation: 'manyToOne',
-      target: 'plugin::mux-video-uploader.mux-asset',
-    },
     parameters: { type: 'json' },
     outputs: { type: 'json' },
     errors: { type: 'json' },
