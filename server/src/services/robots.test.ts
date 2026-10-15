@@ -326,6 +326,22 @@ describe('syncing an asset', () => {
     );
   });
 
+  it("takes units from the job's full copy, not from the list, which can say 0 for a finished job", async () => {
+    mux.client.robots.jobs.list.mockResolvedValue(
+      page([muxJob({ id: 'rjob_a', status: 'completed', parameters: undefined, units_consumed: 0 })])
+    );
+
+    await robots().syncAsset(muxAsset);
+    expect(rows()[0].units_consumed ?? null).toBeNull();
+
+    await dispatchWebhookEvent({
+      type: 'robots.job.summarize.completed',
+      data: muxJob({ id: 'rjob_a', status: 'completed', units_consumed: 500, outputs: { title: 'Done' } }),
+    });
+
+    expect(rows()[0]).toMatchObject({ units_consumed: 500, detail_loaded: true });
+  });
+
   it('settles an unconfirmed create the list shows, inside the time window', async () => {
     const requestedAt = unixNow() - 30;
     fake.db.seed(ROBOT_JOB_MODEL, [placeholderRow({ requested_at: isoAt(requestedAt) })]);

@@ -69,7 +69,12 @@ export function rowFromJob(
     parameters,
     outputs: isRecord(job.outputs) ? job.outputs : undefined,
     errors: Array.isArray(job.errors) || isRecord(job.errors) ? (job.errors as RobotsJobRow['errors']) : undefined,
-    units_consumed: typeof job.units_consumed === 'number' ? job.units_consumed : undefined,
+    // Mux reports 0 until a job finishes, and a list summary can still say 0 for a finished one. A
+    // finished row only fills empty fields, so a 0 stored then would hide the real count.
+    units_consumed:
+      detail && isTerminalJobStatus(job.status) && typeof job.units_consumed === 'number'
+        ? job.units_consumed
+        : undefined,
     mux_created_at: isoFromSeconds(job.created_at),
     mux_updated_at: isoFromSeconds(job.updated_at),
     // Outputs and units exist only once a job has finished, and count as stored only when this copy
