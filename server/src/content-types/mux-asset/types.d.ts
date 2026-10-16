@@ -1,7 +1,8 @@
 import type Mux from '@mux/ts';
+import type { RobotsOutputs } from '../../../../types/robots';
 import { ParsedCustomTextTrack } from '../../../../types/shared-types';
 
-export interface MuxAsset extends MuxAssetUpdate {
+export interface MuxAsset extends Omit<MuxAssetUpdate, 'tags'> {
   upload_id: string;
   isReady: boolean;
   title: string;
@@ -16,15 +17,24 @@ export interface MuxAsset extends MuxAssetUpdate {
   createdAt: string;
   updatedAt: string;
   asset_data?: Mux.Video.Assets.Asset;
+  description?: string | null;
+  tags?: string[] | null;
+  robots_outputs?: RobotsOutputs | null;
 }
 
 export interface MuxAssetUpdate {
   id: number;
   title?: string;
+  /** `null` or blank clears it. */
+  description?: string | null;
+  /** Trimmed, none empty. */
+  tags?: string[];
   /** File is optional when updating, and only exists if user is updating the captions */
   custom_text_tracks?: (Omit<ParsedCustomTextTrack, 'file'> & {
     file?: ParsedCustomTextTrack['file'];
   })[];
+  /** Ids of the text tracks the form was opened with. */
+  known_track_ids?: string[];
 }
 
 export interface GetMuxAssetsResponse {

@@ -50,7 +50,7 @@ export const CustomTextTrack = z.object({
 
 export type ParsedCustomTextTrack = z.infer<typeof CustomTextTrack>;
 
-export type StoredTextTrack = ParsedCustomTextTrack & { id: string };
+export type StoredTextTrack = ParsedCustomTextTrack & { id: string; documentId: string };
 
 export const UploadConfig = z
   .object({
@@ -94,6 +94,12 @@ export const UploadConfig = z
     custom_text_tracks: z.array(CustomTextTrack).optional(),
 
     upload_type: z.enum(['file', 'url']).default('file'),
+
+    /**
+     * The configured default Robots directives the person kept checked. Only someone with Run Robots
+     * can narrow the list; the server ignores it for everyone else.
+     */
+    directives: z.array(z.string()).optional(),
   })
 
 export type RequestedUploadConfig = z.input<typeof UploadConfig>;

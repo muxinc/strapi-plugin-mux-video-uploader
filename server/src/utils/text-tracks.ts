@@ -11,9 +11,9 @@ export async function storeTextTracks(custom_text_tracks: ParsedCustomTextTrack[
   // @ts-expect-error - v5 migration
   return await Promise.all(
     custom_text_tracks.map(async (track) => {
-      const { id } = await strapi.entityService.create(TEXT_TRACK_MODEL, { data: track });
+      const { id, documentId } = await strapi.entityService.create(TEXT_TRACK_MODEL, { data: track });
 
-      return { ...track, id };
+      return { ...track, id, documentId };
     })
   );
 }
@@ -27,14 +27,18 @@ export function storedTextTrackToMuxTrack(track: StoredTextTrack): Mux.Video.Ass
     closed_captions: track.closed_captions,
     language_code: track.language_code,
     name: track.closed_captions ? `${track.name} (CC)` : track.name,
-    url: getStrapiTextTrackUrl(track.id),
+    url: getStrapiTextTrackUrl(track.documentId),
   };
 }
 
 const BACKEND_URI = strapi.config?.server.url;
 
-function getStrapiTextTrackUrl(id: StoredTextTrack['id']) {
-  return `${BACKEND_URI}/${pluginId}/mux-text-tracks/${id}`;
+/**
+ * The public URL Mux downloads a caption file from. It names the stored track by its `documentId`:
+ * the route needs no login, and numeric ids could be counted through to read every caption file.
+ */
+function getStrapiTextTrackUrl(documentId: StoredTextTrack['documentId']) {
+  return `${BACKEND_URI}/${pluginId}/mux-text-tracks/${documentId}`;
 }
 
 export function getMuxTextTrackUrl({
@@ -55,7 +59,8 @@ export function getMuxTextTrackUrl({
  */
 export async function updateTextTracks(
   muxAsset: MuxAsset,
-  newTracks: MuxAssetUpdate['custom_text_tracks']
+  newTracks: MuxAssetUpdate['custom_text_tracks'],
+  knownTrackIds: string[] = []
 ): Promise<MuxAsset['asset_data'] | undefined> {
   if (!newTracks || !muxAsset.asset_id || !muxAsset.playback_id) return undefined;
 
@@ -72,11 +77,15 @@ export async function updateTextTracks(
    */
   const existingTracks = muxAsset.asset_data?.tracks || [];
 
+  // Only tracks the form was opened with can be deleted by leaving them out: one Robots added while
+  // the form was open isn't missing because someone deleted it.
   const removedTracks =
     existingTracks.filter(
       (track) =>
         track.type === 'text' &&
         track.text_type === 'subtitles' &&
+        !!track.id &&
+        knownTrackIds.includes(track.id) &&
         !newTracks.find((t) => t.stored_track?.id === track.id)
     ) || [];
 

@@ -1,3 +1,5 @@
+import type { IncomingHttpHeaders } from 'node:http';
+
 import Mux from '@mux/ts';
 
 import { ParsedUploadConfig, StoredTextTrack, uploadConfigToNewAssetInput } from '../../../types/shared-types';
@@ -22,12 +24,15 @@ export interface UploadRequestConfig {
   signed?: 'true' | 'false';
 }
 
-const getMuxClient = async () => {
+export const getMuxClient = async () => {
   const { accessTokenId, secretKey } = await Config.getConfig();
 
   return new Mux({
     tokenId: accessTokenId,
     tokenSecret: secretKey,
+    // A repeated create can start a second billed Robots job, or a second asset that runs its
+    // directives again.
+    maxRetries: 0,
     defaultHeaders: {
       'x-source-platform': `Strapi CMS | ${pluginPkg.version}`,
     },
@@ -53,21 +58,24 @@ const muxService = () => ({
     config,
     storedTextTracks = [],
     corsOrigin = '*',
+    directives = [],
   }: {
     config: ParsedUploadConfig;
     storedTextTracks: StoredTextTrack[];
     corsOrigin?: string;
+    directives?: Array<{ id: string }>;
   }): Promise<Mux.Video.Uploads.Upload> {
     const { video } = await getMuxClient();
 
     return video.uploads.create({
       cors_origin: corsOrigin,
       new_asset_settings: {
-        input: uploadConfigToNewAssetInput(config, storedTextTracks),
-        playback_policy: [config.signed ? 'signed' : 'public'],
+        inputs: uploadConfigToNewAssetInput(config, storedTextTracks),
+        playback_policies: [config.signed ? 'signed' : 'public'],
         mp4_support: config.mp4_support,
         video_quality: config.video_quality,
         max_resolution_tier: config.max_resolution_tier,
+        ...(directives.length ? { directives } : {}),
       },
     });
   },
@@ -76,21 +84,29 @@ const muxService = () => ({
     url,
     config,
     storedTextTracks,
+    directives = [],
   }: {
     url: string;
     storedTextTracks: StoredTextTrack[];
     config: ParsedUploadConfig;
+    directives?: Array<{ id: string }>;
   }) {
     const { video } = await getMuxClient();
 
-
     return video.assets.create({
       inputs: uploadConfigToNewAssetInput(config, storedTextTracks, url) || [],
-      playback_policy: [config.signed ? 'signed' : 'public'],
+      playback_policies: [config.signed ? 'signed' : 'public'],
       mp4_support: config.mp4_support,
       video_quality: config.video_quality,
       max_resolution_tier: config.max_resolution_tier,
+      ...(directives.length ? { directives } : {}),
     });
+  },
+
+  async createPlaybackId(assetId: string, policy: 'public' | 'signed') {
+    const { video } = await getMuxClient();
+
+    return video.assets.createPlaybackId(assetId, { policy });
   },
 
   async deleteAsset(assetId: string) {
@@ -127,6 +143,13 @@ const muxService = () => ({
     const { video } = await getMuxClient();
 
     return await Promise.all(tracks.map((track) => video.assets.createTrack(assetId, track)));
+  },
+
+  async unwrapWebhook(rawBody: string, headers: IncomingHttpHeaders) {
+    const { webhooks } = await getMuxClient();
+    const { webhookSigningSecret } = await Config.getConfig();
+
+    return webhooks.unwrap(rawBody, headers, webhookSigningSecret);
   },
 
   async deleteAssetTextTracks(assetId: string, trackIds: string[]) {

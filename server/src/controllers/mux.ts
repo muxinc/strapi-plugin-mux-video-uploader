@@ -3,66 +3,13 @@ import { Context } from 'koa';
 import { z } from 'zod';
 
 import { StoredTextTrack, UploadConfig, UploadDataWithoutFile } from '../../../types/shared-types';
-import { Config, getService } from '../utils';
+import { PLUGIN_NAME } from '../constants';
+import { resolveUploadDirectives } from '../robots/upload-directives';
+import { getService } from '../utils';
 import { parseRequest } from '../utils/parse-json-body';
-import { resolveMuxAsset } from '../utils/resolve-mux-asset';
 import { storeTextTracks } from '../utils/text-tracks';
 import { ASSET_MODEL, TEXT_TRACK_MODEL } from '../utils/types';
-
-const processWebhookEvent = async (webhookEvent: any) => {
-  const { type, data } = webhookEvent;
-
-  switch (type) {
-    case 'video.upload.asset_created': {
-      const muxAsset = await resolveMuxAsset({ upload_id: data.id });
-      return [
-        muxAsset.id,
-        {
-          data: { asset_id: data.asset_id },
-        },
-      ] as const;
-    }
-    case 'video.asset.ready': {
-      const muxAsset = await resolveMuxAsset({ asset_id: data.id });
-      return [
-        muxAsset.id,
-        {
-          data: {
-            playback_id: data.playback_ids[0].id,
-            duration: data.duration,
-            aspect_ratio: data.aspect_ratio,
-            isReady: true,
-            asset_data: data,
-          },
-        },
-      ] as const;
-    }
-    case 'video.upload.errored': {
-      const muxAsset = await resolveMuxAsset({ upload_id: data.id });
-      return [
-        muxAsset.id,
-        {
-          data: {
-            error_message: `There was an unexpected error during upload`,
-          },
-        },
-      ] as const;
-    }
-    case 'video.asset.errored': {
-      const muxAsset = await resolveMuxAsset({ asset_id: data.id });
-      return [
-        muxAsset.id,
-        {
-          data: {
-            error_message: `${data.errors.type}: ${data.errors.messages[0] || ''}`,
-          },
-        },
-      ] as const;
-    }
-    default:
-      return undefined;
-  }
-};
+import { dispatchWebhookEvent, WebhookEvent, WebhookOutcome } from '../webhooks';
 
 // Do not go gentle into that good night,
 // Old age should burn and rave at close of day;
@@ -119,20 +66,27 @@ async function parseUploadRequest(ctx: Context) {
 
   const storedTextTracks = await storeTextTracks(custom_text_tracks);
 
+  const directives = await resolveUploadDirectives({
+    canRunRobots: !!ctx.state?.userAbility?.can(`plugin::${PLUGIN_NAME}.robots.run`),
+    requested: config.data.directives,
+  });
+
   return {
     storedTextTracks,
+    directives,
     config: config.data,
     params,
   };
 }
 
 const postDirectUpload = async (ctx: Context) => {
-  const { config, storedTextTracks, params } = await parseUploadRequest(ctx);
+  const { config, storedTextTracks, directives, params } = await parseUploadRequest(ctx);
 
   const result = await getService('mux').getDirectUploadUrl({
     config,
     storedTextTracks,
     corsOrigin: ctx.request.header.origin,
+    directives,
   });
 
   const data = {
@@ -147,7 +101,7 @@ const postDirectUpload = async (ctx: Context) => {
 };
 
 const postRemoteUpload = async (ctx: Context) => {
-  const { config, storedTextTracks, params } = await parseUploadRequest(ctx);
+  const { config, storedTextTracks, directives, params } = await parseUploadRequest(ctx);
 
   if (params.body?.upload_type !== 'url' || !params.body.url) {
     // ctx.badRequest's type seems to be off - we're following the official example: https://docs.strapi.io/dev-docs/error-handling#controllers-and-middlewares
@@ -156,7 +110,12 @@ const postRemoteUpload = async (ctx: Context) => {
     return;
   }
 
-  const result = await getService('mux').createRemoteAsset({ config, storedTextTracks, url: params.body.url });
+  const result = await getService('mux').createRemoteAsset({
+    config,
+    storedTextTracks,
+    url: params.body.url,
+    directives,
+  });
 
   const data = {
     asset_id: result.id,
@@ -219,60 +178,45 @@ const deleteMuxAsset = async (ctx: Context) => {
   ctx.send(result);
 };
 
+// Set by koa-body when strapi::body has includeUnparsed enabled
+const UNPARSED_BODY = Symbol.for('unparsedBody');
+
 const muxWebhookHandler = async (ctx: Context) => {
-  const body = ctx.request.body;
-  const sigHttpHeader = ctx.request.headers['mux-signature'];
+  const rawBody = (ctx.request.body as Record<symbol, unknown> | undefined)?.[UNPARSED_BODY];
 
-  const config = await Config.getConfig();
+  if (typeof rawBody !== 'string') {
+    // koa-body keeps the raw body of JSON requests only, and Mux always sends JSON.
+    if (!ctx.is('json')) ctx.throw(415, 'Webhooks must be JSON');
 
-  if (
-    sigHttpHeader === undefined ||
-    sigHttpHeader === '' ||
-    (Array.isArray(sigHttpHeader) && sigHttpHeader.length < 0)
-  ) {
-    ctx.throw(401, 'Webhook signature is missing');
+    strapi.log.error(
+      '[mux-video-uploader] Webhook rejected: the raw request body is unavailable. Set `includeUnparsed: true` on `strapi::body` in config/middlewares.'
+    );
+    ctx.throw(500, 'Webhook could not be verified');
   }
 
-  if (Array.isArray(sigHttpHeader) && sigHttpHeader.length > 1) {
-    ctx.throw(401, 'we have an unexpected amount of signatures');
+  let event: WebhookEvent;
+
+  try {
+    event = (await getService('mux').unwrapWebhook(rawBody, ctx.request.headers)) as unknown as WebhookEvent;
+  } catch (error) {
+    strapi.log.warn(`[mux-video-uploader] Webhook rejected: ${error instanceof Error ? error.message : error}`);
+    ctx.throw(401, 'Invalid webhook signature');
   }
 
-  let sig;
+  // Every verified event answers 200, handled or not. Only an unexpected error answers 500, so Mux
+  // delivers the event again.
+  let outcome: WebhookOutcome;
 
-  if (Array.isArray(sigHttpHeader)) {
-    sig = sigHttpHeader[0];
-  } else {
-    sig = sigHttpHeader;
+  try {
+    outcome = await dispatchWebhookEvent(event);
+  } catch (error) {
+    strapi.log.error(
+      `[mux-video-uploader] Webhook ${event.type} could not be processed: ${error instanceof Error ? error.message : error}`
+    );
+    ctx.throw(500, 'Webhook could not be processed');
   }
 
-  // TODO: Currently commented out because we should be using the raw request body for verfiying
-  // Webhook signatures, NOT JSON.stringify.  Strapi does not currently allow for access to the
-  // Koa.js request (the middleware used for parsing requests).
-
-  // let isSigValid;
-
-  // try {
-  //   isSigValid = Webhooks.verifyHeader(JSON.stringify(body), sig, config.webhook_signing_secret);
-  // } catch(err) {
-  //   ctx.throw(403, err);
-
-  //   return;
-  // }
-
-  const outcome = await processWebhookEvent(body);
-
-  if (outcome === undefined) {
-    ctx.send('ignored');
-  } else {
-    const [id, params] = outcome;
-
-    const result = await strapi.db.query(ASSET_MODEL).update({
-      where: { id },
-      data: params.data,
-    });
-
-    ctx.send(result);
-  }
+  ctx.send(outcome);
 };
 
 const signMuxPlaybackId = async (ctx: Context) => {
@@ -292,9 +236,11 @@ const signMuxPlaybackId = async (ctx: Context) => {
 const textTrack = async (ctx: Context) => {
   const { documentId } = ctx.params;
 
-  // @ts-ignore - v5 migration
-  // const track = (await strapi.documents(TEXT_TRACK_MODEL).findOne(documentId)) as StoredTextTrack | undefined;
-  const track = (await strapi.db.query(TEXT_TRACK_MODEL).findOne(documentId)) as StoredTextTrack | undefined;
+  // The URL carries the stored track's `documentId` (see `getStrapiTextTrackUrl`), which can't be guessed.
+  const track =
+    typeof documentId === 'string' && documentId !== ''
+      ? ((await strapi.db.query(TEXT_TRACK_MODEL).findOne({ where: { documentId } })) as StoredTextTrack | null)
+      : null;
 
   if (!track) {
     ctx.notFound('mux-text-track.notFound');
