@@ -169,6 +169,7 @@ Upgrading keeps every video and caption you have: Strapi only adds tables, colum
 4. Start Strapi. It creates the `muxrobotjobs` table and the new `muxassets` columns and indexes on its own.
 5. If webhooks were rejected while the secret was wrong, resend them from Mux, for example with `mux webhooks events replay`.
 6. To use Mux Robots: create an access token with the Robots permission (see [Mux Robots](#-mux-robots)), grant **Run Robots** to the roles that should run workflows, and optionally list directive ids in `defaultDirectiveIds`.
+7. To see chapters in the player, make your app use one version of Mux Player (see [Chapters don't show in the player](#chapters-dont-show-in-the-player)).
 
 What behaves differently—
 
@@ -238,6 +239,23 @@ Here is an example of how to do this on a unix-based operating system from withi
 ```bash
 rm -rf ./.cache ./build ./.strapi
 ```
+
+### Chapters don't show in the player
+
+Strapi's own Media Library (`@strapi/upload`) ships Mux Player 3.1.0, which loads first and takes the `<mux-player>` element for the whole admin, so the plugin's player runs on 3.1.0 too. Chapters from **Generate chapters** need 3.5 or later. Make your app install a single version by adding this to its `package.json`—
+
+```jsonc
+// npm
+"overrides": { "@mux/mux-player-react": "^3.14.0" }
+
+// yarn
+"resolutions": { "@mux/mux-player-react": "^3.14.0" }
+
+// pnpm
+"pnpm": { "overrides": { "@mux/mux-player-react": "^3.14.0" } }
+```
+
+Then reinstall, delete `node_modules/.strapi/vite`, and rebuild the admin (`npm run build`). The Media Library's preview keeps working with the newer player.
 
 ### Custom subtitles and captions aren't working
 
