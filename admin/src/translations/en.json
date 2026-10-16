@@ -239,7 +239,7 @@
   "Robots.output.answer": "Answer",
   "Robots.output.cancelled": "This job was cancelled.",
   "Robots.output.category": "Category",
-  "Robots.output.chapters-added": "The chapters were added to the Mux video. The player shows them in its progress bar.",
+  "Robots.output.chapters-added": "The chapters were added to the Mux video. The player shows them in its progress bar once your app uses Mux Player 3.5 or later (see the README).",
   "Robots.output.chapters-failed": "Mux couldn't add these chapters to the video. They're listed below.",
   "Robots.output.chapters-not-added": "These chapters weren't added to the Mux video; they're listed below.",
   "Robots.output.confidence": "Confidence",
