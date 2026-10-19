@@ -18,11 +18,12 @@ import {
   Tooltip,
   Typography,
 } from '@strapi/design-system';
-import { useFetchClient, useNotification } from '@strapi/strapi/admin';
+import { isFetchError, useFetchClient, useNotification } from '@strapi/strapi/admin';
 import { Cross, Duplicate, Trash, WarningCircle } from '@strapi/icons';
 
 import { MuxAsset, MuxAssetUpdate } from '../../../../server/src/content-types/mux-asset/types';
 import type { EntryFieldOption } from '../../../../types/robots-format';
+import { normalizeTags } from '../../../../types/shared-types';
 import usePluginIntl from '../../utils/use-plugin-intl';
 import CustomTextTrackForm from '../modal-new-upload/custom-text-track-form';
 import PreviewPlayer from '../preview-player';
@@ -42,10 +43,29 @@ export type DetailsTab = 'details' | 'captions' | 'robots';
  * The player is remounted when this changes, so it loads the new playback ID, tracks (captions,
  * audio, chapters) and thumbnail.
  */
+/** Strapi's 400s are titled "ValidationError"; the readable reason is in the zod issues they carry. */
+function saveErrorMessage(error: unknown): string | undefined {
+  if (!isFetchError(error)) return undefined;
+
+  const body = (error.response?.data as any)?.error;
+  try {
+    const issues = JSON.parse(body?.details?.errors?.body ?? '[]');
+    if (typeof issues[0]?.message === 'string') return issues[0].message;
+  } catch {
+    // Not a list of issues: fall back to the message.
+  }
+
+  return body?.message && body.message !== 'ValidationError' ? body.message : undefined;
+}
+
 /** Re-reads Strapi, which webhooks keep current, never Mux. */
 const PROCESSING_POLL_INTERVAL_MS = 5000;
 
 const playbackSignature = (muxAsset?: MuxAsset) => JSON.stringify([muxAsset?.playback_id, muxAsset?.asset_data]);
+
+/** The limits of `mux-asset`'s schema, which the server checks on the trimmed title. */
+const TITLE_MIN_LENGTH = 3;
+const TITLE_MAX_LENGTH = 255;
 
 export default function ModalDetails(props: {
   onToggle: (refresh: boolean) => void;
@@ -185,19 +205,31 @@ export default function ModalDetails(props: {
     values: MuxAssetUpdate,
     { setErrors, setSubmitting }: FormikHelpers<MuxAssetUpdate>
   ) => {
-    const title = formatMessage('Common.title-required', 'No title specified');
-
-    if (!values.title) {
-      setErrors({ title });
-
-      return;
-    }
-
     const changed = changesIn(values);
+    const title = values.title?.trim() ?? '';
+
+    // An untouched title isn't sent, so one saved before these limits doesn't block other edits.
+    if (changed.title) {
+      const titleError = !title
+        ? formatMessage('Common.title-required', 'No title specified')
+        : title.length < TITLE_MIN_LENGTH || title.length > TITLE_MAX_LENGTH
+          ? t('ModalDetails.title-length', 'The title needs {min} to {max} characters.', {
+              min: TITLE_MIN_LENGTH,
+              max: TITLE_MAX_LENGTH,
+            })
+          : undefined;
+
+      if (titleError) {
+        setErrors({ title: titleError });
+        setTab('details');
+
+        return;
+      }
+    }
 
     const data: MuxAssetUpdate = {
       id: formAsset?.id || 0,
-      title: changed.title ? values.title : undefined,
+      title: changed.title ? title : undefined,
       description: changed.description ? values.description || null : undefined,
       tags: changed.tags ? values.tags : undefined,
       custom_text_tracks: changed.tracks ? values.custom_text_tracks : undefined,
@@ -208,7 +240,16 @@ export default function ModalDetails(props: {
     };
 
     if (Object.values(changed).some(Boolean)) {
-      await put(`${PLUGIN_ID}/mux-asset/${formAsset?.id}`, data);
+      try {
+        await put(`${PLUGIN_ID}/mux-asset/${formAsset?.id}`, data);
+      } catch (error) {
+        toggleNotification({
+          type: 'danger',
+          message: saveErrorMessage(error) || formatMessage('ModalDetails.failed-to-save', 'Failed to save video'),
+        });
+
+        return;
+      }
     }
 
     setSubmitting(false);
@@ -314,7 +355,14 @@ export default function ModalDetails(props: {
 
   // The video's own fields, with the limits of `mux-asset`'s schema.
   const summaryTargets: EntryFieldOption[] = [
-    { name: 'title', label: titleLabel, type: 'string', minLength: 3, maxLength: 255, onlyFor: 'title' },
+    {
+      name: 'title',
+      label: titleLabel,
+      type: 'string',
+      minLength: TITLE_MIN_LENGTH,
+      maxLength: TITLE_MAX_LENGTH,
+      onlyFor: 'title',
+    },
     { name: 'description', label: descriptionLabel, type: 'text', onlyFor: 'description' },
     { name: 'tags', label: tagsLabel, type: 'json', onlyFor: 'tags' },
   ];
@@ -648,12 +696,11 @@ function TagsField({
   const { t } = useRobotsIntl();
   const [draft, setDraft] = React.useState('');
 
-  // Splits on commas too, so a pasted list adds one tag per item.
+  // Splits on commas too, so a pasted list adds one tag per item. A tag already there in another case
+  // isn't added: the first spelling stays.
   const add = () => {
-    const added = draft
-      .split(',')
-      .map((tag) => tag.trim())
-      .filter((tag, index, all) => tag && !tags.includes(tag) && all.indexOf(tag) === index);
+    const known = new Set(tags.map((tag) => tag.toLowerCase()));
+    const added = normalizeTags([draft]).filter((tag) => !known.has(tag.toLowerCase()));
     setDraft('');
     if (added.length > 0) onChange([...tags, ...added]);
   };

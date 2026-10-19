@@ -10,6 +10,7 @@ import {
   SingleSelectOption,
   Typography,
 } from '@strapi/design-system';
+import { useNotification } from '@strapi/strapi/admin';
 
 import {
   confirmWarnings,
@@ -97,6 +98,7 @@ export default function RunModal({
   blockedReason,
 }: RunModalProps) {
   const { t } = useRobotsIntl();
+  const { toggleNotification } = useNotification();
   const [selected, setSelected] = React.useState<RobotsWorkflow>(DEFAULT_ROBOTS_WORKFLOW);
   const [values, setValues] = React.useState<Record<string, unknown>>({});
   const [confirming, setConfirming] = React.useState(false);
@@ -120,6 +122,15 @@ export default function RunModal({
     }
   }, [isOpen]);
 
+  // Whether the form is still there when a run's outcome arrives: it goes if the tab does.
+  const shown = React.useRef(isOpen);
+  React.useEffect(() => {
+    shown.current = isOpen;
+    return () => {
+      shown.current = false;
+    };
+  }, [isOpen]);
+
   const errors = React.useMemo(() => validateParams(definition, values, context), [definition, values, context]);
   const warnings = React.useMemo(() => confirmWarnings(definition, values, context), [definition, values, context]);
 
@@ -130,6 +141,10 @@ export default function RunModal({
     const outcome = await onRun(selected, values);
 
     if (!outcome.ok && outcome.reason === 'invalid-parameters') {
+      if (!shown.current) {
+        toggleNotification({ type: 'danger', message: outcome.message });
+        return;
+      }
       setMuxError(outcome.message);
       setConfirming(false);
       setSubmitting(false);
@@ -142,7 +157,7 @@ export default function RunModal({
   if (!isOpen) return null;
 
   return (
-    <Modal.Root open onOpenChange={(open: boolean) => !open && onClose()}>
+    <Modal.Root open onOpenChange={(open: boolean) => !open && !submitting && onClose()}>
       <Modal.Content style={{ width: 'min(90vw, 72rem)', maxWidth: 'unset' }}>
         <Modal.Header>
           <Modal.Title>
@@ -265,7 +280,7 @@ export default function RunModal({
             </>
           ) : (
             <>
-              <Button variant="tertiary" onClick={onClose}>
+              <Button variant="tertiary" onClick={onClose} disabled={submitting}>
                 {t('Common.cancel-button', 'Cancel')}
               </Button>
               <Button

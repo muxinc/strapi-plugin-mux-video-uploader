@@ -62,7 +62,7 @@ const MuxRobotsPanel = ({ model, documentId, document, activeTab }: PanelProps) 
         locale={document?.locale ?? undefined}
         savedAt={document?.updatedAt}
         relationFields={relationFields}
-        readOnly={activeTab === 'published'}
+        status={activeTab === 'published' ? 'published' : 'draft'}
       />
     ),
   };
@@ -76,7 +76,7 @@ function PanelBody({
   locale,
   savedAt,
   relationFields,
-  readOnly,
+  status,
 }: {
   model: string;
   documentId?: string;
@@ -84,7 +84,8 @@ function PanelBody({
   /** Changes with every save, which may have linked another video. */
   savedAt?: string;
   relationFields: string[];
-  readOnly: boolean;
+  /** The version the edit view shows: the published one can link another video than the draft. */
+  status: 'draft' | 'published';
 }) {
   const { t } = useRobotsIntl();
   const api = useRobotsApi();
@@ -101,7 +102,7 @@ function PanelBody({
     if (!documentId) return;
 
     let cancelled = false;
-    const query = new URLSearchParams({ model, documentId, ...(locale ? { locale } : {}) });
+    const query = new URLSearchParams({ model, documentId, status, ...(locale ? { locale } : {}) });
 
     setResponse(undefined);
     setError(undefined);
@@ -113,7 +114,7 @@ function PanelBody({
     return () => {
       cancelled = true;
     };
-  }, [model, documentId, locale, savedAt]);
+  }, [model, documentId, locale, status, savedAt]);
 
   const labelOf = (name: string) => editFields.find((field) => field.name === name)?.label ?? name;
 
@@ -161,7 +162,7 @@ function PanelBody({
 
   const video = videos.find((candidate) => candidate.id === videoId) ?? videos[0];
   const summary = video.summary;
-  const canApply = !!summary && !readOnly && !formDisabled;
+  const canApply = !!summary && status === 'draft' && !formDisabled;
 
   const applyButton = (
     <Button variant="secondary" fullWidth disabled={!canApply} onClick={() => setApplying(true)}>

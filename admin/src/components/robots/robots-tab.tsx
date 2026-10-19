@@ -229,7 +229,7 @@ export default function RobotsTab({ muxAsset, canRun, onAssetMayHaveChanged }: R
         setUnitsExhausted(true);
         break;
       case 'invalid-parameters':
-        // Shown under the run form instead.
+        // The run form shows it: under the form, or as a toast if the form has gone.
         break;
       default:
         toggleNotification({ type: error.reason === 'create-pending' ? 'warning' : 'danger', message: error.message });

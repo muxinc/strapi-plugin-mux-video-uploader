@@ -60,7 +60,7 @@ export default function DirectiveModal({
   };
 
   return (
-    <Modal.Root open onOpenChange={(open: boolean) => !open && onClose()}>
+    <Modal.Root open onOpenChange={(open: boolean) => !open && !submitting && onClose()}>
       <Modal.Content>
         <Modal.Header>
           <Modal.Title>
@@ -135,7 +135,7 @@ export default function DirectiveModal({
             </>
           ) : (
             <>
-              <Button variant="tertiary" onClick={onClose}>
+              <Button variant="tertiary" onClick={onClose} disabled={submitting}>
                 {t('Common.cancel-button', 'Cancel')}
               </Button>
               <Button disabled={!directive || !!blockedReason} onClick={() => setConfirming(true)}>

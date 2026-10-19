@@ -107,11 +107,12 @@ function ParamField({
   const { t } = useRobotsIntl();
   const set = (next: unknown) => onChange(field.name, next);
 
-  const wrap = (control: React.ReactNode) => (
-    <Field.Root name={field.name} hint={field.helpText} required={field.isRequired}>
+  const wrap = (control: React.ReactNode, error?: string) => (
+    <Field.Root name={field.name} hint={field.helpText} required={field.isRequired} error={error}>
       <Field.Label>{field.label}</Field.Label>
       {control}
       <Field.Hint />
+      <Field.Error />
     </Field.Root>
   );
 
@@ -156,7 +157,11 @@ function ParamField({
           value={typeof value === 'number' ? value : undefined}
           step={field.step}
           onValueChange={(next: number | undefined) => set(next === undefined || Number.isNaN(next) ? undefined : next)}
-        />
+        />,
+        // `validateParams` lists it too, under the form; this marks the field itself.
+        field.integer && typeof value === 'number' && !Number.isInteger(value)
+          ? t('Robots.form.whole-number', 'Use a whole number.')
+          : undefined
       );
 
     case 'language': {

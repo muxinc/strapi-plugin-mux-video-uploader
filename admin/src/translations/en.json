@@ -104,7 +104,7 @@
   "ModalNewUpload.unresolvable-upload-state": "Unable to resolve upload state",
   "ModalNewUpload.formErrors.url": "A valid URL is required",
   "ModalNewUpload.formErrors.file": "A video or audio file is required",
-  "ModalNewUpload.formErrors.title": "Required",
+  "ModalNewUpload.formErrors.title": "The title needs 3 to 255 characters",
 
   "CustomTextTrackForm.closed-captions": "Closed captions",
   "CustomTextTrackForm.new-caption": "New caption/subtitle",
@@ -140,6 +140,8 @@
   "ModalDetails.remove-tag": "Remove {tag}",
   "ModalDetails.tags-hint": "Press Enter or type a comma to add a tag.",
   "ModalDetails.tags-label": "Tags",
+  "ModalDetails.failed-to-save": "Failed to save video",
+  "ModalDetails.title-length": "The title needs {min} to {max} characters.",
 
   "Robots.actions.refresh": "Refresh",
   "Robots.actions.run-directive": "Run a directive",
@@ -219,6 +221,7 @@
   "Robots.form.taxonomy-value": "Taxonomy value {number}",
   "Robots.form.taxonomy-value-placeholder": "Value",
   "Robots.form.used-of": "{count} of {max} used.",
+  "Robots.form.whole-number": "Use a whole number.",
   "Robots.jobs.cancel": "Cancel",
   "Robots.jobs.column.actions": "Actions",
   "Robots.jobs.column.started": "Started",
