@@ -382,6 +382,57 @@ describe('syncing an asset', () => {
     expect(result.termsUrl).toBe(termsUrl);
   });
 
+  describe('results stored before the video reached Strapi', () => {
+    const storedSummary = () =>
+      fake.db.seed(ROBOT_JOB_MODEL, [
+        jobRow({
+          status: 'completed',
+          detail_loaded: true,
+          mux_updated_at: isoAt(1791817380),
+          parameters: { asset_id: 'ast_1' },
+          outputs: { title: 'Stored', description: 'Stored, described', tags: ['stored'] },
+        }),
+      ]);
+    const storedAsset = () => fake.db.rows(ASSET_MODEL).find((row) => row.id === muxAsset.id);
+
+    it('writes them onto the video', async () => {
+      storedSummary();
+      mux.client.robots.jobs.list.mockResolvedValue(page([]));
+
+      await robots().syncAsset(muxAsset);
+
+      expect(storedAsset()).toMatchObject({
+        description: 'Stored, described',
+        tags: ['stored'],
+        robots_outputs: { summarize: { job_id: 'rjob_1', completed_at: isoAt(1791817380), title: 'Stored' } },
+      });
+    });
+
+    it("writes them even when Mux can't be reached", async () => {
+      storedSummary();
+      mux.client.robots.jobs.list.mockRejectedValue(muxConnectionError());
+
+      await robots().syncAsset(muxAsset);
+
+      expect(storedAsset()?.robots_outputs?.summarize?.job_id).toBe('rjob_1');
+    });
+
+    it('never fills a description someone cleared after the same summary was written', async () => {
+      storedSummary();
+      mux.client.robots.jobs.list.mockResolvedValue(page([]));
+      // Postgres hands JSON back with its keys reordered.
+      const written = { tags: ['stored'], title: 'Stored', job_id: 'rjob_1', completed_at: isoAt(1791817380) };
+      await fake.db.query(ASSET_MODEL).update({
+        where: { id: muxAsset.id },
+        data: { description: null, tags: [], robots_outputs: { summarize: written } },
+      });
+
+      await robots().syncAsset(muxAsset);
+
+      expect(storedAsset()).toMatchObject({ description: null, tags: [], robots_outputs: { summarize: written } });
+    });
+  });
+
   it("says it couldn't reach Mux, and still answers with what's stored", async () => {
     mux.client.robots.jobs.list.mockRejectedValue(muxConnectionError());
 

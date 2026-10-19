@@ -72,16 +72,23 @@ const userId = (ctx: Context) => (typeof ctx.state?.user?.id === 'number' ? ctx.
 export default {
   /**
    * The Mux videos an entry links to, with their newest summary, for the Content Manager's summary
-   * panel. Needs Content Manager read access to the entry, not the plugin's permissions.
+   * panel. Needs Content Manager read access to the entry, not the plugin's permissions. `status` is
+   * the version the panel shows: `draft` (the default) or `published`.
    */
   entryVideos: async (ctx: Context) => {
     const model = nonEmptyString(ctx.query.model);
     const documentId = nonEmptyString(ctx.query.documentId);
     const locale = nonEmptyString(ctx.query.locale);
+    const status = ctx.query.status ?? 'draft';
 
     const contentType = model ? strapi.contentType(model as any) : undefined;
     if (!model || !documentId || !contentType) {
       ctx.badRequest('ValidationError', { errors: { query: 'model and documentId are required' } });
+      return;
+    }
+
+    if (status !== 'draft' && status !== 'published') {
+      ctx.badRequest('ValidationError', { errors: { query: 'status must be draft or published' } });
       return;
     }
 
@@ -107,7 +114,7 @@ export default {
     const entry = await strapi.documents(model as any).findOne({
       documentId,
       ...(locale ? { locale } : {}),
-      status: 'draft',
+      status,
       // `createdBy` lets "is creator" conditions apply, as in the Content Manager's own read.
       populate: { ...Object.fromEntries(fieldNames.map((name) => [name, true])), createdBy: { fields: ['id'] } },
     } as any);

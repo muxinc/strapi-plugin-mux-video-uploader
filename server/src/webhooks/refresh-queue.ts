@@ -1,6 +1,5 @@
 import { getService } from '../utils';
-import { resolveMuxAssetOrNull } from '../utils/resolve-mux-asset';
-import { ASSET_MODEL } from '../utils/types';
+import { resolveMuxAssetOrNull, updateMuxAssets } from '../utils/resolve-mux-asset';
 import { snapshotFromAsset } from './asset-snapshot';
 
 /**
@@ -76,15 +75,11 @@ export function rereadIfRefreshing(assetId: string) {
 /** Never throws: nothing awaits it once the webhook has been answered. */
 async function refreshAsset(assetId: string) {
   try {
-    const muxAsset = await resolveMuxAssetOrNull({ asset_id: assetId });
-    if (!muxAsset) return;
+    if (!(await resolveMuxAssetOrNull({ asset_id: assetId }))) return;
 
     const asset = await getService('mux').getAssetById(assetId);
 
-    await strapi.db.query(ASSET_MODEL).update({
-      where: { id: muxAsset.id },
-      data: snapshotFromAsset(asset),
-    });
+    await updateMuxAssets({ asset_id: assetId }, snapshotFromAsset(asset));
   } catch (error) {
     strapi.log.warn(
       `[mux-video-uploader] Could not refresh Mux asset ${assetId}: ${error instanceof Error ? error.message : error}`

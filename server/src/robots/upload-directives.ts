@@ -19,10 +19,7 @@ export async function resolveUploadDirectives({
   canRunRobots: boolean;
   requested?: string[];
 }): Promise<Array<{ id: string }>> {
-  const { defaultDirectiveIds = [] } = await Config.getConfig();
-  const configured = Array.from(
-    new Set(defaultDirectiveIds.filter((id) => typeof id === 'string' && id.trim() !== ''))
-  );
+  const { defaultDirectiveIds: configured = [] } = await Config.getConfig();
 
   const chosen =
     canRunRobots && Array.isArray(requested) ? configured.filter((id) => requested.includes(id)) : configured;

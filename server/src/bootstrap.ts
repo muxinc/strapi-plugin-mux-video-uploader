@@ -75,6 +75,27 @@ const bootstrap = async ({ strapi }: { strapi: Core.Strapi }) => {
         'new uploads will stay in "Preparing". Copy the signing secret from Mux → Settings → Webhooks.'
     );
   }
+
+  // `register` adds `includeUnparsed: true` to `strapi::body`, but leaves an explicit `false` alone.
+  if (bodyMiddlewareDropsRawBody(strapi)) {
+    strapi.log.warn(
+      '[mux-video-uploader] strapi::body sets includeUnparsed: false in config/middlewares. Mux webhooks need ' +
+        'the raw request body to verify their signature, so every one will be rejected with 500 and new uploads ' +
+        'will stay in "Preparing". Remove the option or set it to true.'
+    );
+  }
+};
+
+const bodyMiddlewareDropsRawBody = (strapi: Core.Strapi) => {
+  const middlewares = strapi.config.get('middlewares') as unknown;
+  if (!Array.isArray(middlewares)) return false;
+
+  return middlewares.some(
+    (middleware) =>
+      typeof middleware === 'object' &&
+      middleware?.name === 'strapi::body' &&
+      middleware.config?.includeUnparsed === false
+  );
 };
 
 export default bootstrap;

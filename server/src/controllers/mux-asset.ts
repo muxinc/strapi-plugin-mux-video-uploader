@@ -1,15 +1,19 @@
 import { Context } from 'koa';
 import { z } from 'zod';
 
+import { MuxAssetTitle, normalizeTags } from '../../../types/shared-types';
 import { MuxAssetUpdate } from '../content-types/mux-asset/types';
 import { callMux } from '../robots/errors';
+import { withAssetLock } from '../robots/lock';
+import { backfillOutputs } from '../robots/outputs';
 import { getService } from '../utils';
 import { getMuxAssetQuery, getPagination, MuxAssetQuery, sanitizeMuxAssetOutput } from '../utils/mux-asset-query';
-import { resolveMuxAsset } from '../utils/resolve-mux-asset';
+import { resolveMuxAsset, updateMuxAssets } from '../utils/resolve-mux-asset';
 import { updateTextTracks } from '../utils/text-tracks';
 import { ASSET_MODEL } from '../utils/types';
 import { compact } from '../utils/values';
 import { snapshotFromAsset } from '../webhooks/asset-snapshot';
+import { scheduleAssetRefresh } from '../webhooks/refresh-queue';
 import { findMuxAsset, parseBody, withRobotsErrors } from './robots';
 
 /** Leaves out the keys the request didn't set. */
@@ -55,16 +59,42 @@ const findOne = async (ctx: Context) => {
 
 const count = async (ctx: Context) => countAssets(await getMuxAssetQuery(ctx));
 
-const create = async (ctx: Context) => {
-  const { body } = ctx.request.body;
+const MuxId = z.string().trim().min(1).max(255);
 
-  return await strapi.documents(ASSET_MODEL).create({ data: body });
+/**
+ * What the Create permission may set: which Mux upload or asset the video is, and its title. The rest
+ * comes from Mux, or needs Update. Anything else in the body is dropped.
+ */
+const MuxAssetCreateBody = z.object({
+  body: z.object({
+    title: MuxAssetTitle,
+    upload_id: MuxId.nullable().optional(),
+    asset_id: MuxId.nullable().optional(),
+    signed: z.boolean().optional(),
+  }),
+});
+
+const create = async (ctx: Context) => {
+  const parsed = parseBody(ctx, MuxAssetCreateBody);
+  if (!parsed) return;
+
+  const created = await strapi.documents(ASSET_MODEL).create({ data: compact(parsed.body) });
+
+  // The rest of the asset is read from Mux, and Robots results stored before it arrived are written.
+  const assetId = parsed.body.asset_id;
+  if (assetId) {
+    await withAssetLock(assetId, () => backfillOutputs(assetId));
+    scheduleAssetRefresh(assetId);
+  }
+
+  return created;
 };
 
-/** Each is left as it is when absent from the request. */
+/** Each is left as it is when absent from the request. An empty title counts as absent, as before. */
 const MuxAssetDetailsBody = z.object({
+  title: z.preprocess((title) => (title === '' ? undefined : title), MuxAssetTitle.optional()),
   description: z.string().nullable().optional(),
-  tags: z.array(z.string().trim().min(1)).optional(),
+  tags: z.array(z.string()).transform(normalizeTags).optional(),
 });
 
 const update = async (ctx: Context) => {
@@ -74,7 +104,7 @@ const update = async (ctx: Context) => {
 
   const muxAsset = await resolveMuxAsset({ id: documentId });
 
-  const { title, custom_text_tracks, known_track_ids } = <MuxAssetUpdate>ctx.request.body;
+  const { custom_text_tracks, known_track_ids } = <MuxAssetUpdate>ctx.request.body;
 
   /** Let Mux's webhook handlers notify us of track changes */
   await updateTextTracks(
@@ -84,7 +114,7 @@ const update = async (ctx: Context) => {
   );
 
   const data = compact({
-    title: typeof title === 'string' && title ? title : undefined,
+    title: details.title,
     description: details.description === undefined ? undefined : details.description?.trim() || null,
     tags: details.tags,
   });
@@ -120,9 +150,8 @@ const createPlaybackId = withRobotsErrors(async (ctx) => {
     .getAssetById(assetId)
     .catch(() => null);
 
-  const asset = fresh
-    ? await strapi.db.query(ASSET_MODEL).update({ where: { id: muxAsset.id }, data: snapshotFromAsset(fresh) })
-    : muxAsset;
+  const updated = fresh ? await updateMuxAssets({ asset_id: assetId }, snapshotFromAsset(fresh)) : [];
+  const asset = updated.find((row) => row.id === muxAsset.id) ?? muxAsset;
 
   ctx.send({ asset });
 });

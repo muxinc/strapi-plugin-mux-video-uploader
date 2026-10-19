@@ -109,6 +109,8 @@ export interface RobotsParamField {
   min?: number;
   max?: number;
   step?: number;
+  /** `number` only: a count or milliseconds, never a fraction. */
+  integer?: boolean;
   /** `track` only: which kind of existing asset track to pick from. */
   trackType?: 'text' | 'audio';
   /** `stringList` and `enumList`. */
@@ -394,8 +396,15 @@ export const ROBOTS_CATALOG: RobotsWorkflowDefinition[] = [
         ],
         defaultValue: '',
       },
-      { kind: 'number', name: 'title_length', label: 'Max title length (words)', min: 1, step: 1 },
-      { kind: 'number', name: 'description_length', label: 'Max description length (words)', min: 1, step: 1 },
+      { kind: 'number', name: 'title_length', label: 'Max title length (words)', min: 1, step: 1, integer: true },
+      {
+        kind: 'number',
+        name: 'description_length',
+        label: 'Max description length (words)',
+        min: 1,
+        step: 1,
+        integer: true,
+      },
       {
         kind: 'language',
         name: 'language_code',
@@ -424,6 +433,7 @@ export const ROBOTS_CATALOG: RobotsWorkflowDefinition[] = [
         helpText: 'Defaults to 10.',
         min: 1,
         step: 1,
+        integer: true,
         section: TAGS_SECTION,
       },
       {
@@ -493,6 +503,7 @@ export const ROBOTS_CATALOG: RobotsWorkflowDefinition[] = [
         min: 1,
         max: 1000,
         step: 1,
+        integer: true,
       },
       {
         kind: 'language',
@@ -532,6 +543,7 @@ export const ROBOTS_CATALOG: RobotsWorkflowDefinition[] = [
         min: 1,
         max: 25,
         step: 1,
+        integer: true,
       },
       {
         kind: 'number',
@@ -539,6 +551,7 @@ export const ROBOTS_CATALOG: RobotsWorkflowDefinition[] = [
         label: 'Minimum highlight length (ms)',
         min: 0,
         step: 1000,
+        integer: true,
         section: HIGHLIGHT_LENGTH_SECTION,
       },
       {
@@ -547,6 +560,7 @@ export const ROBOTS_CATALOG: RobotsWorkflowDefinition[] = [
         label: 'Maximum highlight length (ms)',
         min: 0,
         step: 1000,
+        integer: true,
         section: HIGHLIGHT_LENGTH_SECTION,
       },
       {
@@ -614,6 +628,7 @@ export const ROBOTS_CATALOG: RobotsWorkflowDefinition[] = [
         min: 1,
         max: 5,
         step: 1,
+        integer: true,
         helpText: '1–5. Defaults to 1.',
       },
       {
@@ -750,7 +765,7 @@ export const ROBOTS_CATALOG: RobotsWorkflowDefinition[] = [
           'Scenes are found from this video’s caption track in that language, if it has one. ' +
           'Leave empty to use the first caption track that is ready.',
       },
-      { kind: 'number', name: 'min_scenes', label: 'Minimum scenes (hint)', min: 1, step: 1 },
+      { kind: 'number', name: 'min_scenes', label: 'Minimum scenes (hint)', min: 1, step: 1, integer: true },
       {
         kind: 'select',
         name: 'output_steering.segmentation_strategy',
@@ -798,6 +813,7 @@ export const ROBOTS_CATALOG: RobotsWorkflowDefinition[] = [
         helpText: 'At least 1000. Defaults to 15000.',
         min: 1000,
         step: 1000,
+        integer: true,
       },
     ],
   },
@@ -844,7 +860,7 @@ export const ROBOTS_CATALOG: RobotsWorkflowDefinition[] = [
         min: 5,
         step: 1,
       },
-      { kind: 'number', name: 'max_samples', label: 'Maximum samples', min: 1, step: 1 },
+      { kind: 'number', name: 'max_samples', label: 'Maximum samples', min: 1, step: 1, integer: true },
       ...SCOPE_FIELDS,
       {
         kind: 'select',
@@ -1273,6 +1289,7 @@ function scopeErrors(
 
 function numberErrors(field: RobotsParamField, value: number): string[] {
   if (Number.isNaN(value)) return [`${field.label} must be a number.`];
+  if (field.integer && !Number.isInteger(value)) return [`${field.label} must be a whole number.`];
   if (field.min !== undefined && value < field.min) return [`${field.label} must be at least ${field.min}.`];
   if (field.max !== undefined && value > field.max) return [`${field.label} must be at most ${field.max}.`];
   return [];

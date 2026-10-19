@@ -22,10 +22,10 @@ export default {
 
     const { defaultDirectiveIds } = config;
 
+    // Blank entries are dropped when the config is read (see `normalizeDirectiveIds`).
     if (
       defaultDirectiveIds !== undefined &&
-      (!Array.isArray(defaultDirectiveIds) ||
-        defaultDirectiveIds.some((id) => typeof id !== 'string' || id.trim() === ''))
+      (!Array.isArray(defaultDirectiveIds) || defaultDirectiveIds.some((id) => typeof id !== 'string'))
     ) {
       throw new Error(
         'The "defaultDirectiveIds" config of the Mux Video Uploader plugin must be a list of Robots directive ids, such as ["drv_..."].'

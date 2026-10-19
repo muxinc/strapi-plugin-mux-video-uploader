@@ -229,6 +229,47 @@ describe('video events: snapshots', () => {
   });
 });
 
+describe('video events: two videos on one Mux asset', () => {
+  it('video.asset.ready marks every row on the asset ready, not just one', async () => {
+    const first = seedAsset({ asset_id: 'ast_1' });
+    const second = seedAsset({ asset_id: 'ast_1', title: 'The same video again' });
+
+    await deliver('video.asset.ready', readyAsset);
+
+    for (const { id } of [first, second]) {
+      expect(storedAsset(id)).toMatchObject({ playback_id: 'play_1', isReady: true, asset_data: readyAsset });
+    }
+  });
+
+  it('video.asset.errored and the refresh after an update reach every row too', async () => {
+    const first = seedAsset({ asset_id: 'ast_1' });
+    const second = seedAsset({ asset_id: 'ast_1' });
+    getAssetById.mockResolvedValue({ ...readyAsset, duration: 42 });
+
+    await deliver('video.asset.errored', { id: 'ast_1', errors: { type: 'invalid_input', messages: ['Bad'] } });
+    await deliver('video.asset.updated', readyAsset);
+    await refreshesSettled();
+
+    expect(getAssetById).toHaveBeenCalledTimes(1);
+    for (const { id } of [first, second]) {
+      expect(storedAsset(id)).toMatchObject({ error_message: 'invalid_input: Bad', duration: 42 });
+    }
+  });
+
+  it('video.upload.asset_created names the asset on every row of the upload', async () => {
+    const first = seedAsset({ upload_id: 'upl_1', asset_id: null });
+    const second = seedAsset({ upload_id: 'upl_1', asset_id: null });
+    getAssetById.mockResolvedValue(readyAsset);
+
+    await deliver('video.upload.asset_created', { id: 'upl_1', asset_id: 'ast_1' });
+    await refreshesSettled();
+
+    for (const { id } of [first, second]) {
+      expect(storedAsset(id)).toMatchObject({ asset_id: 'ast_1', isReady: true });
+    }
+  });
+});
+
 describe('video events: assets this Strapi does not have', () => {
   it.each([
     ['video.upload.asset_created', { id: 'upl_unknown', asset_id: 'ast_unknown' }],

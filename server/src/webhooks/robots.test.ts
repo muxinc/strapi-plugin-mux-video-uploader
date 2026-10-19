@@ -314,6 +314,54 @@ describe('Robots outputs on the asset', () => {
     expect(asset(id)?.robots_outputs).toBeUndefined();
   });
 
+  it('writes the summary onto every video on the asset', async () => {
+    const first = seedAsset(fake.db);
+    const second = seedAsset(fake.db, { title: 'The same video again', description: 'Typed' });
+
+    await dispatchWebhookEvent(jobEvent(summary('rjob_1', T0 + 60, 'First')));
+
+    expect(asset(first.id)).toMatchObject({ description: 'First, described', tags: ['first', 'mux'] });
+    expect(asset(second.id)).toMatchObject({ description: 'Typed', tags: ['first', 'mux'] });
+    expect(asset(second.id)?.robots_outputs.summarize.job_id).toBe('rjob_1');
+  });
+
+  it('writes results that arrived before the video, once its upload names the asset', async () => {
+    await dispatchWebhookEvent(jobEvent(summary('rjob_old', T0 + 60, 'Older')));
+    await dispatchWebhookEvent(jobEvent(summary('rjob_new', T0 + 120, 'Newer')));
+    await dispatchWebhookEvent(
+      jobEvent(
+        job({
+          id: 'rjob_m',
+          workflow: 'moderate',
+          status: 'completed',
+          updated_at: T0 + 30,
+          outputs: { exceeds_threshold: true, max_scores: { violence: 0.9 } },
+        })
+      )
+    );
+    await dispatchWebhookEvent(
+      jobEvent(
+        job({ id: 'rjob_other', status: 'completed', parameters: { asset_id: 'ast_2' }, outputs: { title: 'X' } })
+      )
+    );
+    const { id } = seedAsset(fake.db, { upload_id: 'upl_1', asset_id: null });
+
+    expect(
+      await dispatchWebhookEvent({ type: 'video.upload.asset_created', data: { id: 'upl_1', asset_id: 'ast_1' } })
+    ).toBe('handled');
+    await refreshesSettled();
+
+    expect(asset(id)).toMatchObject({
+      asset_id: 'ast_1',
+      description: 'Newer, described',
+      tags: ['newer', 'mux'],
+      robots_outputs: {
+        summarize: { job_id: 'rjob_new', completed_at: isoAt(T0 + 120), title: 'Newer' },
+        moderate: { job_id: 'rjob_m', exceeds_threshold: true, max_scores: { violence: 0.9 } },
+      },
+    });
+  });
+
   it('re-reads the asset once per completed job, after the event is handled', async () => {
     seedAsset(fake.db);
 

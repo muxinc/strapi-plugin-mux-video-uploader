@@ -325,6 +325,41 @@ describe('validation', () => {
     expect(errorsFor('summarize', taxonomy({ description: 'When it is news', aliases: 'headlines' }))).toEqual([]);
   });
 
+  it('wants whole numbers for counts and milliseconds', () => {
+    expect(errorsFor('summarize', { title_length: 2.5 })).toEqual(['Max title length (words) must be a whole number.']);
+    expect(errorsFor('summarize', { tag_count: 0.5 })).toEqual(['Number of tags must be a whole number.']);
+    expect(errorsFor('find-scenes', { min_scene_duration_ms: 1500.5 })).toEqual([
+      'Minimum scene length (ms) must be a whole number.',
+    ]);
+    expect(errorsFor('moderate', { max_samples: 3.2 })).toEqual(['Maximum samples must be a whole number.']);
+    expect(errorsFor('summarize', { title_length: 3, tag_count: 12 })).toEqual([]);
+  });
+
+  it('marks every count and millisecond field as whole numbers', () => {
+    const integerFields = ROBOTS_CATALOG.flatMap((workflow) =>
+      workflow.params.filter((field) => field.integer).map((field) => `${workflow.key}:${field.name}`)
+    );
+
+    expect(integerFields).toEqual(
+      expect.arrayContaining([
+        'summarize:title_length',
+        'summarize:description_length',
+        'summarize:tag_count',
+        'ask-questions:max_free_form_answer_length',
+        'find-key-moments:max_moments',
+        'find-key-moments:target_duration_ms.min',
+        'find-key-moments:target_duration_ms.max',
+        'find-best-thumbnails:max_thumbnails',
+        'find-scenes:min_scenes',
+        'find-scenes:min_scene_duration_ms',
+        'moderate:max_samples',
+      ])
+    );
+    // Seconds and thresholds can be fractions.
+    expect(integerFields).not.toContain('moderate:thresholds.sexual');
+    expect(integerFields).not.toContain('summarize:output_steering.scope.start_time');
+  });
+
   it('keeps moderation thresholds between 0 and 1, and written answers at least 1 character', () => {
     expect(errorsFor('moderate', { 'thresholds.sexual': 1.5 })).toEqual([
       'Sexual content threshold must be at most 1.',

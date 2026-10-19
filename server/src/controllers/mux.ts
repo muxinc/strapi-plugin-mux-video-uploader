@@ -4,12 +4,17 @@ import { z } from 'zod';
 
 import { StoredTextTrack, UploadConfig, UploadDataWithoutFile } from '../../../types/shared-types';
 import { PLUGIN_NAME } from '../constants';
+import { withAssetLock } from '../robots/lock';
+import { backfillOutputs } from '../robots/outputs';
 import { resolveUploadDirectives } from '../robots/upload-directives';
-import { getService } from '../utils';
+import { Config, getService } from '../utils';
 import { parseRequest } from '../utils/parse-json-body';
+import { resolveMuxAssetOrNull } from '../utils/resolve-mux-asset';
 import { storeTextTracks } from '../utils/text-tracks';
 import { ASSET_MODEL, TEXT_TRACK_MODEL } from '../utils/types';
+import { nonEmptyString } from '../utils/values';
 import { dispatchWebhookEvent, WebhookEvent, WebhookOutcome } from '../webhooks';
+import { parseBody } from './robots';
 
 // Do not go gentle into that good night,
 // Old age should burn and rave at close of day;
@@ -53,9 +58,12 @@ const storyboard = async (ctx: Context) => {
   ctx.body = response.data;
 };
 
+/** `undefined` once a 400 has been sent: nothing is stored and Mux isn't called. */
 async function parseUploadRequest(ctx: Context) {
-  const params = parseRequest(ctx, UploadDataWithoutFile, null, null);
+  const body = parseBody(ctx, UploadDataWithoutFile);
+  if (!body) return undefined;
 
+  const params = { body };
   const config = UploadConfig.safeParse(params.body);
 
   if (!config.success) {
@@ -80,7 +88,10 @@ async function parseUploadRequest(ctx: Context) {
 }
 
 const postDirectUpload = async (ctx: Context) => {
-  const { config, storedTextTracks, directives, params } = await parseUploadRequest(ctx);
+  const request = await parseUploadRequest(ctx);
+  if (!request) return;
+
+  const { config, storedTextTracks, directives, params } = request;
 
   const result = await getService('mux').getDirectUploadUrl({
     config,
@@ -101,7 +112,10 @@ const postDirectUpload = async (ctx: Context) => {
 };
 
 const postRemoteUpload = async (ctx: Context) => {
-  const { config, storedTextTracks, directives, params } = await parseUploadRequest(ctx);
+  const request = await parseUploadRequest(ctx);
+  if (!request) return;
+
+  const { config, storedTextTracks, directives, params } = request;
 
   if (params.body?.upload_type !== 'url' || !params.body.url) {
     // ctx.badRequest's type seems to be off - we're following the official example: https://docs.strapi.io/dev-docs/error-handling#controllers-and-middlewares
@@ -125,6 +139,7 @@ const postRemoteUpload = async (ctx: Context) => {
   };
 
   await strapi.documents(ASSET_MODEL).create({ data });
+  await withAssetLock(result.id, () => backfillOutputs(result.id));
 
   ctx.send(result);
 };
@@ -134,7 +149,13 @@ const deleteMuxAsset = async (ctx: Context) => {
     ctx,
     null,
     z.object({ documentId: z.string().or(z.number()) }),
-    z.object({ delete_on_mux: z.string().or(z.boolean()).default(true) })
+    // A query string carries `"false"`, which is truthy: only `true` and `"true"` delete on Mux.
+    z.object({
+      delete_on_mux: z
+        .union([z.boolean(), z.string()])
+        .optional()
+        .transform((value) => value === undefined || value === true || value === 'true'),
+    })
   );
 
   // Ensure that the mux-asset entry exists for the id
@@ -194,6 +215,16 @@ const muxWebhookHandler = async (ctx: Context) => {
     ctx.throw(500, 'Webhook could not be verified');
   }
 
+  // The SDK would blame its MUX_WEBHOOK_SECRET env var, which this plugin doesn't read.
+  const { webhookSigningSecret } = await Config.getConfig();
+  if (!webhookSigningSecret) {
+    strapi.log.warn(
+      "[mux-video-uploader] Webhook rejected: the plugin's webhookSigningSecret is empty. Copy the signing secret " +
+        'from Mux → Settings → Webhooks into the plugin config.'
+    );
+    ctx.throw(401, 'Invalid webhook signature');
+  }
+
   let event: WebhookEvent;
 
   try {
@@ -219,14 +250,34 @@ const muxWebhookHandler = async (ctx: Context) => {
   ctx.send(outcome);
 };
 
+/** Signs only the playback IDs of this Strapi's videos. `:documentId` is a playback ID. */
 const signMuxPlaybackId = async (ctx: Context) => {
-  const { documentId } = ctx.params;
+  const playbackId = nonEmptyString(ctx.params.documentId);
   const { type } = ctx.query;
 
-  const result = await getService('mux').signPlaybackId(documentId, type as string);
+  if (!playbackId || !(await resolveMuxAssetOrNull({ playback_id: playbackId }))) {
+    ctx.notFound('mux-asset.notFound');
+    return;
+  }
+
+  const result = await getService('mux').signPlaybackId(playbackId, type as string);
 
   ctx.send(result);
 };
+
+/**
+ * A header value Node accepts for any file name (RFC 6266): an ASCII stand-in, plus the real name
+ * percent-encoded for clients that read `filename*`.
+ */
+function attachmentDisposition(name: string) {
+  const fallback = name.replace(/[^\x20-\x7e]|["\\]/g, '_');
+  const encoded = encodeURIComponent(name).replace(
+    /['()*]/g,
+    (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`
+  );
+
+  return `attachment; filename="${fallback}"; filename*=UTF-8''${encoded}`;
+}
 
 /**
  * Returns a text track stored in Strapi so Mux can download and parse it as an asset's subtitle/captions
@@ -249,7 +300,7 @@ const textTrack = async (ctx: Context) => {
   }
 
   const contentType = `${track.file.type}; charset=utf-8`;
-  ctx.set({ 'Content-Type': contentType, 'Content-Disposition': `attachment; filename=${track.file.name}` });
+  ctx.set({ 'Content-Type': contentType, 'Content-Disposition': attachmentDisposition(track.file.name) });
   ctx.type = `${track.file.type}; charset=utf-8`;
   ctx.body = track.file.contents;
 };

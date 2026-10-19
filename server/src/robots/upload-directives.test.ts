@@ -82,6 +82,22 @@ describe('resolveUploadDirectives', () => {
     expect(await resolveUploadDirectives({ canRunRobots: false })).toEqual([{ id: 'drv_a' }, { id: 'drv_b' }]);
   });
 
+  it('attaches padded ids trimmed, and ignores blank ones', async () => {
+    configure([' drv_a ', '', '  ', 'drv_a', 'drv_b']);
+
+    expect(await resolveUploadDirectives({ canRunRobots: true, requested: ['drv_a', 'drv_b'] })).toEqual([
+      { id: 'drv_a' },
+      { id: 'drv_b' },
+    ]);
+  });
+
+  it('asks Mux nothing when the configured list is only blanks, as an empty env var gives', async () => {
+    configure(['']);
+
+    expect(await resolveUploadDirectives({ canRunRobots: false })).toEqual([]);
+    expect(mux.client.robots.directives.list).not.toHaveBeenCalled();
+  });
+
   it('asks Mux nothing when no directive is configured or kept', async () => {
     configure([]);
     expect(await resolveUploadDirectives({ canRunRobots: true, requested: ['drv_a'] })).toEqual([]);

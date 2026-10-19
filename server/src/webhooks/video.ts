@@ -1,4 +1,6 @@
-import { resolveMuxAssetOrNull, MuxAssetFilter } from '../utils/resolve-mux-asset';
+import { withAssetLock } from '../robots/lock';
+import { backfillOutputs } from '../robots/outputs';
+import { findMuxAssets, MuxAssetFilter, resolveMuxAssetOrNull } from '../utils/resolve-mux-asset';
 import { ASSET_MODEL } from '../utils/types';
 import { nonEmptyString } from '../utils/values';
 import { snapshotFromAsset } from './asset-snapshot';
@@ -20,13 +22,16 @@ export async function handleVideoEvent(event: WebhookEvent): Promise<WebhookOutc
 
   switch (event.type) {
     // `video.asset.ready` may have arrived first and found no asset with this id, so read the asset
-    // once the event is answered.
+    // once the event is answered. Robots results that arrived before it are written now.
     case 'video.upload.asset_created': {
       const assetId = nonEmptyString(data.asset_id);
       if (!assetId) return 'ignored';
 
       const outcome = await updateMuxAsset({ upload_id: nonEmptyString(data.id) }, { asset_id: assetId });
-      if (outcome === 'handled') scheduleAssetRefresh(assetId);
+      if (outcome === 'handled') {
+        await withAssetLock(assetId, () => backfillOutputs(assetId));
+        scheduleAssetRefresh(assetId);
+      }
 
       return outcome;
     }
@@ -62,14 +67,17 @@ export async function handleVideoEvent(event: WebhookEvent): Promise<WebhookOutc
   }
 }
 
+/** Writes onto every row the filter matches. */
 async function updateMuxAsset(filter: MuxAssetFilter, data: Record<string, unknown>): Promise<WebhookOutcome> {
-  const muxAsset = await resolveMuxAssetOrNull(filter);
-  if (!muxAsset) return 'ignored';
+  const muxAssets = await findMuxAssets(filter);
+  if (muxAssets.length === 0) return 'ignored';
 
-  await strapi.db.query(ASSET_MODEL).update({ where: { id: muxAsset.id }, data });
+  for (const muxAsset of muxAssets) {
+    await strapi.db.query(ASSET_MODEL).update({ where: { id: muxAsset.id }, data });
 
-  // Otherwise a refresh that read Mux before this event could overwrite it with older data.
-  if (muxAsset.asset_id) rereadIfRefreshing(muxAsset.asset_id);
+    // Otherwise a refresh that read Mux before this event could overwrite it with older data.
+    if (muxAsset.asset_id) rereadIfRefreshing(muxAsset.asset_id);
+  }
 
   return 'handled';
 }

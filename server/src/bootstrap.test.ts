@@ -20,6 +20,30 @@ describe('bootstrap', () => {
     expect(log.warn).not.toHaveBeenCalled();
   });
 
+  it('warns at boot when strapi::body explicitly drops the raw body webhooks need', async () => {
+    const { strapi, log } = installFakeStrapi({
+      middlewares: ['strapi::logger', { name: 'strapi::body', config: { includeUnparsed: false } }],
+    });
+
+    await bootstrap({ strapi: strapi as any });
+
+    expect(log.warn).toHaveBeenCalledTimes(1);
+    expect(log.warn).toHaveBeenCalledWith(expect.stringContaining('includeUnparsed: false'));
+  });
+
+  it.each([
+    ['a plain entry', ['strapi::body']],
+    ['includeUnparsed: true', [{ name: 'strapi::body', config: { includeUnparsed: true } }]],
+    ['no includeUnparsed', [{ name: 'strapi::body', config: { jsonLimit: '1mb' } }]],
+    ['another middleware turning it off', [{ name: 'global::body', config: { includeUnparsed: false } }]],
+  ])('stays quiet about the body middleware with %s', async (_, middlewares) => {
+    const { strapi, log } = installFakeStrapi({ middlewares });
+
+    await bootstrap({ strapi: strapi as any });
+
+    expect(log.warn).not.toHaveBeenCalled();
+  });
+
   it('registers Run Robots beside the Read, Create, Update and Delete actions', async () => {
     const { strapi } = installFakeStrapi();
 

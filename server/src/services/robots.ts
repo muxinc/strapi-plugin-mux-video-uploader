@@ -20,7 +20,7 @@ import {
 import { MuxAsset } from '../content-types/mux-asset/types';
 import { callMux, classifyMuxError, RobotsRequestError } from '../robots/errors';
 import { withAssetLock } from '../robots/lock';
-import { writeOutputs } from '../robots/outputs';
+import { backfillOutputs, writeOutputs } from '../robots/outputs';
 import {
   findRowById,
   findRowByMuxId,
@@ -211,7 +211,10 @@ async function createOnce(
 const robotsService = () => ({
   listRows,
 
-  /** The one Mux read when the Robots tab opens: capability, and jobs missing here. */
+  /**
+   * The one Mux read when the Robots tab opens: capability, and jobs missing here. Also writes stored
+   * results the video doesn't show yet, whether or not Mux answers.
+   */
   async syncAsset(muxAsset: MuxAsset): Promise<RobotsSyncResponse> {
     const assetId = muxAsset.asset_id;
     if (!assetId) return { capability: 'ok', rows: [] };
@@ -223,6 +226,7 @@ const robotsService = () => ({
       jobs = ((await robots.jobs.list({ asset_id: assetId, limit: MAX_ROWS })).data ?? []) as MuxJobLike[];
     } catch (error) {
       const classified = classifyMuxError(error);
+      await withAssetLock(assetId, () => backfillOutputs(assetId));
       const rows = await listRows(assetId);
 
       if (classified.reason === 'scope-missing' || classified.reason === 'not-enabled') {
@@ -247,6 +251,8 @@ const robotsService = () => ({
           at: job.created_at,
         });
       }
+
+      await backfillOutputs(assetId);
     });
 
     return { capability: 'ok', rows: await listRows(assetId) };

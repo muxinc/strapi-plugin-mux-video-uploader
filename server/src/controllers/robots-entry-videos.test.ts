@@ -61,6 +61,32 @@ describe('entry videos for Apply summary', () => {
     });
   });
 
+  it('reads the published version when asked to', async () => {
+    const ctx = request({ model: ARTICLE, documentId: 'doc_1', status: 'published' });
+
+    await robots.entryVideos(ctx as any);
+
+    expect(findOne).toHaveBeenCalledWith(expect.objectContaining({ documentId: 'doc_1', status: 'published' }));
+    expect(ctx.body.fields[0].videos).toHaveLength(1);
+  });
+
+  it('reads the draft when asked to', async () => {
+    const ctx = request({ model: ARTICLE, documentId: 'doc_1', status: 'draft' });
+
+    await robots.entryVideos(ctx as any);
+
+    expect(findOne).toHaveBeenCalledWith(expect.objectContaining({ status: 'draft' }));
+  });
+
+  it('answers 400 to any other status, without reading the entry', async () => {
+    const ctx = request({ model: ARTICLE, documentId: 'doc_1', status: 'modified' });
+
+    await robots.entryVideos(ctx as any);
+
+    expect(ctx.status).toBe(400);
+    expect(findOne).not.toHaveBeenCalled();
+  });
+
   it("answers 403 to someone who can't read that content type", async () => {
     canRead.mockReturnValue(false);
     const ctx = request({ model: ARTICLE, documentId: 'doc_1' });

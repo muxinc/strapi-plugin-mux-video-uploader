@@ -1,8 +1,8 @@
-import type { RobotsModerateOutput, RobotsOutputs, RobotsSummarizeOutput } from '../../../types/robots';
-import { resolveMuxAssetOrNull } from '../utils/resolve-mux-asset';
+import type { RobotsJobRow, RobotsModerateOutput, RobotsOutputs, RobotsSummarizeOutput } from '../../../types/robots';
+import { findMuxAssets } from '../utils/resolve-mux-asset';
 import { ASSET_MODEL } from '../utils/types';
 import { compact, isRecord } from '../utils/values';
-import { isoFromSeconds, MuxJobLike, secondsFromDate } from './rows';
+import { isoFromSeconds, MuxJobLike, robotJobs, secondsFromDate } from './rows';
 
 type OutputWorkflow = keyof RobotsOutputs;
 
@@ -60,38 +60,90 @@ function isNewerOutput(current: unknown, candidate: { job_id: string; completed_
   return candidateAt > currentAt || (candidateAt === currentAt && candidate.job_id > current.job_id);
 }
 
+/** The slot a completed summarize or moderate job fills, if it describes `assetId` and says anything. */
+function slotFromJob(assetId: string, workflow: string, job: MuxJobLike) {
+  if (!Object.prototype.hasOwnProperty.call(SLOTS, workflow) || job.status !== 'completed') return undefined;
+
+  const parameters = isRecord(job.parameters) ? job.parameters : {};
+  if (parameters.asset_id !== assetId) return undefined;
+
+  return SLOTS[workflow as OutputWorkflow](job);
+}
+
+/** Writes `slot` onto every mux-asset row of `assetId` that `shouldReplace` lets it replace. */
+async function writeSlot(
+  assetId: string,
+  workflow: OutputWorkflow,
+  slot: RobotsSummarizeOutput | RobotsModerateOutput,
+  shouldReplace: (current: unknown, candidate: typeof slot) => boolean = isNewerOutput
+) {
+  for (const muxAsset of await findMuxAssets({ asset_id: assetId })) {
+    const outputs = isRecord(muxAsset.robots_outputs) ? (muxAsset.robots_outputs as RobotsOutputs) : {};
+    if (!shouldReplace(outputs[workflow], slot)) continue;
+
+    const data: Record<string, unknown> = { robots_outputs: { ...outputs, [workflow]: slot } };
+
+    // Only empty fields are filled: what's already there, typed by someone or from an earlier summary,
+    // is replaced only through Apply summary.
+    if (workflow === 'summarize') {
+      const summary = slot as RobotsSummarizeOutput;
+      const hasDescription = typeof muxAsset.description === 'string' && muxAsset.description.trim() !== '';
+      const hasTags = Array.isArray(muxAsset.tags) && muxAsset.tags.length > 0;
+
+      if (!hasDescription && summary.description) data.description = summary.description;
+      if (!hasTags && summary.tags?.length) data.tags = summary.tags;
+    }
+
+    await strapi.db.query(ASSET_MODEL).update({ where: { id: muxAsset.id }, data });
+  }
+}
+
 /**
  * Folds a completed summarize or moderate job into its asset's `robots_outputs` (and `description` and
  * `tags`), one slot per workflow, whoever ran it. Only from a job whose `parameters.asset_id` is that
  * asset: an output describes one video.
  */
 export async function writeOutputs(assetId: string, workflow: string, job: MuxJobLike) {
-  if (!Object.prototype.hasOwnProperty.call(SLOTS, workflow) || job.status !== 'completed') return;
+  const slot = slotFromJob(assetId, workflow, job);
+  if (slot) await writeSlot(assetId, workflow as OutputWorkflow, slot);
+}
 
-  const parameters = isRecord(job.parameters) ? job.parameters : {};
-  if (parameters.asset_id !== assetId) return;
+const jobFromRow = (row: RobotsJobRow): MuxJobLike => ({
+  id: row.mux_id ?? '',
+  status: row.status,
+  updated_at: secondsFromDate(row.mux_updated_at),
+  parameters: row.parameters ?? undefined,
+  outputs: row.outputs ?? undefined,
+});
 
-  const slot = SLOTS[workflow as OutputWorkflow](job);
-  if (!slot) return;
+/**
+ * Writes the newest stored summarize and moderate results onto the asset's rows. A job can finish
+ * before its asset reaches this Strapi, and its webhook then had no row to write to.
+ *
+ * Runs on every Robots sync, so a slot already holding the same job is left alone: rewriting it would
+ * fill a description or tags someone cleared on purpose.
+ */
+export async function backfillOutputs(assetId: string) {
+  for (const workflow of Object.keys(SLOTS) as OutputWorkflow[]) {
+    const rows = (await robotJobs().findMany({
+      where: { asset_id: assetId, workflow, status: 'completed', is_directive_run: false, mux_id: { $notNull: true } },
+      orderBy: { id: 'asc' },
+    })) as RobotsJobRow[];
 
-  const muxAsset = await resolveMuxAssetOrNull({ asset_id: assetId });
-  if (!muxAsset) return;
+    let newest: RobotsSummarizeOutput | RobotsModerateOutput | undefined;
+    for (const row of rows) {
+      const slot = slotFromJob(assetId, workflow, jobFromRow(row));
+      if (slot && isNewerOutput(newest, slot)) newest = slot;
+    }
 
-  const outputs = isRecord(muxAsset.robots_outputs) ? (muxAsset.robots_outputs as RobotsOutputs) : {};
-  if (!isNewerOutput(outputs[workflow as OutputWorkflow], slot)) return;
-
-  const data: Record<string, unknown> = { robots_outputs: { ...outputs, [workflow]: slot } };
-
-  // Only empty fields are filled: what's already there, typed by someone or from an earlier summary,
-  // is replaced only through Apply summary.
-  if (workflow === 'summarize') {
-    const summary = slot as RobotsSummarizeOutput;
-    const hasDescription = typeof muxAsset.description === 'string' && muxAsset.description.trim() !== '';
-    const hasTags = Array.isArray(muxAsset.tags) && muxAsset.tags.length > 0;
-
-    if (!hasDescription && summary.description) data.description = summary.description;
-    if (!hasTags && summary.tags?.length) data.tags = summary.tags;
+    if (newest) {
+      await writeSlot(
+        assetId,
+        workflow,
+        newest,
+        (current, candidate) =>
+          !(isRecord(current) && current.job_id === candidate.job_id) && isNewerOutput(current, candidate)
+      );
+    }
   }
-
-  await strapi.db.query(ASSET_MODEL).update({ where: { id: muxAsset.id }, data });
 }

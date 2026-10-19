@@ -38,9 +38,13 @@ export function createContext(init: ContextInit = {}) {
     state: init.state ?? {},
     headers,
     request: { body, headers, header: headers },
+    /** What `ctx.set` stored, by header name as given. */
+    responseHeaders: {} as Record<string, string>,
     status: 404,
     body: undefined,
-    set: () => undefined,
+    set(field: string | Record<string, string>, value?: string) {
+      Object.assign(ctx.responseHeaders, typeof field === 'string' ? { [field]: value } : field);
+    },
     /** Koa's `ctx.is`, for the request's `content-type` only. */
     is(type: string) {
       return String(headers['content-type'] ?? '').includes(type) ? type : false;

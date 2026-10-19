@@ -127,6 +127,26 @@ describe('Robots routes', () => {
     });
   });
 
+  it('answers the configured default ids trimmed, without blanks', async () => {
+    fake = installFakeStrapi({ services, config: { defaultDirectiveIds: [' drv_1 ', ''] } });
+    mux.client.robots.directives.list.mockResolvedValue(page([{ id: 'drv_1', name: 'Summarize and moderate' }]));
+    const ctx = request();
+
+    await robots.listDirectives(ctx as any);
+
+    expect(ctx.body.defaultDirectiveIds).toEqual(['drv_1']);
+  });
+
+  it('refuses a fractional value for a whole-number field, without calling Mux', async () => {
+    const ctx = request({ body: { workflow: 'summarize', values: { title_length: 2.5 } } });
+
+    await robots.createJob(ctx as any);
+
+    expect(ctx.status).toBe(400);
+    expect(ctx.body.error.message).toBe('Max title length (words) must be a whole number.');
+    expect(mux.client.robots.jobs.summarize.create).not.toHaveBeenCalled();
+  });
+
   it('dismisses a placeholder with 204', async () => {
     const [row] = fake.db.seed(ROBOT_JOB_MODEL, [placeholderRow()]);
     const ctx = createContext({ params: { id: String(row.id) } });
@@ -182,6 +202,23 @@ describe('Create playback ID', () => {
 
     expect(mux.client.video.assets.createPlaybackId).toHaveBeenCalledWith('ast_1', { policy: 'signed' });
     expect(ctx.body.asset).toMatchObject({ playback_id: 'play_new' });
+  });
+
+  it('stores the fresh asset on every video on that Mux asset', async () => {
+    await fake.db.query(ASSET_MODEL).update({ where: { id: assetRowId }, data: { playback_id: null } });
+    const other = seedAsset(fake.db, { title: 'The same video again', playback_id: null, signed: true });
+    mux.client.video.assets.createPlaybackId.mockResolvedValue({ id: 'play_new', policy: 'signed' });
+    mux.client.video.assets.retrieve.mockResolvedValue({
+      id: 'ast_1',
+      status: 'ready',
+      playback_ids: [{ id: 'play_new', policy: 'signed' }],
+    });
+    const ctx = request();
+
+    await muxAssetController.createPlaybackId(ctx as any);
+
+    expect(ctx.body.asset).toMatchObject({ id: assetRowId, playback_id: 'play_new' });
+    expect(fake.db.rows(ASSET_MODEL).find((row) => row.id === other.id)?.playback_id).toBe('play_new');
   });
 
   it('does nothing when the video still has a playback ID', async () => {

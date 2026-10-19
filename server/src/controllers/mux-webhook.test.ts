@@ -71,12 +71,15 @@ describe('webhook route', () => {
     expect(dispatchWebhookEvent).not.toHaveBeenCalled();
   });
 
-  it('answers 401 to every event while the signing secret is empty', async () => {
+  it("answers 401 to every event while the signing secret is empty, naming the plugin's setting", async () => {
     fake = installFakeStrapi({ services, config: { webhookSigningSecret: '' } });
     const ctx = webhookContext(event, { secret: '' });
 
     await expect(handle(ctx)).rejects.toMatchObject({ status: 401 });
     expect(dispatchWebhookEvent).not.toHaveBeenCalled();
+    expect(fake.log.warn).toHaveBeenCalledTimes(1);
+    expect(fake.log.warn).toHaveBeenCalledWith(expect.stringContaining('webhookSigningSecret is empty'));
+    expect(fake.log.warn).not.toHaveBeenCalledWith(expect.stringContaining('MUX_WEBHOOK_SECRET'));
   });
 
   it('answers 500 and says how to fix it when the raw body is unavailable', async () => {
