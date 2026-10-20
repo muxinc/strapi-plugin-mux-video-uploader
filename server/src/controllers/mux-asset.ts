@@ -4,8 +4,7 @@ import { z } from 'zod';
 import { MuxAssetTitle, normalizeTags } from '../../../types/shared-types';
 import { MuxAssetUpdate } from '../content-types/mux-asset/types';
 import { callMux } from '../robots/errors';
-import { withAssetLock } from '../robots/lock';
-import { backfillOutputs } from '../robots/outputs';
+import { tryBackfillOutputs } from '../robots/outputs';
 import { getService } from '../utils';
 import { getMuxAssetQuery, getPagination, MuxAssetQuery, sanitizeMuxAssetOutput } from '../utils/mux-asset-query';
 import { resolveMuxAsset, updateMuxAssets } from '../utils/resolve-mux-asset';
@@ -82,12 +81,12 @@ const create = async (ctx: Context) => {
 
   // The rest of the asset is read from Mux, and Robots results stored before it arrived are written.
   const assetId = parsed.body.asset_id;
-  if (assetId) {
-    await withAssetLock(assetId, () => backfillOutputs(assetId));
-    scheduleAssetRefresh(assetId);
-  }
+  if (!assetId) return created;
 
-  return created;
+  await tryBackfillOutputs(assetId);
+  scheduleAssetRefresh(assetId);
+
+  return (await strapi.db.query(ASSET_MODEL).findOne({ where: { id: created.id } })) ?? created;
 };
 
 /** Each is left as it is when absent from the request. An empty title counts as absent, as before. */

@@ -138,6 +138,22 @@ describe('Create a video', () => {
     expect(created()).toMatchObject({ asset_id: 'ast_9', playback_id: 'play_mux', isReady: true });
   });
 
+  it('answers with the row after the stored results are written, with summary tags de-duplicated', async () => {
+    fake.db.seed(ROBOT_JOB_MODEL, [
+      jobRow({
+        asset_id: 'ast_9',
+        status: 'completed',
+        detail_loaded: true,
+        parameters: { asset_id: 'ast_9' },
+        outputs: { description: 'Described', tags: ['Mux', 'mux', ' video '] },
+      }),
+    ]);
+
+    const { result } = await create({ title: 'Imported', asset_id: 'ast_9' });
+
+    expect(result).toMatchObject({ description: 'Described', tags: ['Mux', 'video'] });
+  });
+
   it('writes the Robots results stored before the asset reached Strapi', async () => {
     fake.db.seed(ROBOT_JOB_MODEL, [
       jobRow({

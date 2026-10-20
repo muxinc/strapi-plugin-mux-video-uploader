@@ -1,14 +1,18 @@
 import type { RobotsJobRow, RobotsModerateOutput, RobotsOutputs, RobotsSummarizeOutput } from '../../../types/robots';
+import { normalizeTags } from '../../../types/shared-types';
 import { findMuxAssets } from '../utils/resolve-mux-asset';
 import { ASSET_MODEL } from '../utils/types';
 import { compact, isRecord } from '../utils/values';
+import { withAssetLock } from './lock';
 import { isoFromSeconds, MuxJobLike, robotJobs, secondsFromDate } from './rows';
 
 type OutputWorkflow = keyof RobotsOutputs;
 
 function summarizeSlot(job: MuxJobLike): RobotsSummarizeOutput | undefined {
   const outputs = isRecord(job.outputs) ? job.outputs : {};
-  const tags = Array.isArray(outputs.tags) ? outputs.tags.filter((tag): tag is string => typeof tag === 'string') : [];
+  const tags = normalizeTags(
+    Array.isArray(outputs.tags) ? outputs.tags.filter((tag): tag is string => typeof tag === 'string') : []
+  );
 
   const slot = compact({
     job_id: job.id,
@@ -145,5 +149,21 @@ export async function backfillOutputs(assetId: string) {
           !(isRecord(current) && current.job_id === candidate.job_id) && isNewerOutput(current, candidate)
       );
     }
+  }
+}
+
+/**
+ * For a request that has already created the asset on Mux: a failure is logged, never thrown, since
+ * an error there would make the user retry and create, and bill, a second asset.
+ */
+export async function tryBackfillOutputs(assetId: string) {
+  try {
+    await withAssetLock(assetId, () => backfillOutputs(assetId));
+  } catch (error) {
+    strapi.log.warn(
+      `[mux-video-uploader] Couldn't write stored Robots results to Mux asset ${assetId}: ${
+        error instanceof Error ? error.message : error
+      }`
+    );
   }
 }

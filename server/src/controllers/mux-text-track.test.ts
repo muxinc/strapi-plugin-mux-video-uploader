@@ -65,6 +65,18 @@ describe('caption files for Mux', () => {
     expect(disposition).toContain('filename="________ ___ _final_ (v2).vtt"');
   });
 
+  it('serves a file whose name has a broken character', async () => {
+    fake.db.seed(TEXT_TRACK_MODEL, [
+      { id: 4, documentId: 'k2p9wq7x1m4z8c3vj6td0nyr', name: 'Broken', file: file('subs\uD800.vtt', 'WEBVTT') },
+    ]);
+    const ctx = createContext({ params: { documentId: 'k2p9wq7x1m4z8c3vj6td0nyr' } });
+
+    await mux.textTrack(ctx as any);
+
+    expect(ctx.body).toBe('WEBVTT');
+    expect(() => validateHeaderValue('Content-Disposition', ctx.responseHeaders['Content-Disposition'])).not.toThrow();
+  });
+
   it('keeps a plain ASCII name as it is', async () => {
     const ctx = createContext({ params: { documentId: 'b7nq4w0zs2kd9xv1mrp6tcfa' } });
 

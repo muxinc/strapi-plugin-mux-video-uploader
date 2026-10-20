@@ -4,8 +4,7 @@ import { z } from 'zod';
 
 import { StoredTextTrack, UploadConfig, UploadDataWithoutFile } from '../../../types/shared-types';
 import { PLUGIN_NAME } from '../constants';
-import { withAssetLock } from '../robots/lock';
-import { backfillOutputs } from '../robots/outputs';
+import { tryBackfillOutputs } from '../robots/outputs';
 import { resolveUploadDirectives } from '../robots/upload-directives';
 import { Config, getService } from '../utils';
 import { parseRequest } from '../utils/parse-json-body';
@@ -139,7 +138,7 @@ const postRemoteUpload = async (ctx: Context) => {
   };
 
   await strapi.documents(ASSET_MODEL).create({ data });
-  await withAssetLock(result.id, () => backfillOutputs(result.id));
+  await tryBackfillOutputs(result.id);
 
   ctx.send(result);
 };
@@ -271,7 +270,9 @@ const signMuxPlaybackId = async (ctx: Context) => {
  */
 function attachmentDisposition(name: string) {
   const fallback = name.replace(/[^\x20-\x7e]|["\\]/g, '_');
-  const encoded = encodeURIComponent(name).replace(
+  // encodeURIComponent throws on a lone surrogate, which a broken file name can carry.
+  const wellFormed = name.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '\uFFFD');
+  const encoded = encodeURIComponent(wellFormed).replace(
     /['()*]/g,
     (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`
   );

@@ -4,7 +4,7 @@ import { createContext } from '../../../test/koa';
 import { mux, page, resetMux } from '../../../test/mux';
 import { FakeStrapi, installFakeStrapi } from '../../../test/strapi';
 import services from '../services';
-import { ASSET_MODEL, TEXT_TRACK_MODEL } from '../utils/types';
+import { ASSET_MODEL, ROBOT_JOB_MODEL, TEXT_TRACK_MODEL } from '../utils/types';
 import muxController from './mux';
 
 vi.mock('@mux/ts', async () => ({ default: (await import('../../../test/mux')).MuxMock }));
@@ -94,6 +94,17 @@ describe('upload titles', () => {
     expect(fake.strapi.entityService.create).not.toHaveBeenCalled();
     expect(fake.db.rows(ASSET_MODEL)).toEqual([]);
     expect(fake.db.rows(TEXT_TRACK_MODEL)).toEqual([]);
+  });
+
+  it('still answers 200 when writing stored Robots results fails, since Mux already has the asset', async () => {
+    fake.db.query(ROBOT_JOB_MODEL).findMany.mockRejectedValueOnce(new Error('database is locked'));
+    const ctx = upload({ title: 'A remote video', upload_type: 'url', url: 'https://example.com/video.mp4' }, true);
+
+    await muxController.postRemoteUpload(ctx as any);
+
+    expect(ctx.status).toBe(200);
+    expect(fake.db.rows(ASSET_MODEL)).toHaveLength(1);
+    expect(fake.log.warn).toHaveBeenCalledWith(expect.stringContaining('database is locked'));
   });
 
   it('stores the title trimmed', async () => {
