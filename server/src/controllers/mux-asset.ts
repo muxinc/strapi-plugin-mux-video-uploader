@@ -1,29 +1,32 @@
 import { Context } from 'koa';
 
 import { MuxAssetUpdate } from '../content-types/mux-asset/types';
+import { getMuxAssetQuery, getPagination, MuxAssetQuery, sanitizeMuxAssetOutput } from '../utils/mux-asset-query';
 import { resolveMuxAsset } from '../utils/resolve-mux-asset';
 import { updateTextTracks } from '../utils/text-tracks';
 import { ASSET_MODEL } from '../utils/types';
 
-const search = (ctx: Context) => {
-  const params = ctx.query;
+/** Leaves out the keys the request didn't set. */
+const definedOnly = (params: Record<string, unknown>) =>
+  Object.fromEntries(Object.entries(params).filter(([, value]) => value !== undefined));
 
-  if (!params.sort) {
-    params.sort = 'createdAt';
-  }
+const countAssets = ({ filters, _q }: MuxAssetQuery) =>
+  strapi.documents(ASSET_MODEL).count(definedOnly({ filters, _q }));
 
-  if (!params.order) {
-    params.order = 'desc';
-  }
-
-  return strapi.documents(ASSET_MODEL).findMany(params);
-};
-
+// `find`, `findOne` and `count` serve both the admin and the content API, so `ctx.query` never
+// reaches the document service as is: `getMuxAssetQuery` keeps what each API may use.
 const find = async (ctx: Context) => {
-  const entities = await search(ctx);
-  const totalCount = await count(ctx);
+  const query = await getMuxAssetQuery(ctx);
+  const { filters, sort, fields, populate, _q } = query;
+  const { start, limit } = getPagination(ctx.query);
 
-  const items = entities.map((entity: any) => entity);
+  // The admin page also sends `order=desc`, which the document service never applied.
+  const entities = await strapi
+    .documents(ASSET_MODEL)
+    .findMany(definedOnly({ filters, sort: sort || 'createdAt', fields, populate, _q, start, limit }));
+  const totalCount = await countAssets(query);
+
+  const items = await sanitizeMuxAssetOutput(ctx, entities);
 
   return { items, totalCount };
 };
@@ -31,7 +34,8 @@ const find = async (ctx: Context) => {
 const findOne = async (ctx: Context) => {
   const { documentId } = ctx.params;
 
-  return await strapi.db.query(ASSET_MODEL).findOne({
+  // Doesn't read the query, so the row comes back without relations.
+  const entity = await strapi.db.query(ASSET_MODEL).findOne({
     where: { id: documentId },
   });
   // @ts-ignore - v5 migration
@@ -39,13 +43,11 @@ const findOne = async (ctx: Context) => {
   //   documentId,
   //   filters: ctx.query,
   // });
+
+  return sanitizeMuxAssetOutput(ctx, entity);
 };
 
-const count = (ctx: Context) => {
-  const params = ctx.query;
-
-  return strapi.documents(ASSET_MODEL).count(params);
-};
+const count = async (ctx: Context) => countAssets(await getMuxAssetQuery(ctx));
 
 const create = async (ctx: Context) => {
   const { body } = ctx.request.body;

@@ -1,6 +1,6 @@
 {
   "name": "strapi-plugin-mux-video-uploader",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "This plugin allows you to upload your content to Mux and use it with Strapi.",
   "license": "MIT",
   "repository": {
@@ -30,6 +30,7 @@
   ],
   "scripts": {
     "build": "strapi-plugin build",
+    "test": "vitest run",
     "test:ts:back": "run -T tsc -p server/tsconfig.json",
     "test:ts:front": "run -T tsc -p admin/tsconfig.json",
     "verify": "strapi-plugin verify",
@@ -66,7 +67,8 @@
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2",
     "styled-components": "^6.1.13",
-    "typescript": "^5.6.2"
+    "typescript": "^5.6.2",
+    "vitest": "^3.2.7"
   },
   "peerDependencies": {
     "@strapi/sdk-plugin": "^5.2.6",

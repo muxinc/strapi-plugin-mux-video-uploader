@@ -110,6 +110,8 @@ Currently, anyone with "Super Admin" access to your [Strapi](https://strapi.io/)
 
 **Please note**: End Users can only have read operation permissions (`find`, `findOne` and `count`). Write operations are not supported due to potential security reasons.
 
+These endpoints follow Strapi's content API rules: `filters`, `sort`, `fields` and `populate` can't use private fields or the admin users behind `createdBy`/`updatedBy` (the request gets a 400), and `find` returns at most `api.rest.maxLimit` items (100 when unset), paginated with `start`/`limit` or `pagination[page]`/`pagination[pageSize]`.
+
 ## 🤝 Contributing
 
 Contributions, issues and feature requests are welcome!
