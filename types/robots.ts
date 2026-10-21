@@ -268,6 +268,48 @@ export function firstErrorMessage(errors: unknown): string | undefined {
   return undefined;
 }
 
+/** How long Mux's links to a job's files last after the job completes. */
+const TEMPORARY_URL_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** A `temporary_*_url` in a job's outputs: Mux's link to a file it made, such as the captions. */
+export interface RobotsTemporaryDownload {
+  /** The output it came from, e.g. `temporary_vtt_url`. */
+  key: string;
+  url: string;
+  /** Unknown when neither the link nor the job says when it was made. */
+  expiresAtMs?: number;
+}
+
+/** When a pre-signed S3 link stops working: `X-Amz-Date` plus `X-Amz-Expires` seconds. */
+function signedUrlExpiryMs(url: string): number | undefined {
+  try {
+    const params = new URL(url).searchParams;
+    const signedAt = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/.exec(params.get('X-Amz-Date') ?? '');
+    const lifetimeSeconds = Number(params.get('X-Amz-Expires'));
+    if (!signedAt || !Number.isFinite(lifetimeSeconds) || lifetimeSeconds <= 0) return undefined;
+
+    const [year, month, day, hour, minute, second] = signedAt.slice(1).map(Number);
+    return Date.UTC(year, month - 1, day, hour, minute, second) + lifetimeSeconds * 1000;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * The download links in a job's outputs, each with when it expires: what the link itself says, or else
+ * 7 days after the job's last update, as Mux documents. Only `https:` links, since they become `href`s.
+ */
+export function temporaryDownloads(row: Pick<RobotsJobRow, 'outputs' | 'mux_updated_at'>): RobotsTemporaryDownload[] {
+  const completedAtMs = row.mux_updated_at ? Date.parse(row.mux_updated_at) : NaN;
+  const fallbackExpiryMs = Number.isFinite(completedAtMs) ? completedAtMs + TEMPORARY_URL_LIFETIME_MS : undefined;
+
+  return Object.entries(row.outputs ?? {}).flatMap(([key, url]) =>
+    /^temporary_.*_url$/.test(key) && typeof url === 'string' && url.startsWith('https://')
+      ? [{ key, url, expiresAtMs: signedUrlExpiryMs(url) ?? fallbackExpiryMs }]
+      : []
+  );
+}
+
 /** A Mux video an entry links to, for the Content Manager's Apply summary panel. */
 export interface RobotsEntryVideo {
   id: number;

@@ -1,9 +1,9 @@
 import React from 'react';
-import { Badge, Box, Flex, Td, Tr, Typography } from '@strapi/design-system';
+import { Badge, Box, Flex, Link, Td, Tr, Typography } from '@strapi/design-system';
 
-import type { RobotsJobRow } from '../../../../types/robots';
+import { RobotsJobRow, temporaryDownloads } from '../../../../types/robots';
 import { SUPPORTED_MUX_LANGUAGES } from '../../../../types/shared-types';
-import { asRows, asStrings, EM_DASH, formatMs, formatScore, formatSeconds, formatText } from './format';
+import { asRows, asStrings, EM_DASH, formatDateTime, formatMs, formatScore, formatSeconds, formatText } from './format';
 import { Translate } from './intl';
 import Note from './note';
 import RobotsTable from './table';
@@ -269,34 +269,97 @@ const languageName = (code: unknown) =>
     ? (SUPPORTED_MUX_LANGUAGES.find((language) => language.code === code)?.label ?? code)
     : undefined;
 
-// The result is a track on the Mux video, so there's always something to say: where to find it.
+function downloadLabel(key: string, t: Translate) {
+  switch (key) {
+    case 'temporary_vtt_url':
+      return t('Robots.output.download-vtt', 'Download the captions (VTT)');
+    case 'temporary_srt_url':
+      return t('Robots.output.download-srt', 'Download the captions (SRT)');
+    case 'temporary_words_url':
+      return t('Robots.output.download-words', 'Download the word timings (JSON)');
+    case 'temporary_audio_url':
+      return t('Robots.output.download-audio', 'Download the dubbed audio');
+    default:
+      return t('Robots.output.download-file', 'Download the file');
+  }
+}
+
+function DownloadLinks({ downloads, t }: { downloads: ReturnType<typeof temporaryDownloads>; t: Translate }) {
+  const expiresAtMs = Math.min(...downloads.map((download) => download.expiresAtMs ?? Infinity));
+
+  return (
+    <Flex direction="column" alignItems="start" gap={2}>
+      {downloads.map((download) => (
+        <Link key={download.key} href={download.url} isExternal>
+          {downloadLabel(download.key, t)}
+        </Link>
+      ))}
+      {Number.isFinite(expiresAtMs) && (
+        <Typography variant="pi" textColor="neutral600">
+          {t('Robots.output.downloads-expire', 'Mux keeps these files until {date}.', {
+            date: formatDateTime(expiresAtMs),
+          })}
+        </Typography>
+      )}
+    </Flex>
+  );
+}
+
+// The result is a track on the Mux video, a download link, or both, so there's always something to say.
 const trackView = (audio: boolean): OutputView => ({
   hasContent: () => true,
   render: (outputs, row, t) => {
     const parameters = row.parameters ?? {};
+    const allDownloads = temporaryDownloads(row);
+    const nowMs = Date.now();
+    const downloads = allDownloads.filter((download) => (download.expiresAtMs ?? Infinity) > nowMs);
+
     if (parameters.upload_to_mux === false) {
+      if (downloads.length === 0) {
+        return (
+          <Note>
+            {allDownloads.length > 0
+              ? t(
+                  'Robots.output.not-attached',
+                  "This run didn't attach the result to the Mux video. Mux only returned a temporary download link, which has expired."
+                )
+              : t(
+                  'Robots.output.not-attached-no-link',
+                  "This run didn't attach the result to the Mux video, and Mux returned no download link."
+                )}
+          </Note>
+        );
+      }
+
       return (
-        <Note>
-          {t(
-            'Robots.output.not-attached',
-            "This run didn't attach the result to the Mux video. Mux only returned a temporary download link, which has expired."
-          )}
-        </Note>
+        <Flex direction="column" alignItems="stretch" gap={3}>
+          <Note>
+            {t(
+              'Robots.output.not-attached-download',
+              "This run didn't attach the result to the Mux video. Download it before Mux's link expires."
+            )}
+          </Note>
+          <DownloadLinks downloads={downloads} t={t} />
+        </Flex>
       );
     }
+
     const language =
       languageName(outputs.language_code) ??
       languageName(parameters.to_language_code) ??
       languageName(parameters.language_code) ??
       '';
     return (
-      <Note variant="success">
-        {audio
-          ? t('Robots.output.added-audio', "Added audio track {language}; pick it in the player's audio menu.", {
-              language,
-            })
-          : t('Robots.output.added-track', 'Added track {language}; see it in the Captions tab.', { language })}
-      </Note>
+      <Flex direction="column" alignItems="stretch" gap={3}>
+        <Note variant="success">
+          {audio
+            ? t('Robots.output.added-audio', "Added audio track {language}; pick it in the player's audio menu.", {
+                language,
+              })
+            : t('Robots.output.added-track', 'Added track {language}; see it in the Captions tab.', { language })}
+        </Note>
+        {downloads.length > 0 && <DownloadLinks downloads={downloads} t={t} />}
+      </Flex>
     );
   },
 });

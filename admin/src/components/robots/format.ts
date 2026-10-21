@@ -8,6 +8,8 @@ export const relativeTime = (iso: string | null | undefined) => {
   return time.isValid ? (time.toRelative() ?? EM_DASH) : EM_DASH;
 };
 
+export const formatDateTime = (ms: number) => DateTime.fromMillis(ms).toLocaleString(DateTime.DATETIME_MED);
+
 export const exactTime = (iso: string | null | undefined) => {
   if (!iso) return '';
   const time = DateTime.fromISO(iso);
@@ -45,7 +47,10 @@ export const prettyJson = (value: unknown): string | undefined => {
   }
 };
 
-/** `temporary_*_url` links expire, so showing one invites a click on a dead link. */
+/**
+ * `temporary_*_url` links expire a week after the job. The output view lists them with that date;
+ * anywhere else they'd read as lasting.
+ */
 export function withoutTemporaryUrls(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(withoutTemporaryUrls);
   if (!value || typeof value !== 'object') return value;

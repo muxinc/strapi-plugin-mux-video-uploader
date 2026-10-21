@@ -210,7 +210,7 @@ const UPLOAD_TO_MUX: RobotsParamField = {
   kind: 'boolean',
   name: 'upload_to_mux',
   label: 'Attach the result to the Mux asset',
-  helpText: 'Leave on to get a real track on the asset. Off returns a temporary download URL only.',
+  helpText: 'Leave on to get a real track on the asset. Off only returns a download link, which Mux keeps for 7 days.',
   defaultValue: true,
 };
 

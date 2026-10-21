@@ -7,6 +7,7 @@ import {
   ROBOTS_CONFIRM_GRACE_MS,
   ROBOTS_STALE_MS,
   RobotsJobRow,
+  temporaryDownloads,
   unitsState,
 } from './robots';
 
@@ -88,5 +89,41 @@ describe('firstErrorMessage', () => {
     expect(firstErrorMessage({ message: 'Object form.' })).toBe('Object form.');
     expect(firstErrorMessage(['Plain string.'])).toBe('Plain string.');
     expect(firstErrorMessage(null)).toBeUndefined();
+  });
+});
+
+describe('temporaryDownloads', () => {
+  const signed = (date: string, seconds: number) =>
+    `https://s3.us-east-1.amazonaws.com/mux-robots/captions/a.vtt?X-Amz-Date=${date}&X-Amz-Expires=${seconds}&X-Amz-Signature=abc`;
+
+  it('reads when the link expires from its signature', () => {
+    const url = signed('20261013T155150Z', 604800);
+
+    expect(temporaryDownloads(row({ outputs: { temporary_vtt_url: url } }))).toEqual([
+      { key: 'temporary_vtt_url', url, expiresAtMs: Date.parse('2026-10-20T15:51:50Z') },
+    ]);
+  });
+
+  it('falls back to 7 days after the job last changed when the link has no signing date', () => {
+    const url = 'https://example.com/a.srt';
+
+    expect(
+      temporaryDownloads(row({ outputs: { temporary_srt_url: url }, mux_updated_at: '2026-10-13T00:00:00.000Z' }))
+    ).toEqual([{ key: 'temporary_srt_url', url, expiresAtMs: Date.parse('2026-10-20T00:00:00.000Z') }]);
+  });
+
+  it('lists every temporary link and skips other outputs and links that are not https', () => {
+    const downloads = temporaryDownloads(
+      row({
+        outputs: {
+          temporary_srt_url: 'https://example.com/a.srt',
+          temporary_words_url: 'https://example.com/a.json',
+          temporary_audio_url: 'javascript:alert(1)',
+          uploaded_track_id: 'trk_1',
+        },
+      })
+    );
+
+    expect(downloads.map((download) => download.key)).toEqual(['temporary_srt_url', 'temporary_words_url']);
   });
 });
