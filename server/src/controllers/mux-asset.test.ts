@@ -82,6 +82,13 @@ describe('Update a video', () => {
     expect(stored).toMatchObject({ title: 'A video', description: 'From Mux', tags: ['video'] });
     expect(fake.db.query(ASSET_MODEL).update).not.toHaveBeenCalled();
   });
+
+  it('puts the reason in the JSON list of issues that the details modal shows', async () => {
+    const { ctx } = await update({ title: 'ab' });
+
+    const issues = JSON.parse(ctx.body.error.details.errors.body);
+    expect(issues[0].message).toBe('The title must be at least 3 characters long.');
+  });
 });
 
 describe('Create a video', () => {
