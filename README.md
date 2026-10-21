@@ -172,7 +172,7 @@ Only top-level relations are found, not ones inside components or dynamic zones.
 
 ### Good to know
 
-- **How results arrive.** Mux sends every job and directive run update by webhook, and Strapi stores it. Opening the Robots tab reads Mux once, to pick up jobs started outside Strapi. After that, the tab re-reads Strapi every 6 seconds while something runs, and stops when nothing does or the details close. Nothing polls Mux.
+- **How results arrive.** Mux sends every job and directive run update by webhook, and Strapi stores it. Opening the Robots tab reads Mux once, to pick up jobs started outside Strapi. After that, the tab re-reads Strapi every 4 seconds while something runs, and stops when nothing does or the details close. Nothing polls Mux.
 - **Who can read results.** The newest summary and moderation scores are kept in the Mux Asset's `robots_outputs`. The plugin's content API returns `description`, `tags` and `robots_outputs`, so any role with `find` or `findOne` can read them, moderation scores included.
 - **No automatic retries.** The plugin never repeats a request to Mux on its own, so a run is never started or billed twice by accident. If Mux doesn't answer, the run shows as "Not confirmed" until it appears or you tell the plugin nothing is running.
 - **One Strapi process.** The check that holds back a second run while Mux hasn't confirmed the first works within one Strapi process. With several instances behind a load balancer, two clicks that reach different instances can each start, and bill, a run.

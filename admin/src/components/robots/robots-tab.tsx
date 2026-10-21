@@ -25,12 +25,15 @@ import OutputViewer from './output-viewer';
 import RunModal, { RunOutcome } from './run-modal';
 
 /** Polls read the plugin's own table, never Mux. */
-const ROBOTS_POLL_INTERVAL_MS = 6000;
+const ROBOTS_POLL_INTERVAL_MS = 4000;
 
 /** How many polls a placeholder keeps the loop alive for, so its job can be found. */
-const PLACEHOLDER_CHECKS = 10;
+const PLACEHOLDER_CHECKS = 15;
 
-/** How many polls re-read the video after a job completes: Strapi refreshes it from Mux right after. */
+/**
+ * How many polls read the video again after the read when a job completes: Strapi's own read from Mux
+ * may still be running, and Mux can add a track (captions, chapters) a little later.
+ */
 const ASSET_REREADS = 2;
 
 /** A sync slower than this shows the stored rows while it finishes. */
@@ -181,8 +184,12 @@ export default function RobotsTab({ muxAsset, canRun, onAssetMayHaveChanged }: R
             row.status === 'completed' &&
             previous.find((before) => before.id === row.id)?.status !== 'completed'
         );
-        if (completedNow) rereadsLeft.current = ASSET_REREADS;
         showRows(fresh);
+        // The player shows what the job changed without waiting for the next poll.
+        if (completedNow) {
+          rereadsLeft.current = ASSET_REREADS;
+          onAssetMayHaveChangedRef.current();
+        }
       } catch {
         setNowMs(Date.now());
       }
