@@ -178,6 +178,18 @@ describe('video events: snapshots', () => {
     expect(storedAsset(id)).toMatchObject({ asset_id: 'ast_1', playback_id: 'play_1', isReady: true });
   });
 
+  it('records the error after video.upload.asset_created, in case video.asset.errored came first', async () => {
+    const { id } = seedAsset({ upload_id: 'upl_1', asset_id: null });
+    const errors = { type: 'invalid_input', messages: ['Bad input'] };
+    getAssetById.mockResolvedValue({ id: 'ast_1', status: 'errored', errors });
+
+    expect((await deliver('video.asset.errored', { id: 'ast_1', status: 'errored', errors })).body).toBe('ignored');
+    await deliver('video.upload.asset_created', { id: 'upl_1', asset_id: 'ast_1' });
+    await refreshesSettled();
+
+    expect(storedAsset(id)).toMatchObject({ isReady: false, error_message: 'invalid_input: Bad input' });
+  });
+
   it('reads again when video.asset.ready lands while an older read is still running', async () => {
     const { id } = seedAsset({ asset_id: 'ast_1' });
     let finishStaleRead: (asset: unknown) => void = () => undefined;

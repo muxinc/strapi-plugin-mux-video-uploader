@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { mux, muxConnectionError, page, resetMux } from '../../../test/mux';
+import { mux, muxApiError, muxConnectionError, page, resetMux } from '../../../test/mux';
 import { FakeStrapi, installFakeStrapi } from '../../../test/strapi';
 import services from '../services';
 import { resolveUploadDirectives, UPLOAD_DIRECTIVES_TIMEOUT_MS } from './upload-directives';
@@ -78,6 +78,22 @@ describe('resolveUploadDirectives', () => {
 
   it("keeps the list as it is when the listing can't be read", async () => {
     mux.client.robots.directives.list.mockRejectedValue(muxConnectionError());
+
+    expect(await resolveUploadDirectives({ canRunRobots: false })).toEqual([{ id: 'drv_a' }, { id: 'drv_b' }]);
+  });
+
+  it.each([
+    ['a token without the Robots scope', 401],
+    ['an environment without Robots enabled', 403],
+  ])("attaches none for %s, so the upload isn't refused", async (_, status) => {
+    mux.client.robots.directives.list.mockRejectedValue(muxApiError(status));
+
+    expect(await resolveUploadDirectives({ canRunRobots: false })).toEqual([]);
+    expect(fake.log.warn).toHaveBeenCalledWith(expect.stringContaining("can't use Robots"));
+  });
+
+  it('keeps the list as it is when Mux fails for another reason', async () => {
+    mux.client.robots.directives.list.mockRejectedValue(muxApiError(500));
 
     expect(await resolveUploadDirectives({ canRunRobots: false })).toEqual([{ id: 'drv_a' }, { id: 'drv_b' }]);
   });

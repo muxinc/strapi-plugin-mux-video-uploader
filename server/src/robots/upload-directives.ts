@@ -1,4 +1,5 @@
 import { Config, getService } from '../utils';
+import { RobotsRequestError } from './errors';
 
 /** Past this, an upload stops waiting for the directive listing and attaches the configured ids as they are. */
 export const UPLOAD_DIRECTIVES_TIMEOUT_MS = 5000;
@@ -11,6 +12,7 @@ export const UPLOAD_DIRECTIVES_TIMEOUT_MS = 5000;
  *   request is ignored: every configured directive runs.
  * - Ids Mux doesn't know are dropped only when the listing is complete. When it can't be read, or may
  *   be incomplete, the list is attached as is.
+ * - None is attached when the token can't use Robots, so Mux has no reason to refuse the upload.
  */
 export async function resolveUploadDirectives({
   canRunRobots,
@@ -45,6 +47,13 @@ export async function resolveUploadDirectives({
       }
     }
   } catch (error) {
+    if (error instanceof RobotsRequestError && (error.reason === 'scope-missing' || error.reason === 'not-enabled')) {
+      strapi.log.warn(
+        `[mux-video-uploader] Not attaching Robots directives: this Mux token can't use Robots (${error.message}).`
+      );
+      return [];
+    }
+
     strapi.log.warn(
       `[mux-video-uploader] Couldn't list Robots directives, attaching the configured ones as they are: ${
         error instanceof Error ? error.message : error

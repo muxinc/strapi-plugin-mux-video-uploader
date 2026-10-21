@@ -3,7 +3,7 @@ import { backfillOutputs } from '../robots/outputs';
 import { findMuxAssets, MuxAssetFilter, resolveMuxAssetOrNull } from '../utils/resolve-mux-asset';
 import { ASSET_MODEL } from '../utils/types';
 import { nonEmptyString } from '../utils/values';
-import { snapshotFromAsset } from './asset-snapshot';
+import { assetErrorMessage, snapshotFromAsset } from './asset-snapshot';
 import { rereadIfRefreshing, scheduleAssetRefresh } from './refresh-queue';
 import type { WebhookEvent, WebhookOutcome } from './types';
 
@@ -14,15 +14,12 @@ const TRACK_EVENTS = [
   'video.asset.track.deleted',
 ];
 
-/** `error_message` is a 255-character column; a longer write would fail and Mux would retry for 24 h. */
-const ERROR_MESSAGE_MAX_LENGTH = 255;
-
 export async function handleVideoEvent(event: WebhookEvent): Promise<WebhookOutcome> {
   const data = (event.data ?? {}) as Record<string, any>;
 
   switch (event.type) {
-    // `video.asset.ready` may have arrived first and found no asset with this id, so read the asset
-    // once the event is answered. Robots results that arrived before it are written now.
+    // `video.asset.ready` or `video.asset.errored` may have arrived first and found no asset with this
+    // id, so read the asset once the event is answered. Robots results that arrived before it are written now.
     case 'video.upload.asset_created': {
       const assetId = nonEmptyString(data.asset_id);
       if (!assetId) return 'ignored';
@@ -46,15 +43,7 @@ export async function handleVideoEvent(event: WebhookEvent): Promise<WebhookOutc
       );
 
     case 'video.asset.errored':
-      return updateMuxAsset(
-        { asset_id: nonEmptyString(data.id) },
-        {
-          error_message: `${data.errors?.type ?? 'error'}: ${data.errors?.messages?.[0] || ''}`.slice(
-            0,
-            ERROR_MESSAGE_MAX_LENGTH
-          ),
-        }
-      );
+      return updateMuxAsset({ asset_id: nonEmptyString(data.id) }, { error_message: assetErrorMessage(data.errors) });
 
     // The payload can be older than what Mux holds now, so read the asset again rather than trust it.
     case 'video.asset.updated':
