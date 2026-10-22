@@ -68,5 +68,20 @@ export default {
     asset_data: {
       type: 'json',
     },
+    /** From the newest completed Robots summarize, mirroring `robots_outputs.summarize`. */
+    description: {
+      type: 'text',
+    },
+    tags: {
+      type: 'json',
+    },
+    robots_outputs: {
+      type: 'json',
+    },
   },
+  // Every webhook finds its asset by one of these.
+  indexes: [
+    { name: 'muxassets_asset_id_index', columns: ['asset_id'] },
+    { name: 'muxassets_upload_id_index', columns: ['upload_id'] },
+  ],
 };

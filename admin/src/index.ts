@@ -2,6 +2,7 @@ import { getTranslation } from './utils/getTranslation';
 import { PLUGIN_ID } from './pluginId';
 import { Initializer } from './components/Initializer';
 import { PluginIcon } from './components/PluginIcon';
+import MuxRobotsPanel from './components/robots-panel/mux-robots-panel';
 import pluginPermissions from './permissions';
 
 export default {
@@ -23,6 +24,10 @@ export default {
       isReady: false,
       name: PLUGIN_ID,
     });
+  },
+
+  bootstrap(app: any) {
+    app.getPlugin('content-manager').apis.addEditViewSidePanel([MuxRobotsPanel]);
   },
 
   async registerTrads(app: any) {

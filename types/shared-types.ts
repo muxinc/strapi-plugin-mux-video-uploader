@@ -31,6 +31,31 @@ const SUPPORTED_MUX_LANGUAGES_VALUES = SUPPORTED_MUX_LANGUAGES.map((l) => l.code
 
 export type SupportedMuxLanguage = (typeof SUPPORTED_MUX_LANGUAGES_VALUES)[number];
 
+/** A video's title, as `mux-asset`'s schema allows it. Checked before anything reaches Mux. */
+export const MuxAssetTitle = z
+  .string()
+  .trim()
+  .min(3, 'The title must be at least 3 characters long.')
+  .max(255, 'The title must be at most 255 characters long.');
+
+/**
+ * Tags as the details form builds them: trimmed, split on commas, without blanks, and without repeats
+ * that differ only in case. The first spelling stays.
+ */
+export function normalizeTags(tags: string[]): string[] {
+  const seen = new Set<string>();
+
+  return tags
+    .flatMap((tag) => tag.split(','))
+    .map((tag) => tag.trim())
+    .filter((tag) => {
+      const key = tag.toLowerCase();
+      if (!tag || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
+
 /** .srt or .vtt file uploaded as subtitle/caption for a video */
 export const TextTrackFile = z.object({
   contents: z.string(),
@@ -50,10 +75,9 @@ export const CustomTextTrack = z.object({
 
 export type ParsedCustomTextTrack = z.infer<typeof CustomTextTrack>;
 
-export type StoredTextTrack = ParsedCustomTextTrack & { id: string };
+export type StoredTextTrack = ParsedCustomTextTrack & { id: string; documentId: string };
 
-export const UploadConfig = z
-  .object({
+export const UploadConfig = z.object({
     /**
      * Enable static renditions by setting this to 'standard'. Can be overwritten on a per-asset basis.
      * @see {@link https://docs.mux.com/guides/video/enable-static-mp4-renditions#why-enable-mp4-support}
@@ -94,13 +118,19 @@ export const UploadConfig = z
     custom_text_tracks: z.array(CustomTextTrack).optional(),
 
     upload_type: z.enum(['file', 'url']).default('file'),
-  })
+
+    /**
+     * The configured default Robots directives the person kept checked. Only someone with Run Robots
+     * can narrow the list; the server ignores it for everyone else.
+     */
+    directives: z.array(z.string()).optional(),
+});
 
 export type RequestedUploadConfig = z.input<typeof UploadConfig>;
 export type ParsedUploadConfig = z.infer<typeof UploadConfig>;
 
 export const UploadData = z
-  .object({ title: z.string().min(1) })
+  .object({ title: MuxAssetTitle })
   .and(
     z.discriminatedUnion('upload_type', [
       z.object({ upload_type: z.literal('file'), file: z.custom<File>((value) => value instanceof File) }),
@@ -116,7 +146,7 @@ export type RequestedUploadData = z.input<typeof UploadData>;
  * Users upload the file directly from the browser via the presigned URL generated in `parseUploadRequest`.
  */
 export const UploadDataWithoutFile = z
-  .object({ title: z.string().min(1) })
+  .object({ title: MuxAssetTitle })
   .and(
     z.discriminatedUnion('upload_type', [
       z.object({ upload_type: z.literal('file') }),

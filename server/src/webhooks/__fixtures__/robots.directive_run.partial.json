@@ -1,0 +1,30 @@
+{
+  "type": "robots.directive_run.partial",
+  "id": "3f0a1b2c-0000-4000-8000-000000000003",
+  "created_at": "2026-10-12T15:10:00.000000Z",
+  "environment": { "name": "strapi-robots-sandbox", "id": "env_redacted" },
+  "object": { "type": "robots_directive_run", "id": "drvrun_1" },
+  "attempts": [],
+  "accessor": null,
+  "accessor_source": null,
+  "request_id": null,
+  "data": {
+    "id": "drvrun_1",
+    "directive_id": "drv_1",
+    "asset_id": "ast_1",
+    "status": "partial",
+    "started_at": 1791817500,
+    "completed_at": 1791817790,
+    "node_states": [
+      { "reference_id": "summary", "status": "dispatched", "workflow_name": "summarize", "job_id": "rjob_summary_2" },
+      { "reference_id": "moderation", "status": "failed", "reason": "The asset has no video track to sample." },
+      { "reference_id": "dub_es", "status": "waiting_for_resources", "workflow_name": "translate-audio" },
+      {
+        "reference_id": "chapters",
+        "status": "waiting_for_source_workflow",
+        "workflow_name": "generate-chapters",
+        "source_workflows": ["premium_captions"]
+      }
+    ]
+  }
+}
