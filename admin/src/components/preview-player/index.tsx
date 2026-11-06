@@ -1,4 +1,5 @@
 import React from 'react';
+import styled from 'styled-components';
 import '@videojs/react/video/skin.css';
 import { VideoPlayer, VideoSkin } from '@videojs/react/video';
 import { MuxVideo } from '@videojs/react/media/mux-video';
@@ -10,6 +11,36 @@ import pluginPkg from '../../../../package.json';
 import { PLUGIN_ID } from '../../pluginId';
 
 type SignedTokens = { playback: string; thumbnail: string | null; storyboard: string | null };
+
+// Keeps the form below the player in view, and the control bar of a vertical video on screen.
+const MAX_HEIGHT = '50vh';
+
+// Strapi's global reset isn't in a cascade layer, so it beats every @layer rule of the skin:
+// menu items lose their margins, the highlighted item its background and the error dialog its
+// type. `revert-layer` hands those properties back to the skin. `&&` doubles the class so the
+// first rule also beats Strapi's `*:focus-visible` outline.
+const Skin = styled(VideoSkin)`
+  && * {
+    margin: revert-layer;
+    outline: revert-layer;
+    outline-offset: revert-layer;
+  }
+
+  && :is(button, input, p, h1, h2, h3, h4, h5, h6, ol, ul) {
+    padding: revert-layer;
+    border: revert-layer;
+    background: revert-layer;
+    font: revert-layer;
+    list-style: revert-layer;
+    overflow-wrap: revert-layer;
+  }
+`;
+
+// "16:9" → [16, 9]. Anything else falls back to 16:9.
+const parseAspectRatio = (value?: string | null): [number, number] => {
+  const [width, height] = (value ?? '').split(':').map(Number);
+  return width > 0 && height > 0 ? [width, height] : [16, 9];
+};
 
 const PreviewPlayer = (props: { muxAsset?: MuxAsset }) => {
   const { muxAsset } = props;
@@ -29,7 +60,19 @@ const PreviewPlayer = (props: { muxAsset?: MuxAsset }) => {
     if (muxAsset?.playback_id && muxAsset.signed) init(muxAsset);
   }, []);
 
-  if (!muxAsset?.playback_id || (muxAsset.signed && !tokens)) return null;
+  if (!muxAsset?.playback_id) return null;
+
+  // Full width, unless that would make it taller than MAX_HEIGHT: then it narrows and stays centered.
+  const [ratioWidth, ratioHeight] = parseAspectRatio(muxAsset.aspect_ratio || muxAsset.asset_data?.aspect_ratio);
+  const sizeStyle: React.CSSProperties = {
+    display: 'block',
+    aspectRatio: `${ratioWidth} / ${ratioHeight}`,
+    width: `min(100%, calc(${MAX_HEIGHT} * ${ratioWidth} / ${ratioHeight}))`,
+    marginInline: 'auto',
+  };
+
+  // Holds the player's space while a signed video's tokens load.
+  if (muxAsset.signed && !tokens) return <div style={sizeStyle} />;
 
   // Known from the first render, so MuxVideo never shows the image.mux.com poster it would derive,
   // which Strapi's default CSP blocks. A signed video without a thumbnail token gets no poster.
@@ -40,20 +83,12 @@ const PreviewPlayer = (props: { muxAsset?: MuxAsset }) => {
       ? `${thumbnailUrl}?token=${tokens.thumbnail}`
       : undefined;
 
-  const aspectRatio = muxAsset.aspect_ratio || muxAsset.asset_data?.aspect_ratio;
-
   return (
     // The poster goes through the plugin's thumbnail proxy, so it stays within Strapi's default CSP
     // (img-src 'self'). Set on the player, it wins over the image.mux.com poster MuxVideo would derive.
     // `title=""` keeps the skin from overlaying the title: the modal already shows it next to the player.
     <VideoPlayer poster={posterUrl} title="">
-      <VideoSkin
-        style={{
-          display: 'block',
-          width: '100%',
-          aspectRatio: aspectRatio ? aspectRatio.replace(':', ' / ') : '16 / 9',
-        }}
-      >
+      <Skin style={sizeStyle}>
         <MuxVideo
           source={{
             playbackId: muxAsset.playback_id,
@@ -83,7 +118,7 @@ const PreviewPlayer = (props: { muxAsset?: MuxAsset }) => {
             page_type: 'Preview Player',
           }}
         />
-      </VideoSkin>
+      </Skin>
     </VideoPlayer>
   );
 };

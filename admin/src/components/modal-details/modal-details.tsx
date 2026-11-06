@@ -384,7 +384,6 @@ export default function ModalDetails(props: {
     </Button>
   );
 
-  const aspect_ratio = latestAsset.aspect_ratio || latestAsset.asset_data?.aspect_ratio;
   const needsPlaybackId = latestAsset.isReady && !!latestAsset.asset_id && !latestAsset.playback_id;
 
   return (
@@ -412,7 +411,6 @@ export default function ModalDetails(props: {
                   <Box
                     background="neutral150"
                     style={{
-                      aspectRatio: aspect_ratio ? aspect_ratio.replace(':', ' / ') : undefined,
                       marginBottom: '1.5rem',
                       padding: '3rem 0',
                       position: 'relative',
