@@ -127,13 +127,12 @@ const muxService = () => ({
       expiration: type === 'video' ? '1d' : '1m',
     };
 
-    let params = { width: type === 'thumbnail' ? '512' : '' };
-
+    // No `width` claim: the poster is shown at the player's full size, so a signed thumbnail
+    // comes at the source resolution, like an unsigned one.
     const token = await jwt.signPlaybackId(playbackId, {
       ...baseOptions,
       // @ts-expect-error This `type` type isn't properly exposed by the Mux SDK
       type,
-      params,
     });
 
     return { token };
