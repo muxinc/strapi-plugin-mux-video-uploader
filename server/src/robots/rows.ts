@@ -1,7 +1,9 @@
 import {
+  apiVersionFromHref,
   isTerminalJobStatus,
   isTerminalRow,
   PLACEHOLDER_STATUSES,
+  RobotsApiVersion,
   RobotsJobRow,
   RobotsNodeState,
   RobotsRunData,
@@ -27,9 +29,14 @@ export interface MuxJobLike {
   errors?: unknown;
   units_consumed?: number;
   directive?: { id?: string; run_id?: string };
+  /** List summaries only: the route of the version that created the job. */
+  _links?: { self?: { href?: string } };
 }
 
-/** A directive run as a webhook (`id`, `asset_id`) or the REST API (`run_id`, `subject_id`) describes it. */
+/**
+ * A directive run as a webhook or the REST API describes it: v1 says `id` and `subject_id` everywhere;
+ * v0 says `run_id` over REST, and `id` and `asset_id` in webhooks.
+ */
 export interface MuxRunLike {
   id?: string;
   run_id?: string;
@@ -51,15 +58,25 @@ export const secondsFromDate = (value: unknown) => {
   return Number.isFinite(ms) ? ms / 1000 : undefined;
 };
 
+/**
+ * `apiVersion` is the version the job was read or created through. Without it, a list summary's link
+ * says which; anything else leaves the stored version as it is.
+ */
 export function rowFromJob(
   job: MuxJobLike,
-  { workflow, assetId, detail }: { workflow: string; assetId?: string | null; detail: boolean }
+  {
+    workflow,
+    assetId,
+    detail,
+    apiVersion,
+  }: { workflow: string; assetId?: string | null; detail: boolean; apiVersion?: RobotsApiVersion }
 ): IncomingRow {
   const parameters = isRecord(job.parameters) ? job.parameters : undefined;
   const jobAssetId = typeof parameters?.asset_id === 'string' ? parameters.asset_id : undefined;
 
   return compact({
     mux_id: job.id,
+    api_version: apiVersion ?? apiVersionFromHref(job._links?.self?.href),
     is_directive_run: false,
     workflow,
     status: nonEmptyString(job.status),
@@ -93,13 +110,19 @@ export function rowFromJob(
 
 export function rowFromRun(
   run: MuxRunLike,
-  { directiveId, assetId, status }: { directiveId?: string; assetId?: string | null; status?: string } = {}
+  {
+    directiveId,
+    assetId,
+    status,
+    apiVersion,
+  }: { directiveId?: string; assetId?: string | null; status?: string; apiVersion: RobotsApiVersion }
 ): IncomingRow | undefined {
   const muxId = nonEmptyString(run.id ?? run.run_id);
   if (!muxId) return undefined;
 
   return compact({
     mux_id: muxId,
+    api_version: apiVersion,
     is_directive_run: true,
     directive_id: nonEmptyString(run.directive_id) ?? directiveId,
     status: nonEmptyString(run.status) ?? status,
@@ -180,15 +203,13 @@ export interface ClaimCriteria {
 
 /**
  * The placeholder a job or run seen for the first time resolves, if any: same asset, same workflow
- * (or directive), started within the claim window around the request. The closest request wins; ties
- * go to the older placeholder. The window is lopsided on purpose: a job created before the request
- * can't be its result, and the time before only absorbs clocks that disagree.
+ * (or directive), same API version, started within the claim window around the request. The closest
+ * request wins; ties go to the older placeholder. The window is lopsided on purpose: a job created
+ * before the request can't be its result, and the time before only absorbs clocks that disagree.
  */
-async function findClaimablePlaceholder(
-  isDirectiveRun: boolean,
-  criteria: ClaimCriteria
-): Promise<RobotsJobRow | null> {
+async function findClaimablePlaceholder(incoming: IncomingRow, criteria: ClaimCriteria): Promise<RobotsJobRow | null> {
   const { assetId, at } = criteria;
+  const isDirectiveRun = incoming.is_directive_run;
   const kind = isDirectiveRun ? criteria.directiveId : criteria.workflow;
   if (!assetId || typeof at !== 'number' || !kind) return null;
 
@@ -205,6 +226,11 @@ async function findClaimablePlaceholder(
   })) as RobotsJobRow[];
 
   const candidates = placeholders.flatMap((placeholder) => {
+    // Unknown on both sides matches: 3.2.0 left placeholders without a version, and a rollback to it
+    // drops the column from 4.0's own.
+    const versions = [incoming.api_version, placeholder.api_version];
+    if (versions.every(Boolean) && versions[0] !== versions[1]) return [];
+
     const requestedAt = secondsFromDate(placeholder.requested_at);
     if (requestedAt === undefined) return [];
     if (at < requestedAt - CLAIM_WINDOW_BEFORE_S || at > requestedAt + CLAIM_WINDOW_AFTER_S) return [];
@@ -234,8 +260,7 @@ export async function upsertRobotsRow(incoming: IncomingRow, claim?: ClaimCriter
 
   // A job a directive started belongs to that directive's run, never to a workflow the plugin asked for.
   const startedByDirective = !incoming.is_directive_run && !!incoming.directive_id;
-  const placeholder =
-    claim && !startedByDirective ? await findClaimablePlaceholder(incoming.is_directive_run, claim) : null;
+  const placeholder = claim && !startedByDirective ? await findClaimablePlaceholder(incoming, claim) : null;
 
   if (placeholder) {
     const update = mergeIntoRow(placeholder, incoming) ?? {};

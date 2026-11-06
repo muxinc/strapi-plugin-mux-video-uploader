@@ -15,6 +15,7 @@ import type { RobotsDirectiveSummary } from '../../../../types/robots';
 import { useRobotsIntl } from './intl';
 import { PricingLink, ROBOTS_DASHBOARD_URL } from './links';
 import Note from './note';
+import V0DirectivesNote from './v0-directives-note';
 
 interface DirectiveModalProps {
   isOpen: boolean;
@@ -23,9 +24,14 @@ interface DirectiveModalProps {
   onRun: (directiveId: string) => Promise<unknown>;
   videoTitle: string;
   directives?: RobotsDirectiveSummary[];
+  /** `defaultDirectiveIds`, so the note can name the v0 directives every upload still gets. */
+  configuredDirectiveIds: string[];
   loadError?: string;
   blockedReason?: string;
 }
+
+/** Runs start on Robots v1, which can't run a v0 directive. */
+const isV0 = (directive: RobotsDirectiveSummary) => directive.api_version === 'v0';
 
 export default function DirectiveModal({
   isOpen,
@@ -33,6 +39,7 @@ export default function DirectiveModal({
   onRun,
   videoTitle,
   directives,
+  configuredDirectiveIds,
   loadError,
   blockedReason,
 }: DirectiveModalProps) {
@@ -50,7 +57,8 @@ export default function DirectiveModal({
 
   if (!isOpen) return null;
 
-  const directive = directives?.find((candidate) => candidate.id === selected);
+  const directive = directives?.find((candidate) => candidate.id === selected && !isV0(candidate));
+  const v0Directives = (directives ?? []).filter(isV0);
 
   const run = async () => {
     if (!directive || submitting) return;
@@ -105,6 +113,11 @@ export default function DirectiveModal({
             </Note>
           ) : (
             <Flex direction="column" alignItems="stretch" gap={3}>
+              {v0Directives.length > 0 && (
+                <V0DirectivesNote
+                  configured={v0Directives.filter((candidate) => configuredDirectiveIds.includes(candidate.id))}
+                />
+              )}
               <Field.Root name="directive">
                 <Field.Label>{t('Robots.directive.label', 'Directive')}</Field.Label>
                 <SingleSelect
@@ -112,11 +125,14 @@ export default function DirectiveModal({
                   placeholder={t('Robots.directive.placeholder', 'Choose a directive')}
                   onChange={(next: string | number) => setSelected(String(next))}
                 >
-                  {directives.map((candidate) => (
-                    <SingleSelectOption key={candidate.id} value={candidate.id}>
-                      {candidate.name === candidate.id ? candidate.id : `${candidate.name} (${candidate.id})`}
-                    </SingleSelectOption>
-                  ))}
+                  {directives.map((candidate) => {
+                    const name = candidate.name === candidate.id ? candidate.id : `${candidate.name} (${candidate.id})`;
+                    return (
+                      <SingleSelectOption key={candidate.id} value={candidate.id} disabled={isV0(candidate)}>
+                        {isV0(candidate) ? t('Robots.directive.v0-option', '{name} · Robots v0', { name }) : name}
+                      </SingleSelectOption>
+                    );
+                  })}
                 </SingleSelect>
               </Field.Root>
               {blockedReason && <Note variant="warning">{blockedReason}</Note>}

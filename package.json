@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@mux/mux-player-react": "^3.14.0",
-    "@mux/ts": "^15.5.0",
+    "@mux/ts": "^16.0.0",
     "@mux/upchunk": "^3.5.0",
     "@strapi/design-system": "^2.0.0-rc.12",
     "@strapi/icons": "^2.0.0-rc.12",

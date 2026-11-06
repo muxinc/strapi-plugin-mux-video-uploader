@@ -130,6 +130,8 @@ mux webhooks listen --forward-to http://localhost:1337/mux-video-uploader/webhoo
 
 [Mux Robots](https://www.mux.com/docs/guides/robots) runs AI workflows on your Mux videos. Each run consumes Mux AI units: see [Robots pricing](https://www.mux.com/docs/pricing/overview#mux-robots-pricing).
 
+Since 4.0 the plugin starts every job and directive run on Robots v1, the GA API. Robots v0 (beta) is deprecated and Mux keeps it until about April 2027: the plugin still reads, cancels and stores the v0 jobs and runs it finds, but never starts one. See **Upgrading to 4.0** below.
+
 ### Set up Robots
 
 1. Make sure Robots is enabled for your Mux account.
@@ -142,17 +144,19 @@ mux webhooks listen --forward-to http://localhost:1337/mux-video-uploader/webhoo
 
 The **Robots** tab of a video's details lets you:
 
-- run any of the 12 workflows, or a directive;
+- run any of the 12 workflows, or a v1 directive;
 - cancel a running job;
-- see every job and directive run on that video, with its output and the Mux AI units it consumed.
+- see every job and directive run on that video, with its output and the Mux AI units it consumed, v0 ones included.
+
+**Analyze structure** writes a title, summary, tags, chapters, scenes and key moments in one job, and replaces Find scenes, which Robots v1 dropped. It costs more Mux AI units than Find scenes did, and on a video it also requests or reuses [Mux Shots](https://www.mux.com/docs/guides/find-different-shots-in-your-video), billed separately. It also runs on audio-only videos that have a caption track. Find scenes jobs that ran before stay listed, with their output.
 
 Captions, dubs and chapters are added to the Mux video itself. To see chapters in the player, read [this FAQ](#chapters-dont-show-in-the-player).
 
 ### Description and tags
 
-- When a summarize job completes, its description and tags fill the video's `description` and `tags`, but only if they're empty. Anything already there stays, and the title never changes on its own.
+- When a summarize or analyze-structure job completes, its description (analyze-structure's summary) and tags fill the video's `description` and `tags`, but only if they're empty. Anything already there stays, and the title never changes on its own.
 - Both fields are shown and editable in the video's **Details** tab.
-- **Apply summary** in the Details tab writes the newest summary's title, description or tags into the form, replacing what's there. Review them, then save. The button is disabled until the video has a completed summarize job.
+- **Apply summary** in the Details tab writes the newest summary's title, description or tags into the form, replacing what's there. The newest summary is the latest completed of Summarize and Analyze structure, and the dialog names which. Review them, then save. The button is disabled until the video has one of them.
 
 ### Apply a summary to your entries
 
@@ -170,10 +174,12 @@ Only top-level relations are found, not ones inside components or dynamic zones.
 2. List their ids in `defaultDirectiveIds` (see the [plugin config](#typescript---plugin-config)).
 3. Every new upload gets them. The upload form lists them, checked, in its **Automation** section. Only people with **Run Robots** can uncheck one. An id Mux doesn't have is flagged there and isn't attached.
 
+A directive keeps the Robots version that created it, whatever the plugin calls: Mux runs a v0 directive on v0, and the plugin stores its runs and jobs. The upload form and the **Run a directive** dialog mark v0 directives, the dialog doesn't run them, and Strapi logs a warning each time an upload attaches one. To move one to v1, open it in the Mux Dashboard, choose **Create v1 copy**, and replace its id in `defaultDirectiveIds` with the copy's (see Mux's [directives migration guide](https://www.mux.com/docs/guides/robots-migrate-directives-to-v1)). Don't list both ids: both directives would run, and both bill.
+
 ### Good to know
 
 - **How results arrive.** Mux sends every job and directive run update by webhook, and Strapi stores it. Opening the Robots tab reads Mux once, to pick up jobs started outside Strapi. After that, the tab re-reads Strapi every 4 seconds while something runs, and stops when nothing does or the details close. Nothing polls Mux.
-- **Who can read results.** The newest summary and moderation scores are kept in the Mux Asset's `robots_outputs`. The plugin's content API returns `description`, `tags` and `robots_outputs`, so any role with `find` or `findOne` can read them, moderation scores included.
+- **Who can read results.** The newest summary, analyze-structure result and moderation scores are kept in the Mux Asset's `robots_outputs`. The plugin's content API returns `description`, `tags` and `robots_outputs`, so any role with `find` or `findOne` can read them, moderation scores included.
 - **No automatic retries.** The plugin never repeats a request to Mux on its own, so a run is never started or billed twice by accident. If Mux doesn't answer, the run shows as "Not confirmed" until it appears or you tell the plugin nothing is running.
 - **One Strapi process.** The check that holds back a second run while Mux hasn't confirmed the first works within one Strapi process. With several instances behind a load balancer, two clicks that reach different instances can each start, and bill, a run.
 
@@ -192,6 +198,34 @@ Apply summary in the Content Manager follows the Content Manager's own permissio
 **Please note**: End Users can only have read operation permissions (`find`, `findOne` and `count`). Write operations are not supported due to potential security reasons.
 
 These endpoints follow Strapi's content API rules: `filters`, `sort`, `fields` and `populate` can't use private fields or the admin users behind `createdBy`/`updatedBy` (the request gets a 400), and `find` returns at most `api.rest.maxLimit` items (100 when unset), paginated with `start`/`limit` or `pagination[page]`/`pagination[pageSize]`.
+
+## ⬆️ Upgrading to 4.0
+
+4.0 moves Robots to v1, the GA API. Everything else works as in 3.2, and there's no migration to run: Strapi adds one column, and nothing is deleted or rewritten.
+
+1. Update the package, then rebuild the admin—
+
+   ```bash
+   npm install strapi-plugin-mux-video-uploader@^4.0.0
+   npm run build
+   ```
+
+2. Start Strapi. It adds `api_version` to `muxrobotjobs`; rows stored by 3.2 keep it empty, and the plugin works out their version the next time it reads them from Mux.
+3. Move your directives to v1: see [Directives on upload](#directives-on-upload). Until you do, `defaultDirectiveIds` keeps starting v0 runs, which work until Mux retires v0.
+
+**Rolling back, or several instances.** 3.2 doesn't know Robots v1: it acknowledges `robots.v1.*` webhooks without storing them, and can't read or cancel v1 jobs. Upgrade every Strapi instance that receives webhooks before running anything, and let running jobs finish before rolling back. A rollback also drops `api_version`; upgrading again works the versions out again.
+
+What behaves differently—
+
+- **New jobs and runs start on Robots v1.** v0 jobs and runs, from before the upgrade or from v0 directives, are still listed, updated by their webhooks, and read on v0. Mux doesn't see a v0 job and a v1 job of the same workflow as duplicates: the run form warns when a v0 one is still running, since both bill.
+- **Webhooks of both versions are handled.** v1 jobs and runs send `robots.v1.job.*` and `robots.v1.directive_run.*` events. If a proxy or firewall in front of Strapi filters events by type, let both through.
+- **Times are seconds.** Key moments, thumbnails and insights report seconds on v1, and the key moments form asks for its highlight lengths in seconds. Jobs that ran on v0 still show their times right.
+- **Captions to read** lists the video's own ready caption languages. v1 reads a track only when its language matches exactly: `en` doesn't read an `en-US` track, and nothing prefers English anymore when you leave it empty.
+- **Edit captions replaces the track it edits by default**, keeping its name, as v1 does. Choose to keep it to add the edited track beside it, under a new name. `track_name_suffix` and `delete_original_track` are gone.
+- **Track replacement is a choice.** Generate premium captions, Translate captions and Translate audio ask what to do when the video already has a track in that language or with that name: don't run (Mux's default), replace it, or replace it only if Mux auto-generated it. Tracks Robots made count as uploaded.
+- **Moderate also scores what is said.** On a video with a ready caption track, v1 moderates the transcript as well as sampled frames unless you uncheck it, so "Delete every playback ID" can now act on what is said, not only on what is seen.
+- **Find scenes can't be run.** Run Analyze structure instead.
+- **A `409` doesn't always mean "already running".** v1 also answers `409` while the video or the caption track a workflow reads is still being prepared; the form shows Mux's message.
 
 ## ⬆️ Upgrading to 3.2
 
@@ -235,7 +269,7 @@ For reference: besides Strapi's own columns (`id`, `document_id`, `created_at`, 
 | `asset_data` | json | The Mux asset as last read: tracks, playback ids, renditions |
 | `description` | text | **New in 3.2.** Filled by a summarize job when empty; editable |
 | `tags` | json | **New in 3.2.** A list of strings, filled by a summarize job when empty; editable |
-| `robots_outputs` | json | **New in 3.2.** The newest `summarize` (`job_id`, `completed_at`, `title`, `description`, `tags`) and `moderate` (`job_id`, `completed_at`, `exceeds_threshold`, `max_scores`) results |
+| `robots_outputs` | json | **New in 3.2.** The newest `summarize` (`job_id`, `completed_at`, `title`, `description`, `tags`) and `moderate` (`job_id`, `completed_at`, `exceeds_threshold`, `max_scores`) results. **New in 4.0:** `analyze_structure` (`job_id`, `completed_at`, `title`, `summary`, `tags`); its chapters, scenes and key moments stay in `muxrobotjobs` |
 
 **`muxrobotjobs`**: Mux Robot Job (`plugin::mux-video-uploader.mux-robot-job`), **new in 3.2**, hidden from the Content Manager. Indexed on `mux_id` and `asset_id`.
 
@@ -246,8 +280,9 @@ For reference: besides Strapi's own columns (`id`, `document_id`, `created_at`, 
 | Column | Type | Holds |
 | --- | --- | --- |
 | `mux_id` | string | `rjob_…` or `drvrun_…`; empty until Mux confirms a run started from Strapi |
+| `api_version` | string | **New in 4.0.** `v1` or `v0`, the Robots version that created it, which every later read and cancel uses. Empty on rows stored by 3.2 until Mux names their version |
 | `is_directive_run` | boolean | A directive run rather than a job |
-| `workflow` | string | The workflow, e.g. `summarize` (jobs) |
+| `workflow` | string | The workflow, e.g. `summarize` (jobs). Also `find-scenes` (Robots v0 only) and `generate-contextual-text`, which directives can dispatch but the plugin doesn't start |
 | `directive_id`, `directive_run_id` | string | The directive and run that started a job, or the run's directive |
 | `status` | string | `pending`, `processing`, `completed`, `errored`, `cancelled`; runs also `partial`; `requested` or `unconfirmed` while Mux hasn't confirmed a run |
 | `asset_id` | string | The Mux asset id, matching a Mux Asset row's `asset_id` when this Strapi has the video |

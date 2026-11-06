@@ -30,8 +30,10 @@ interface Step {
 
 function nodeDetail(t: Translate, node: RobotsNodeState, jobs: RobotsJobRow[]) {
   if (node.reason) return node.reason;
-  if (node.source_workflows?.length) {
-    return t('Robots.runs.waiting-on', 'Waiting on {workflows}', { workflows: node.source_workflows.join(', ') });
+  // v1 names the bindings it waits on by their reference ids; v0 named workflows.
+  const waitingOn = node.source_bindings ?? node.source_workflows;
+  if (waitingOn?.length) {
+    return t('Robots.runs.waiting-on', 'Waiting on {workflows}', { workflows: waitingOn.join(', ') });
   }
   if (node.job_id) {
     const job = jobs.find((candidate) => candidate.mux_id === node.job_id);
@@ -52,7 +54,10 @@ function stepsOf(t: Translate, run: RobotsJobRow, jobs: RobotsJobRow[]): Step[] 
 
   const nodeSteps = nodes.map((node, index) => ({
     key: node.job_id ?? node.reference_id ?? `node-${index}`,
-    workflow: node.workflow_name ? workflowLabel(node.workflow_name) : (node.reference_id ?? `#${index + 1}`),
+    workflow:
+      (node.workflow ?? node.workflow_name)
+        ? workflowLabel(node.workflow ?? node.workflow_name)
+        : (node.reference_id ?? `#${index + 1}`),
     status: node.status,
     detail: nodeDetail(t, node, jobs),
   }));

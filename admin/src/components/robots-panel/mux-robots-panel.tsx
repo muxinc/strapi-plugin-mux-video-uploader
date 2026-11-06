@@ -14,7 +14,8 @@ import {
 import { unstable_useContentManagerContext, useForm, useNotification } from '@strapi/strapi/admin';
 import { useNavigate } from 'react-router-dom';
 
-import type { RobotsEntryVideosResponse, RobotsSummarizeOutput } from '../../../../types/robots';
+import type { RobotsEntryVideosResponse, RobotsSummary } from '../../../../types/robots';
+import { workflowLabel } from '../../../../types/robots-catalog';
 import { EntryFieldOption, muxAssetRelationFields } from '../../../../types/robots-format';
 import { PLUGIN_ID } from '../../pluginId';
 import { robotsErrorOf, useRobotsApi } from '../robots/api';
@@ -191,7 +192,10 @@ function PanelBody({
       ) : (
         <Box>
           <Typography variant="pi" textColor="neutral600">
-            {t('Robots.panel.no-summary', 'No summary yet. Run Summarize on this video in Mux Video Uploader.')}
+            {t(
+              'Robots.panel.no-summary',
+              'No summary yet. Run Summarize or Analyze structure on this video in Mux Video Uploader.'
+            )}
           </Typography>
           <Box paddingTop={1}>
             <TextButton onClick={() => navigate(`/plugins/${PLUGIN_ID}?asset=${video.id}&tab=robots`)}>
@@ -207,7 +211,7 @@ function PanelBody({
         <Tooltip
           label={t(
             'Robots.panel.apply-disabled',
-            "Run a Summarize workflow to apply its title, description and tags to this entry's own fields."
+            "Run Summarize or Analyze structure to apply its title, description and tags to this entry's own fields."
           )}
         >
           <span>{applyButton}</span>
@@ -227,7 +231,7 @@ function EntryApplyDialog({
   fields,
   onClose,
 }: {
-  summary: RobotsSummarizeOutput;
+  summary: RobotsSummary;
   fields: EntryFieldOption[];
   onClose: () => void;
 }) {
@@ -264,9 +268,14 @@ function EntryApplyDialog({
   );
 }
 
-function SummaryPreview({ summary }: { summary: RobotsSummarizeOutput }) {
+function SummaryPreview({ summary }: { summary: RobotsSummary }) {
+  const { t } = useRobotsIntl();
+
   return (
     <Box>
+      <Typography variant="pi" textColor="neutral600" tag="p">
+        {t('Robots.panel.from', 'From {workflow}', { workflow: workflowLabel(summary.source) })}
+      </Typography>
       {summary.title && (
         <Typography variant="omega" fontWeight="bold" tag="p">
           {summary.title}

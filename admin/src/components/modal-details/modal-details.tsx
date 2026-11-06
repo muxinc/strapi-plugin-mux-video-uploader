@@ -22,6 +22,7 @@ import { isFetchError, useFetchClient, useNotification } from '@strapi/strapi/ad
 import { Cross, Duplicate, Trash, WarningCircle } from '@strapi/icons';
 
 import { MuxAsset, MuxAssetUpdate } from '../../../../server/src/content-types/mux-asset/types';
+import { newestSummary } from '../../../../types/robots';
 import type { EntryFieldOption } from '../../../../types/robots-format';
 import { normalizeTags } from '../../../../types/shared-types';
 import usePluginIntl from '../../utils/use-plugin-intl';
@@ -348,7 +349,7 @@ export default function ModalDetails(props: {
 
   if (!latestAsset) return null;
 
-  const summary = latestAsset.robots_outputs?.summarize;
+  const summary = newestSummary(latestAsset.robots_outputs);
   const titleLabel = formatMessage('Common.title-label', 'Title');
   const descriptionLabel = formatMessage('ModalDetails.description-label', 'Description');
   const tagsLabel = formatMessage('ModalDetails.tags-label', 'Tags');
@@ -572,7 +573,7 @@ export default function ModalDetails(props: {
                             <Tooltip
                               label={formatMessage(
                                 'ModalDetails.apply-summary-disabled',
-                                'Run a Summarize job on this video to apply its title, description and tags.'
+                                'Run Summarize or Analyze structure on this video to apply its title, description and tags.'
                               )}
                             >
                               <span>{applySummaryButton}</span>

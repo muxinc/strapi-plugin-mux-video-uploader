@@ -7,6 +7,7 @@ import {
   DEFAULT_ROBOTS_WORKFLOW,
   defaultParamValues,
   emptyQuestionRow,
+  isRunnableWorkflow,
   paramsFromFormValues,
   ROBOTS_CATALOG,
   ROBOTS_CATALOG_BY_KEY,
@@ -24,7 +25,7 @@ const errorsFor = (key: keyof typeof ROBOTS_CATALOG_BY_KEY, values: Record<strin
   validateParams(def(key), { ...defaultParamValues(def(key).params), ...values }, context);
 
 describe('the catalog', () => {
-  it('has the twelve public workflows, each with its SDK resource and webhook spelling', () => {
+  it('has every workflow, each with its SDK resource and webhook spelling', () => {
     expect(ROBOTS_CATALOG.map((workflow) => workflow.key)).toEqual([...ROBOTS_WORKFLOW_KEYS]);
     for (const workflow of ROBOTS_CATALOG) {
       expect(workflow.eventKey).toBe(workflow.key.replace(/-/g, '_'));
@@ -122,24 +123,73 @@ describe('building parameters', () => {
     expect(paramsFromFormValues(def('edit-captions'), 'ast_1', values)).not.toHaveProperty('censor_profanity');
   });
 
-  it('only sends replace_existing while uploading the captions', () => {
-    const values = { ...defaultParamValues(def('generate-premium-captions').params), replace_existing: true };
+  it.each(['generate-premium-captions', 'translate-captions', 'translate-audio'] as const)(
+    "only sends %s's replace_existing_tracks while uploading, failing on a clash by default",
+    (key) => {
+      const values = defaultParamValues(def(key).params);
 
-    expect(paramsFromFormValues(def('generate-premium-captions'), 'ast_1', values)).toMatchObject({
-      replace_existing: true,
-    });
+      expect(paramsFromFormValues(def(key), 'ast_1', values)).toMatchObject({ replace_existing_tracks: 'fail' });
+      expect(paramsFromFormValues(def(key), 'ast_1', { ...values, upload_to_mux: false })).not.toHaveProperty(
+        'replace_existing_tracks'
+      );
+    }
+  );
+
+  it('sends the v1 field names, never their v0 ones', () => {
+    const names = ROBOTS_CATALOG.flatMap((workflow) => workflow.params.map((field) => field.name));
+
+    for (const removed of ['to_language_code', 'replace_existing', 'delete_original_track', 'track_name_suffix']) {
+      expect(names).not.toContain(removed);
+    }
+    expect(names.filter((name) => name.startsWith('target_duration_ms'))).toEqual([]);
     expect(
-      paramsFromFormValues(def('generate-premium-captions'), 'ast_1', { ...values, upload_to_mux: false })
-    ).not.toHaveProperty('replace_existing');
+      paramsFromFormValues(def('find-key-moments'), 'ast_1', { 'target_duration.min': 5, 'target_duration.max': 20.5 })
+    ).toEqual({ asset_id: 'ast_1', target_duration: { min: 5, max: 20.5 } });
   });
 
-  it("hides moderate's language on videos with pictures, and keeps it when the kind is unknown", () => {
-    const values = { language_code: 'en' };
+  it("edits captions on v1's defaults: the edited track replaces the source and keeps its name", () => {
+    const values = { ...defaultParamValues(def('edit-captions').params), track_id: 'trk_en', censor_profanity: true };
 
-    expect(paramsFromFormValues(def('moderate'), 'ast_1', values, { isAudioOnly: false })).not.toHaveProperty(
-      'language_code'
-    );
-    expect(paramsFromFormValues(def('moderate'), 'ast_1', values, {})).toHaveProperty('language_code', 'en');
+    expect(paramsFromFormValues(def('edit-captions'), 'ast_1', values)).toMatchObject({
+      replace_existing_tracks: 'replace',
+    });
+    expect(paramsFromFormValues(def('edit-captions'), 'ast_1', values)).not.toHaveProperty('track_name');
+    // Mux runs it without an upload only when neither is sent.
+    const notUploaded = paramsFromFormValues(def('edit-captions'), 'ast_1', {
+      ...values,
+      upload_to_mux: false,
+      track_name: 'Kept',
+    });
+    expect(notUploaded).not.toHaveProperty('replace_existing_tracks');
+    expect(notUploaded).not.toHaveProperty('track_name');
+  });
+
+  it('sends speaker names trimmed and without brackets, and drops half-filled rows', () => {
+    expect(
+      paramsFromFormValues(def('edit-captions'), 'ast_1', {
+        track_id: 'trk_en',
+        speaker_replacements: [
+          { find: ' [Speaker 1] ', replace: ' Ana ' },
+          { find: 'Speaker 2', replace: '' },
+        ],
+      })
+    ).toMatchObject({ speaker_replacements: [{ find: 'Speaker 1', replace: 'Ana' }] });
+  });
+
+  it("sends moderate's captions to read whenever the transcript is moderated, as Robots v1 reads them on videos too", () => {
+    const values = { ...defaultParamValues(def('moderate').params), language_code: 'en' };
+
+    expect(paramsFromFormValues(def('moderate'), 'ast_1', values, { isAudioOnly: false })).toMatchObject({
+      include_transcript: true,
+      language_code: 'en',
+    });
+    expect(
+      paramsFromFormValues(def('moderate'), 'ast_1', { ...values, include_transcript: false }, { isAudioOnly: false })
+    ).not.toHaveProperty('language_code');
+    // An audio-only video is always moderated on its transcript, so the option isn't sent.
+    const audioOnly = paramsFromFormValues(def('moderate'), 'ast_1', values, { isAudioOnly: true });
+    expect(audioOnly).toHaveProperty('language_code', 'en');
+    expect(audioOnly).not.toHaveProperty('include_transcript');
   });
 
   it('turns question rows into answer options or free-form replies, never both', () => {
@@ -200,9 +250,6 @@ describe('validation', () => {
   it('checks number bounds', () => {
     expect(errorsFor('find-best-thumbnails', { max_thumbnails: 6 })).toContain('Maximum candidates must be at most 5.');
     expect(errorsFor('moderate', { sampling_interval: 2 })).toContain('Seconds between samples must be at least 5.');
-    expect(errorsFor('find-scenes', { min_scene_duration_ms: 500 })).toContain(
-      'Minimum scene length (ms) must be at least 1000.'
-    );
     expect(errorsFor('find-key-moments', { max_moments: 26 }, { hasCaptions: true })).toContain(
       'Maximum moments must be at most 25.'
     );
@@ -228,9 +275,59 @@ describe('validation', () => {
 
   it('needs something for edit-captions to do', () => {
     expect(errorsFor('edit-captions', { track_id: 'trk_1' })).toEqual([
-      'Add at least one replacement rule, or turn on "Censor profanity".',
+      'Add at least one replacement rule or speaker name, or turn on "Censor profanity".',
     ]);
     expect(errorsFor('edit-captions', { track_id: 'trk_1', censor_profanity: true })).toEqual([]);
+    expect(
+      errorsFor('edit-captions', { track_id: 'trk_1', speaker_replacements: [{ find: 'Speaker 1', replace: 'Ana' }] })
+    ).toEqual([]);
+  });
+
+  describe("edit-captions' new track name", () => {
+    const context = {
+      captionTracks: [
+        { id: 'trk_en', name: 'English', language_code: 'en' },
+        { id: 'trk_es', name: 'Spanish', language_code: 'es' },
+      ],
+      textTracks: [
+        { id: 'trk_en', name: 'English' },
+        { id: 'trk_es', name: 'Spanish' },
+        { id: 'trk_chapters', name: 'Chapters' },
+      ],
+    };
+    const edit = (values: Record<string, unknown>) =>
+      errorsFor('edit-captions', { track_id: 'trk_en', censor_profanity: true, ...values }, context);
+
+    it('needs a name of its own to keep the source', () => {
+      expect(edit({ replace_existing_tracks: 'fail' })).toEqual([
+        'Keeping the track being edited needs a name for the new track.',
+      ]);
+      expect(edit({ replace_existing_tracks: 'fail', track_name: ' english ' })).toEqual([
+        'Keeping the track being edited needs a different name for the new track.',
+      ]);
+      expect(edit({ replace_existing_tracks: 'fail', track_name: 'English (clean)' })).toEqual([]);
+    });
+
+    it("can't take another text track's name, ignoring case, whichever choice", () => {
+      expect(edit({ track_name: 'SPANISH' })).toEqual(['This video already has a text track named "Spanish".']);
+      expect(edit({ replace_existing_tracks: 'fail', track_name: 'chapters' })).toEqual([
+        'This video already has a text track named "Chapters".',
+      ]);
+      expect(edit({ track_name: 'English' })).toEqual([]);
+    });
+
+    it('checks nothing about names without an upload', () => {
+      expect(edit({ upload_to_mux: false, replace_existing_tracks: 'fail' })).toEqual([]);
+    });
+  });
+
+  it('reads only a caption language the video has, matched exactly as Robots v1 does', () => {
+    const context = { captionTracks: [{ id: 'trk_en', language_code: 'en-US' }] };
+
+    expect(errorsFor('summarize', { language_code: 'en' }, context)[0]).toMatch(/no ready caption track in "en"/);
+    expect(errorsFor('summarize', { language_code: 'en-US' }, context)).toEqual([]);
+    // Unknown tracks never block a run.
+    expect(errorsFor('summarize', { language_code: 'en' }, {})).toEqual([]);
   });
 
   it('holds the execution window to start before end, and start inside the video', () => {
@@ -242,17 +339,16 @@ describe('validation', () => {
     ]);
   });
 
-  it('wants both highlight bounds or neither, in order', () => {
-    expect(errorsFor('find-key-moments', { 'target_duration_ms.min': 1000 }, { hasCaptions: true })).toEqual([
+  it('wants both highlight bounds or neither, in order, in seconds that can be fractions', () => {
+    expect(errorsFor('find-key-moments', { 'target_duration.min': 1 }, { hasCaptions: true })).toEqual([
       'Set both highlight length bounds, or neither.',
     ]);
     expect(
-      errorsFor(
-        'find-key-moments',
-        { 'target_duration_ms.min': 5000, 'target_duration_ms.max': 1000 },
-        { hasCaptions: true }
-      )
+      errorsFor('find-key-moments', { 'target_duration.min': 5, 'target_duration.max': 1 }, { hasCaptions: true })
     ).toEqual(['The minimum highlight length cannot exceed the maximum.']);
+    expect(
+      errorsFor('find-key-moments', { 'target_duration.min': 2.5, 'target_duration.max': 7.25 }, { hasCaptions: true })
+    ).toEqual([]);
   });
 
   it('wants captions for key moments unless they come from the picture', () => {
@@ -325,17 +421,14 @@ describe('validation', () => {
     expect(errorsFor('summarize', taxonomy({ description: 'When it is news', aliases: 'headlines' }))).toEqual([]);
   });
 
-  it('wants whole numbers for counts and milliseconds', () => {
+  it('wants whole numbers for counts', () => {
     expect(errorsFor('summarize', { title_length: 2.5 })).toEqual(['Max title length (words) must be a whole number.']);
     expect(errorsFor('summarize', { tag_count: 0.5 })).toEqual(['Number of tags must be a whole number.']);
-    expect(errorsFor('find-scenes', { min_scene_duration_ms: 1500.5 })).toEqual([
-      'Minimum scene length (ms) must be a whole number.',
-    ]);
     expect(errorsFor('moderate', { max_samples: 3.2 })).toEqual(['Maximum samples must be a whole number.']);
     expect(errorsFor('summarize', { title_length: 3, tag_count: 12 })).toEqual([]);
   });
 
-  it('marks every count and millisecond field as whole numbers', () => {
+  it('marks every count as a whole number, and no time', () => {
     const integerFields = ROBOTS_CATALOG.flatMap((workflow) =>
       workflow.params.filter((field) => field.integer).map((field) => `${workflow.key}:${field.name}`)
     );
@@ -347,17 +440,14 @@ describe('validation', () => {
         'summarize:tag_count',
         'ask-questions:max_free_form_answer_length',
         'find-key-moments:max_moments',
-        'find-key-moments:target_duration_ms.min',
-        'find-key-moments:target_duration_ms.max',
         'find-best-thumbnails:max_thumbnails',
-        'find-scenes:min_scenes',
-        'find-scenes:min_scene_duration_ms',
         'moderate:max_samples',
       ])
     );
     // Seconds and thresholds can be fractions.
     expect(integerFields).not.toContain('moderate:thresholds.sexual');
     expect(integerFields).not.toContain('summarize:output_steering.scope.start_time');
+    expect(integerFields).not.toContain('find-key-moments:target_duration.min');
   });
 
   it('keeps moderation thresholds between 0 and 1, and written answers at least 1 character', () => {
@@ -375,7 +465,7 @@ describe('validation', () => {
 
   it('requires a target language to dub into', () => {
     expect(errorsFor('translate-audio', {})).toEqual(['Target language is required.']);
-    expect(errorsFor('translate-audio', { to_language_code: 'es' })).toEqual([]);
+    expect(errorsFor('translate-audio', { output_language_code: 'es' })).toEqual([]);
   });
 
   it('allows at most four tie-breakers', () => {
@@ -395,6 +485,46 @@ describe('confirm warnings', () => {
       expect.objectContaining({ title: 'This run can make the video unplayable' }),
     ]);
     expect(confirmWarnings(def('moderate'), defaultParamValues(def('moderate').params))).toEqual([]);
+  });
+
+  it('warns before a run deletes the tracks in its way, and only while uploading', () => {
+    const values = { ...defaultParamValues(def('translate-captions').params), replace_existing_tracks: 'replace_all' };
+
+    expect(confirmWarnings(def('translate-captions'), values)).toEqual([
+      expect.objectContaining({ title: 'This run deletes tracks first' }),
+    ]);
+    expect(confirmWarnings(def('translate-captions'), { ...values, upload_to_mux: false })).toEqual([]);
+  });
+});
+
+describe('Analyze structure and the workflows Strapi only lists', () => {
+  it('offers Analyze structure, and never Find scenes or Generate contextual text', () => {
+    expect(ROBOTS_CATALOG.filter(isRunnableWorkflow).map((workflow) => workflow.key)).toContain('analyze-structure');
+    expect(isRunnableWorkflow(def('find-scenes'))).toBe(false);
+    expect(isRunnableWorkflow(def('generate-contextual-text'))).toBe(false);
+  });
+
+  it('runs on audio-only videos that have captions, and leaves both asset updates off', () => {
+    expect(workflowUnavailability(def('analyze-structure'), { isAudioOnly: true, hasCaptions: true })).toBeUndefined();
+    expect(workflowUnavailability(def('analyze-structure'), { isAudioOnly: true, hasCaptions: false })).toEqual({
+      reason: 'no-captions',
+      fix: 'generate-premium-captions',
+    });
+    expect(
+      workflowUnavailability(def('analyze-structure'), { isAudioOnly: false, hasCaptions: false })
+    ).toBeUndefined();
+    expect(
+      paramsFromFormValues(def('analyze-structure'), 'ast_1', defaultParamValues(def('analyze-structure').params))
+    ).toEqual({ asset_id: 'ast_1', update_asset_meta: false, update_asset_chapters: false });
+  });
+
+  it("holds the steering to Mux's documented limits", () => {
+    expect(errorsFor('analyze-structure', { 'output_steering.audience': 'x'.repeat(161) })).toEqual([
+      'Audience is at most 160 characters.',
+    ]);
+    expect(
+      errorsFor('analyze-structure', { 'output_steering.brand_terms': Array.from({ length: 7 }, () => 'x'.repeat(40)) })
+    ).toEqual(['Brand terms: at most 240 characters in all.']);
   });
 });
 
@@ -438,13 +568,36 @@ describe('the asset', () => {
           { type: 'text', text_type: 'chapters', status: 'ready' },
         ],
       })
-    ).toEqual({ duration: 42, hasCaptions: true, isAudioOnly: false });
+    ).toEqual({ duration: 42, hasCaptions: true, isAudioOnly: false, captionTracks: [], textTracks: [] });
     expect(
-      assetContextFrom({ tracks: [{ type: 'audio' }, { type: 'text', text_type: 'subtitles', status: 'preparing' }] })
+      assetContextFrom({
+        tracks: [
+          { type: 'audio' },
+          { id: 'trk_es', type: 'text', text_type: 'subtitles', status: 'ready', name: 'Spanish', language_code: 'es' },
+          { id: 'trk_en', type: 'text', text_type: 'subtitles', status: 'preparing', language_code: 'en' },
+        ],
+      })
     ).toEqual({
-      hasCaptions: false,
+      hasCaptions: true,
       isAudioOnly: true,
+      captionTracks: [{ id: 'trk_es', name: 'Spanish', language_code: 'es' }],
+      textTracks: [
+        { id: 'trk_es', name: 'Spanish' },
+        { id: 'trk_en', name: undefined },
+      ],
     });
     expect(assetContextFrom(undefined)).toEqual({});
+  });
+
+  it("counts an audio-only video's one legacy text track as its transcript, as Robots v1 does", () => {
+    const legacy = { id: 'trk_1', type: 'text', status: 'ready', name: 'Transcript' };
+
+    expect(assetContextFrom({ tracks: [{ type: 'audio' }, legacy] })).toMatchObject({ hasCaptions: true });
+    expect(assetContextFrom({ tracks: [{ type: 'video' }, { type: 'audio' }, legacy] })).toMatchObject({
+      hasCaptions: false,
+    });
+    expect(assetContextFrom({ tracks: [{ type: 'audio' }, legacy, { ...legacy, id: 'trk_2' }] })).toMatchObject({
+      hasCaptions: false,
+    });
   });
 });
