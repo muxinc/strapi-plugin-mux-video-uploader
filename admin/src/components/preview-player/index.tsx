@@ -9,34 +9,36 @@ import { useSignedTokens } from '../signed-tokens-provider';
 import pluginPkg from '../../../../package.json';
 import { PLUGIN_ID } from '../../pluginId';
 
-type SignedTokens = { playback: string; storyboard: string | null };
+type SignedTokens = { playback: string; thumbnail: string | null; storyboard: string | null };
 
 const PreviewPlayer = (props: { muxAsset?: MuxAsset }) => {
   const { muxAsset } = props;
 
   const [tokens, setTokens] = React.useState<SignedTokens | null>(null);
-  const [posterUrl, setPosterUrl] = React.useState<string>();
 
   const { video, thumbnail, storyboard } = useSignedTokens();
 
   const init = async (muxAsset: MuxAsset) => {
-    const { playback_id } = muxAsset;
-    if (muxAsset.playback_id !== null && muxAsset.signed) {
-      const videoToken = await video(muxAsset);
-      const thumbnailToken = await thumbnail(muxAsset);
-      const storyboardToken = await storyboard(muxAsset);
-      if (videoToken) setTokens({ playback: videoToken, storyboard: storyboardToken });
-      setPosterUrl(`/${PLUGIN_ID}/thumbnail/${playback_id}?token=${thumbnailToken}`);
-    } else if (muxAsset.playback_id !== null) {
-      setPosterUrl(`/${PLUGIN_ID}/thumbnail/${playback_id}`);
-    }
+    const playback = await video(muxAsset);
+    const thumbnailToken = await thumbnail(muxAsset);
+    const storyboardToken = await storyboard(muxAsset);
+    if (playback) setTokens({ playback, thumbnail: thumbnailToken, storyboard: storyboardToken });
   };
 
   React.useEffect(() => {
-    muxAsset && init(muxAsset);
+    if (muxAsset?.playback_id && muxAsset.signed) init(muxAsset);
   }, []);
 
   if (!muxAsset?.playback_id || (muxAsset.signed && !tokens)) return null;
+
+  // Known from the first render, so MuxVideo never shows the image.mux.com poster it would derive,
+  // which Strapi's default CSP blocks. A signed video without a thumbnail token gets no poster.
+  const thumbnailUrl = `/${PLUGIN_ID}/thumbnail/${muxAsset.playback_id}`;
+  const posterUrl = !muxAsset.signed
+    ? thumbnailUrl
+    : tokens?.thumbnail
+      ? `${thumbnailUrl}?token=${tokens.thumbnail}`
+      : undefined;
 
   const aspectRatio = muxAsset.aspect_ratio || muxAsset.asset_data?.aspect_ratio;
 
