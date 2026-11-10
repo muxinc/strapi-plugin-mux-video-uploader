@@ -138,7 +138,7 @@ const GENERATE_CHAPTERS: OutputView = {
             <Note variant="success">
               {t(
                 'Robots.output.chapters-added',
-                'The chapters were added to the Mux video. The player shows them in its progress bar once your app uses Mux Player 3.5 or later (see the README).'
+                'The chapters were added to the Mux video. The player shows them in its progress bar.'
               )}
             </Note>
           ) : status === 'failed' ? (

@@ -9,7 +9,7 @@ This plugin provides the ability to upload content via a url or a direct file up
 - Upload videos using a url or a file to [Mux](https://mux.com) from inside of [Strapi](https://strapi.io/)
 - Manage assets with the plugin's asset grid and pagination capabilities
 - Search for assets using title or [Mux](https://mux.com) Asset ID values
-- Preview content using a player (powered by the [mux-player-react](https://github.com/muxinc/elements/tree/main/packages/mux-player-react) project)
+- Preview content using a player (powered by [Video.js](https://videojs.org))
 - Delete assets which result in the [Mux](https://mux.com) Asset also being deleted
 - Support uploading audio files
 - Attachment of either sidecar subtitle files (supports `.vtt` or `.srt` files) or Mux's auto-generated captions
@@ -146,7 +146,7 @@ The **Robots** tab of a video's details lets you:
 - cancel a running job;
 - see every job and directive run on that video, with its output and the Mux AI units it consumed.
 
-Captions, dubs and chapters are added to the Mux video itself. To see chapters in the player, read [this FAQ](#chapters-dont-show-in-the-player).
+Captions, dubs and chapters are added to the Mux video itself, and the preview player shows them.
 
 ### Description and tags
 
@@ -209,7 +209,6 @@ Your videos and captions are kept: Strapi only adds tables, columns and indexes 
 4. Start Strapi. It creates the `muxrobotjobs` table and the new `muxassets` columns and indexes on its own.
 5. If webhooks were rejected while the secret was wrong, resend them from Mux, for example with `mux webhooks events replay`.
 6. To use Mux Robots, follow [Set up Robots](#set-up-robots).
-7. To see chapters in the player, make your app use one version of Mux Player (see [Chapters don't show in the player](#chapters-dont-show-in-the-player)).
 
 What behaves differently—
 
@@ -283,29 +282,6 @@ Here is an example of how to do this on a unix-based operating system from withi
 ```bash
 rm -rf ./.cache ./build ./.strapi
 ```
-
-### Chapters don't show in the player
-
-Chapters from **Generate chapters** need Mux Player 3.5 or later, but the admin runs 3.1.0: Strapi's own Media Library (`@strapi/upload`) ships that version, loads first, and takes the `<mux-player>` element for the whole admin, plugin included. Make your app install a single version—
-
-1. Add this to your app's `package.json`—
-
-   ```jsonc
-   // npm
-   "overrides": { "@mux/mux-player-react": "^3.14.0" }
-
-   // yarn
-   "resolutions": { "@mux/mux-player-react": "^3.14.0" }
-
-   // pnpm
-   "pnpm": { "overrides": { "@mux/mux-player-react": "^3.14.0" } }
-   ```
-
-2. Reinstall dependencies.
-3. Delete `node_modules/.strapi/vite`.
-4. Rebuild the admin (`npm run build`).
-
-The Media Library's preview keeps working with the newer player.
 
 ### Thumbnails don't show when hovering the player's timeline
 

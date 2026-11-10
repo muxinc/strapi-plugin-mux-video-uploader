@@ -36,6 +36,10 @@ import { useCanRunRobots } from '../robots/use-can-run-robots';
 import ApplyDialog from '../robots-panel/apply-dialog';
 import Summary from './summary';
 import { PLUGIN_ID } from '../../pluginId';
+import pluginPkg from '../../../../package.json';
+
+// The snippet loads the same Video.js release the preview player runs.
+const VIDEOJS_VERSION = pluginPkg.dependencies['@videojs/react'];
 
 export type DetailsTab = 'details' | 'captions' | 'robots';
 
@@ -121,13 +125,20 @@ export default function ModalDetails(props: {
   React.useEffect(() => {
     if (!latestAsset) return;
 
-    setCodeSnippet(`<mux-player
-  playback-id="${latestAsset?.playback_id}"
-  playback-token="TOKEN"
-  env-key="ENV_KEY"
-  metadata-video-title="${latestAsset?.title}"
-  controls
-/>`);
+    const cdn = `https://cdn.jsdelivr.net/npm/@videojs/cdn@${VIDEOJS_VERSION}`;
+    const ratio = latestAsset.aspect_ratio || latestAsset.asset_data?.aspect_ratio;
+    const token = latestAsset.signed ? '?token=TOKEN' : '';
+
+    setCodeSnippet(`<script type="module" src="${cdn}/video.js"></script>
+<script type="module" src="${cdn}/media/mux-video.js"></script>
+<script type="module" src="${cdn}/extensions/mux-data.js"></script>
+
+<video-player>
+  <video-skin style="display: block; width: 100%; aspect-ratio: ${ratio ? ratio.replace(':', ' / ') : '16 / 9'};">
+    <mux-video src="https://stream.mux.com/${latestAsset.playback_id}.m3u8${token}" playsinline crossorigin="anonymous"></mux-video>
+    <mux-data></mux-data>
+  </video-skin>
+</video-player>`);
   }, [latestAsset]);
 
   const subtitles = (formAsset?.asset_data?.tracks ?? []).filter(
@@ -373,7 +384,6 @@ export default function ModalDetails(props: {
     </Button>
   );
 
-  const aspect_ratio = latestAsset.aspect_ratio || latestAsset.asset_data?.aspect_ratio;
   const needsPlaybackId = latestAsset.isReady && !!latestAsset.asset_id && !latestAsset.playback_id;
 
   return (
@@ -397,11 +407,10 @@ export default function ModalDetails(props: {
               </Flex>
             ) : (
               <Grid.Root gap={4} style={{ alignItems: 'flex-start' }}>
-                <Grid.Item col={5} s={12} direction="column" alignItems="start">
+                <Grid.Item col={12} direction="column" alignItems="start">
                   <Box
                     background="neutral150"
                     style={{
-                      aspectRatio: aspect_ratio ? aspect_ratio.replace(':', ' / ') : undefined,
                       marginBottom: '1.5rem',
                       padding: '3rem 0',
                       position: 'relative',
@@ -497,7 +506,7 @@ export default function ModalDetails(props: {
                     </Box>
                   ) : null}
                 </Grid.Item>
-                <Grid.Item col={7} s={12} direction="column" alignItems="stretch">
+                <Grid.Item col={12} direction="column" alignItems="stretch">
                   <Tabs.Root
                     value={tab}
                     onValueChange={(next: string) => {
@@ -535,7 +544,7 @@ export default function ModalDetails(props: {
                             <Field.Input
                               name="title"
                               hasError={errors.title !== undefined}
-                              value={values.title}
+                              value={values.title ?? ''}
                               disabled={!enableUpdate}
                               required
                               onChange={(e: any) => {
@@ -601,9 +610,12 @@ export default function ModalDetails(props: {
                           <Field.Root
                             hint={
                               <>
-                                {formatMessage('ModalDetails.powered-by-mux', 'Powered by mux-player.')}
+                                {formatMessage('ModalDetails.powered-by-videojs', 'Powered by Video.js.')}
                                 &nbsp;
-                                <Link href="https://docs.mux.com/guides/video/mux-player" isExternal>
+                                <Link
+                                  href="https://videojs.org/docs/framework/html/reference/components/mux-video"
+                                  isExternal
+                                >
                                   {formatMessage('ModalDetails.read-more', 'Read more about it')}
                                 </Link>
                               </>
@@ -620,7 +632,7 @@ export default function ModalDetails(props: {
                                 <Duplicate />
                               </IconButton>
                             </Field.Label>
-                            <Textarea name="codeSnippet" value={codeSnippet} rows={7} disabled />
+                            <Textarea name="codeSnippet" value={codeSnippet} rows={11} disabled />
                             <Field.Hint />
                           </Field.Root>
                         </Box>
