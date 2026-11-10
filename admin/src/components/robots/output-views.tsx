@@ -170,7 +170,7 @@ function AssetUpdateNotes({ outputs, updates, t }: { outputs: Outputs; updates: 
       chapters: [
         t(
           'Robots.output.chapters-added',
-          'The chapters were added to the Mux video. The player shows them in its progress bar once your app uses Mux Player 3.5 or later (see the README).'
+          'The chapters were added to the Mux video. The player shows them in its progress bar.'
         ),
         asStrings(update.replaced_track_ids).length > 0
           ? t(
