@@ -713,7 +713,7 @@ function TagsField({
   // isn't added: the first spelling stays.
   const add = () => {
     const known = new Set(tags.map((tag) => tag.toLowerCase()));
-    const added = normalizeTags([draft]).filter((tag) => !known.has(tag.toLowerCase()));
+    const added = normalizeTags(draft.split(',')).filter((tag) => !known.has(tag.toLowerCase()));
     setDraft('');
     if (added.length > 0) onChange([...tags, ...added]);
   };

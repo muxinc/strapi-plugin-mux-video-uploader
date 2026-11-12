@@ -339,6 +339,15 @@ describe('Robots outputs on the asset', () => {
     });
   });
 
+  it('keeps commas inside a tag', async () => {
+    const { id } = seedAsset(fake.db);
+    const withComma = job({ id: 'rjob_1', status: 'completed', updated_at: T0 + 60, outputs: { tags: ['$15,000'] } });
+
+    await dispatchWebhookEvent(jobEvent(withComma));
+
+    expect(asset(id)).toMatchObject({ tags: ['$15,000'], robots_outputs: { summarize: { tags: ['$15,000'] } } });
+  });
+
   it('fills description and tags only while they are empty', async () => {
     const { id } = seedAsset(fake.db, { description: 'Written by hand', tags: [] });
 

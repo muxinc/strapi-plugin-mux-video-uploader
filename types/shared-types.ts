@@ -39,14 +39,13 @@ export const MuxAssetTitle = z
   .max(255, 'The title must be at most 255 characters long.');
 
 /**
- * Tags as the details form builds them: trimmed, split on commas, without blanks, and without repeats
- * that differ only in case. The first spelling stays.
+ * Tags trimmed, without blanks, and without repeats that differ only in case. The first spelling stays.
+ * Commas stay too: Robots writes tags like "$15,000". Only typing in the details form splits on them.
  */
 export function normalizeTags(tags: string[]): string[] {
   const seen = new Set<string>();
 
   return tags
-    .flatMap((tag) => tag.split(','))
     .map((tag) => tag.trim())
     .filter((tag) => {
       const key = tag.toLowerCase();

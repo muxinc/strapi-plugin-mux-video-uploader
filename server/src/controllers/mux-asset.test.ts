@@ -58,11 +58,15 @@ describe('Update a video', () => {
     expect((await update({ title: 'x'.repeat(255) })).stored.title).toHaveLength(255);
   });
 
-  it('trims tags, drops blanks, splits on commas and drops repeats that differ only in case', async () => {
-    const { ctx, stored } = await update({ tags: [' a ', 'A', 'a', 'b,c', '  ', '', 'C', 'Mux'] });
+  it('trims tags, drops blanks and drops repeats that differ only in case', async () => {
+    const { ctx, stored } = await update({ tags: [' a ', 'A', 'a', 'b', '  ', '', 'B', 'Mux'] });
 
     expect(ctx.status).not.toBe(400);
-    expect(stored.tags).toEqual(['a', 'b', 'c', 'Mux']);
+    expect(stored.tags).toEqual(['a', 'b', 'Mux']);
+  });
+
+  it('keeps commas inside a tag, as Robots writes them', async () => {
+    expect((await update({ tags: ['$15,000', 'Mux'] })).stored.tags).toEqual(['$15,000', 'Mux']);
   });
 
   it.each([
