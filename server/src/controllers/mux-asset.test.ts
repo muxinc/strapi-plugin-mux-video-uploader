@@ -185,4 +185,35 @@ describe('Create a video', () => {
       robots_outputs: { summarize: { job_id: 'rjob_1', title: 'Summary' } },
     });
   });
+
+  it('fills the description and tags from the newest summary, whichever workflow wrote it', async () => {
+    const completed = {
+      asset_id: 'ast_9',
+      status: 'completed',
+      detail_loaded: true,
+      parameters: { asset_id: 'ast_9' },
+    };
+    fake.db.seed(ROBOT_JOB_MODEL, [
+      jobRow({
+        ...completed,
+        mux_updated_at: '2026-10-01T00:00:00.000Z',
+        outputs: { description: 'Summarized', tags: ['older'] },
+      }),
+      jobRow({
+        ...completed,
+        mux_id: 'rjob_2',
+        workflow: 'analyze-structure',
+        mux_updated_at: '2026-10-02T00:00:00.000Z',
+        outputs: { summary: 'Analyzed', tags: ['newer'] },
+      }),
+    ]);
+
+    await create({ title: 'Imported', asset_id: 'ast_9' });
+
+    expect(created()).toMatchObject({
+      description: 'Analyzed',
+      tags: ['newer'],
+      robots_outputs: { summarize: { job_id: 'rjob_1' }, analyze_structure: { job_id: 'rjob_2' } },
+    });
+  });
 });

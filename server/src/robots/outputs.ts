@@ -161,6 +161,8 @@ const jobFromRow = (row: RobotsJobRow): MuxJobLike => ({
  * fill a description or tags someone cleared on purpose.
  */
 export async function backfillOutputs(assetId: string) {
+  const slots: Array<{ key: SlotKey; slot: Slot }> = [];
+
   for (const workflow of SLOT_WORKFLOWS) {
     const rows = (await robotJobs().findMany({
       where: { asset_id: assetId, workflow, status: 'completed', is_directive_run: false, mux_id: { $notNull: true } },
@@ -172,16 +174,20 @@ export async function backfillOutputs(assetId: string) {
       const found = slotFromJob(assetId, workflow, jobFromRow(row));
       if (found && isNewerOutput(newest?.slot, found.slot)) newest = found;
     }
+    if (newest) slots.push(newest);
+  }
 
-    if (newest) {
-      await writeSlot(
-        assetId,
-        newest.key,
-        newest.slot,
-        (current, candidate) =>
-          !(isRecord(current) && current.job_id === candidate.job_id) && isNewerOutput(current, candidate)
-      );
-    }
+  // Newest first: only empty fields are filled, so the summary Apply summary offers is the one that fills them.
+  slots.sort((a, b) => (isNewerSlot(a.slot, b.slot) ? 1 : -1));
+
+  for (const { key, slot } of slots) {
+    await writeSlot(
+      assetId,
+      key,
+      slot,
+      (current, candidate) =>
+        !(isRecord(current) && current.job_id === candidate.job_id) && isNewerOutput(current, candidate)
+    );
   }
 }
 

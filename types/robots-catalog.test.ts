@@ -124,14 +124,17 @@ describe('building parameters', () => {
   });
 
   it.each(['generate-premium-captions', 'translate-captions', 'translate-audio'] as const)(
-    "only sends %s's replace_existing_tracks while uploading, failing on a clash by default",
+    "only sends %s's replace_existing_tracks and track_name while uploading, failing on a clash by default",
     (key) => {
-      const values = defaultParamValues(def(key).params);
+      const values = { ...defaultParamValues(def(key).params), track_name: 'Named' };
 
-      expect(paramsFromFormValues(def(key), 'ast_1', values)).toMatchObject({ replace_existing_tracks: 'fail' });
-      expect(paramsFromFormValues(def(key), 'ast_1', { ...values, upload_to_mux: false })).not.toHaveProperty(
-        'replace_existing_tracks'
-      );
+      expect(paramsFromFormValues(def(key), 'ast_1', values)).toMatchObject({
+        replace_existing_tracks: 'fail',
+        track_name: 'Named',
+      });
+      const notUploaded = paramsFromFormValues(def(key), 'ast_1', { ...values, upload_to_mux: false });
+      expect(notUploaded).not.toHaveProperty('replace_existing_tracks');
+      expect(notUploaded).not.toHaveProperty('track_name');
     }
   );
 

@@ -324,13 +324,6 @@ export const ROBOTS_CATALOG: RobotsWorkflowDefinition[] = [
         label: 'Spoken language',
         helpText: 'Leave empty to auto-detect.',
       },
-      {
-        kind: 'text',
-        name: 'track_name',
-        label: 'Track name',
-        helpText:
-          'Leave empty and Mux names the track after its language — "English (Generated)" for ' + 'English audio.',
-      },
       { kind: 'boolean', name: 'include_speakers', label: 'Label speakers', defaultValue: false },
       { kind: 'boolean', name: 'include_words', label: 'Include word-level timings', defaultValue: false },
       {
@@ -344,6 +337,7 @@ export const ROBOTS_CATALOG: RobotsWorkflowDefinition[] = [
         maxItemLength: 49,
       },
       UPLOAD_TO_MUX,
+      trackNameField('Leave empty and Mux names the track after its language, such as "English (Generated)".'),
       replaceTracksField(true),
     ],
   },
