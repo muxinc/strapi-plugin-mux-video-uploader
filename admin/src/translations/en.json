@@ -189,7 +189,7 @@
   "Robots.directive.placeholder": "Choose a directive",
   "Robots.directive.run": "Run {name}",
   "Robots.directive.title": "Run a directive",
-  "Robots.directive.v0-option": "{name} · Robots v0",
+  "Robots.directive.v0-option": "Robots v0",
   "Robots.form.add-question": "Add question",
   "Robots.form.add-replacement": "Add replacement",
   "Robots.form.add-value": "Add value",

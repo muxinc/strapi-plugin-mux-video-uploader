@@ -33,6 +33,26 @@ interface DirectiveModalProps {
 /** Runs start on Robots v1, which can't run a v0 directive. */
 const isV0 = (directive: RobotsDirectiveSummary) => directive.api_version === 'v0';
 
+/** Ids are long enough to push the list past the window, so an option shows one only to tell apart directives that share a name. */
+function optionNames(directives: RobotsDirectiveSummary[]) {
+  const counts = new Map<string, number>();
+  directives.forEach(({ name }) => counts.set(name, (counts.get(name) ?? 0) + 1));
+
+  return new Map(
+    directives.map(({ id, name }) => [id, name !== id && (counts.get(name) ?? 0) > 1 ? `${name} (${id})` : name])
+  );
+}
+
+/** A long name is cut, never the version after it. */
+function OptionLabel({ name, version }: { name: string; version?: string }) {
+  return (
+    <span style={{ display: 'flex', gap: '0.5rem', maxWidth: 'min(36rem, 70vw)' }}>
+      <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</span>
+      {version && <span style={{ flexShrink: 0 }}>· {version}</span>}
+    </span>
+  );
+}
+
 export default function DirectiveModal({
   isOpen,
   onClose,
@@ -59,6 +79,7 @@ export default function DirectiveModal({
 
   const directive = directives?.find((candidate) => candidate.id === selected && !isV0(candidate));
   const v0Directives = (directives ?? []).filter(isV0);
+  const names = optionNames(directives ?? []);
 
   const run = async () => {
     if (!directive || submitting) return;
@@ -125,14 +146,14 @@ export default function DirectiveModal({
                   placeholder={t('Robots.directive.placeholder', 'Choose a directive')}
                   onChange={(next: string | number) => setSelected(String(next))}
                 >
-                  {directives.map((candidate) => {
-                    const name = candidate.name === candidate.id ? candidate.id : `${candidate.name} (${candidate.id})`;
-                    return (
-                      <SingleSelectOption key={candidate.id} value={candidate.id} disabled={isV0(candidate)}>
-                        {isV0(candidate) ? t('Robots.directive.v0-option', '{name} · Robots v0', { name }) : name}
-                      </SingleSelectOption>
-                    );
-                  })}
+                  {directives.map((candidate) => (
+                    <SingleSelectOption key={candidate.id} value={candidate.id} disabled={isV0(candidate)}>
+                      <OptionLabel
+                        name={names.get(candidate.id) ?? candidate.name}
+                        version={isV0(candidate) ? t('Robots.directive.v0-option', 'Robots v0') : undefined}
+                      />
+                    </SingleSelectOption>
+                  ))}
                 </SingleSelect>
               </Field.Root>
               {blockedReason && <Note variant="warning">{blockedReason}</Note>}
