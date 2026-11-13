@@ -210,7 +210,7 @@ These endpoints follow Strapi's content API rules: `filters`, `sort`, `fields` a
    npm run build
    ```
 
-2. Start Strapi. It adds `api_version` to `muxrobotjobs`; rows stored by 3.2 or 3.3 keep it empty, and the plugin works out their version the next time it reads them from Mux.
+2. Start Strapi. It adds `api_version` to `muxrobotjobs`; rows stored by 3.2 or 3.3 keep it empty. A job gets its version the next time the plugin reads it from Mux. A directive run keeps it empty, which is harmless: the plugin never reads or cancels a run.
 3. Move your directives to v1: see [Directives on upload](#directives-on-upload). Until you do, `defaultDirectiveIds` keeps starting v0 runs, which work until Mux retires v0.
 
 **Rolling back, or several instances.** 3.x doesn't know Robots v1: it acknowledges `robots.v1.*` webhooks without storing them, and can't read or cancel v1 jobs. Upgrade every Strapi instance that receives webhooks before running anything, and let running jobs finish before rolling back. A rollback also drops `api_version`; upgrading again works the versions out again.
@@ -279,7 +279,7 @@ For reference: besides Strapi's own columns (`id`, `document_id`, `created_at`, 
 | Column | Type | Holds |
 | --- | --- | --- |
 | `mux_id` | string | `rjob_…` or `drvrun_…`; empty until Mux confirms a run started from Strapi |
-| `api_version` | string | **New in 4.0.** `v1` or `v0`, the Robots version that created it, which every later read and cancel uses. Empty on rows stored by 3.2 until Mux names their version |
+| `api_version` | string | **New in 4.0.** `v1` or `v0`, the Robots version that created it, which every later read and cancel uses. Empty on rows stored by 3.2 or 3.3: a job's is filled the next time it's read from Mux, a directive run's stays empty |
 | `is_directive_run` | boolean | A directive run rather than a job |
 | `workflow` | string | The workflow, e.g. `summarize` (jobs). Also `find-scenes` (Robots v0 only) and `generate-contextual-text`, which directives can dispatch but the plugin doesn't start |
 | `directive_id`, `directive_run_id` | string | The directive and run that started a job, or the run's directive |
