@@ -1171,10 +1171,10 @@
     hls.js "~1.5.11"
     mux-embed "^5.3.1"
 
-"@mux/ts@^16.0.0":
-  version "16.0.0"
-  resolved "https://registry.yarnpkg.com/@mux/ts/-/ts-16.0.0.tgz#0c0302dddea29578402a4326059c683d5de4a9e2"
-  integrity sha512-aQZblTWUoeftpIJJG2rDa8b3iQALJt1ZkoF3yZVcrZihXFcQj8wBSIJvMJPAx1d9UanNgajt43nSzMcRRxucaA==
+"@mux/ts@^16.2.0":
+  version "16.2.0"
+  resolved "https://registry.yarnpkg.com/@mux/ts/-/ts-16.2.0.tgz#c7848d9be9bed15a3cccc02dd066b5635fdecf01"
+  integrity sha512-FRmCIXNjX7UEJ35iUIymEa2qc8Na7Wu5rBt+DCOXsQ1ok25JgXhF91ZPrYb/dX1mSVfjUQytuYlrUuMmvaOC+w==
 
 "@mux/upchunk@^3.5.0":
   version "3.5.0"
