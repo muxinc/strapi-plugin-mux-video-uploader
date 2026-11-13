@@ -311,14 +311,23 @@ export default function ModalDetails(props: {
     }
   };
 
-  const reloadAsset = async () => {
-    const assetId = current.current.latestAsset?.id;
-    if (!assetId) return;
+  // Reads can answer out of order. A copy read after another started is at least as new, so only the
+  // latest one may land; a write's answer supersedes every read started before it.
+  const latestRead = React.useRef(0);
+
+  const readAsset = async (assetId: number) => {
+    const read = ++latestRead.current;
     try {
-      showFreshAsset(await robotsApi.getAsset(assetId));
+      const fresh = await robotsApi.getAsset(assetId);
+      if (read === latestRead.current) showFreshAsset(fresh);
     } catch {
       // The next re-read, or reopening the video, catches up.
     }
+  };
+
+  const reloadAsset = async () => {
+    const assetId = current.current.latestAsset?.id;
+    if (assetId) await readAsset(assetId);
   };
 
   // The list may have loaded before Robots finished: a directive started on upload writes its summary
@@ -326,11 +335,7 @@ export default function ModalDetails(props: {
   // above hasn't reached `latestAsset` yet.
   React.useEffect(() => {
     const assetId = props.muxAsset?.id;
-    if (!isOpen || assetId === undefined) return;
-
-    robotsApi.getAsset(assetId).then(showFreshAsset, () => {
-      // The copy from the list stays.
-    });
+    if (isOpen && assetId !== undefined) readAsset(assetId);
   }, [isOpen, props.muxAsset?.id]);
 
   const createPlaybackId = async () => {
@@ -338,7 +343,9 @@ export default function ModalDetails(props: {
     const assetId = latestAsset.id;
     setCreatingPlaybackId(true);
     try {
-      showFreshAsset((await robotsApi.createPlaybackId(assetId)).asset);
+      const { asset } = await robotsApi.createPlaybackId(assetId);
+      latestRead.current += 1;
+      showFreshAsset(asset);
     } catch (error) {
       toggleNotification({ type: 'danger', message: robotsErrorOf(error).message });
     } finally {
