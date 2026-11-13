@@ -34,6 +34,17 @@ const Skin = styled(VideoSkin)`
     list-style: revert-layer;
     overflow-wrap: revert-layer;
   }
+
+  /*
+   * Video.js 10 measures a tooltip with its overflow, and the skin's hover bridge (::before) only
+   * overflows below a tooltip that sits on top: 40px tall on top, 28px below. With 28-40px of room
+   * above a button, the tooltip flips sides on every render until React throws "Maximum update
+   * depth exceeded" and Strapi swaps the page for its error screen. Tooltips close when the pointer
+   * leaves the button, so the bridge does nothing for them.
+   */
+  && .media-tooltip.media-popup-safe-area::before {
+    content: none;
+  }
 `;
 
 // "16:9" → [16, 9]. Anything else falls back to 16:9.
