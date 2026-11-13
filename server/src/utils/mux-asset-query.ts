@@ -15,7 +15,10 @@ export interface MuxAssetQuery {
   _q?: unknown;
 }
 
-/** Most items one request returns when the app doesn't set `api.rest.maxLimit`. */
+/**
+ * Most items one request returns: always on the admin API, and on the content API when the app doesn't
+ * set `api.rest.maxLimit`.
+ */
 const DEFAULT_MAX_LIMIT = 100;
 
 const LOGICAL_OPERATORS = ['$and', '$or', '$not'];
@@ -204,8 +207,14 @@ export const sanitizeMuxAssetOutput = async <T>(ctx: Context, data: T): Promise<
   return (await strapi.contentAPI.sanitize.output(data, getSchema(), { auth: getAuth(ctx) })) as T;
 };
 
-/** `api.rest.maxLimit` when the app sets one, as Strapi's own content API does; 100 otherwise. */
-const getMaxLimit = () => {
+/**
+ * On the content API, `api.rest.maxLimit` when the app sets one, as Strapi's own content API does; 100
+ * otherwise. `api.rest` configures the REST content API only: the admin API always gets 100, as the
+ * Content Manager ignores it too, so a low `maxLimit` can't shrink the admin page's pages.
+ */
+const getMaxLimit = (ctx: Context) => {
+  if (isAdminRoute(ctx)) return DEFAULT_MAX_LIMIT;
+
   const configured = Number(strapi.config.get('api.rest.maxLimit'));
   return Number.isInteger(configured) && configured > 0 ? configured : DEFAULT_MAX_LIMIT;
 };
@@ -228,7 +237,8 @@ const toInteger = (value: unknown, name: string): number | undefined => {
  * Without them, the first `maxLimit` items. Like Strapi, a `limit`/`pageSize` of -1 or above the
  * maximum gets the maximum, and one below 1 gets 1.
  */
-export const getPagination = (query: Query): { start: number; limit: number } => {
+export const getPagination = (ctx: Context): { start: number; limit: number } => {
+  const query: Query = ctx.query;
   const nested = isPlainObject(query.pagination) ? query.pagination : {};
   const args: Partial<Record<(typeof PAGINATION_KEYS)[number], number>> = {};
 
@@ -246,7 +256,7 @@ export const getPagination = (query: Query): { start: number; limit: number } =>
     });
   }
 
-  const maxLimit = getMaxLimit();
+  const maxLimit = getMaxLimit(ctx);
   const toLimit = (value?: number) =>
     value === undefined || value === -1 || value > maxLimit ? maxLimit : Math.max(value, 1);
 

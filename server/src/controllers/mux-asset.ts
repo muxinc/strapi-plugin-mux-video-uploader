@@ -27,9 +27,8 @@ const countAssets = ({ filters, _q }: MuxAssetQuery) =>
 const find = async (ctx: Context) => {
   const query = await getMuxAssetQuery(ctx);
   const { filters, sort, fields, populate, _q } = query;
-  const { start, limit } = getPagination(ctx.query);
+  const { start, limit } = getPagination(ctx);
 
-  // The admin page also sends `order=desc`, which the document service never applied.
   const entities = await strapi
     .documents(ASSET_MODEL)
     .findMany(definedOnly({ filters, sort: sort || 'createdAt', fields, populate, _q, start, limit }));
