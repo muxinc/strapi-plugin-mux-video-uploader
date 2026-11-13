@@ -1,8 +1,10 @@
+import { sanitize } from '@strapi/utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { jobRow, seedAsset } from '../../../test/fixtures';
 import { createContext } from '../../../test/koa';
 import { FakeStrapi, installFakeStrapi } from '../../../test/strapi';
+import muxAssetContentType from '../content-types/mux-asset';
 import { ASSET_MODEL, ROBOT_JOB_MODEL } from '../utils/types';
 import { refreshesSettled } from '../webhooks/refresh-queue';
 import muxAssetController from './mux-asset';
@@ -24,6 +26,115 @@ const update = async (body: unknown) => {
   const result = await muxAssetController.update(ctx as any);
   return { ctx, result, stored: fake.db.rows(ASSET_MODEL)[0] };
 };
+
+describe('Get one video', () => {
+  const DOCUMENT_ID = 'bn8fkkhjp8gp0tlji7gidvjq';
+  const OTHER_DOCUMENT_ID = 'z3lq9m0x7c5v2b8n4k6j1h0g';
+  const ADMIN_USER = { id: 1, firstname: 'Ada', email: 'admin@example.com', password: '$2a$10$hash' };
+
+  /** `createdBy`/`updatedBy` as `@strapi/core` adds them: private links to an admin user. */
+  const creatorField = { type: 'relation', relation: 'oneToOne', target: 'admin::user', private: true };
+  const models: Record<string, unknown> = {
+    [ASSET_MODEL]: {
+      ...muxAssetContentType,
+      uid: ASSET_MODEL,
+      modelType: 'contentType',
+      attributes: { ...muxAssetContentType.attributes, createdBy: creatorField, updatedBy: creatorField },
+    },
+    'admin::user': {
+      uid: 'admin::user',
+      modelType: 'contentType',
+      kind: 'collectionType',
+      options: {},
+      attributes: { firstname: { type: 'string' }, email: { type: 'email' }, password: { type: 'password' } },
+    },
+  };
+
+  let otherRowId: number;
+
+  beforeEach(async () => {
+    // The content API's output goes through Strapi's real sanitizers, as in `mux-asset-query.test.ts`.
+    const getModel = (uid: string) => models[uid] as any;
+    Object.assign(fake.strapi, {
+      getModel,
+      contentAPI: { sanitize: sanitize.createAPISanitizers({ getModel }) },
+      auth: { verify: async () => undefined },
+    });
+
+    ({ id: otherRowId } = seedAsset(fake.db, {
+      title: 'Another video',
+      asset_id: 'ast_2',
+      documentId: OTHER_DOCUMENT_ID,
+    }));
+    await fake.db.query(ASSET_MODEL).update({ where: { id: assetRowId }, data: { documentId: DOCUMENT_ID } });
+  });
+
+  /**
+   * Koa hands the route parameter over as a string, and the database matches `'1'` to the id 1. The fake
+   * db compares strictly, so numeric ids go in as numbers, as in the update tests.
+   */
+  const findOne = (id: string | number, routeType: 'content-api' | 'admin', query = {}) =>
+    muxAssetController.findOne(
+      createContext({
+        params: { documentId: id },
+        query,
+        state: { route: { info: { type: routeType } } },
+      }) as any
+    );
+
+  it('finds the video by its documentId on the content API', async () => {
+    expect(await findOne(DOCUMENT_ID, 'content-api')).toMatchObject({ id: assetRowId, title: 'A video' });
+    expect(await findOne(OTHER_DOCUMENT_ID, 'content-api')).toMatchObject({ id: otherRowId, title: 'Another video' });
+  });
+
+  it('still finds the video by its numeric id, as before', async () => {
+    expect(await findOne(assetRowId, 'content-api')).toMatchObject({ id: assetRowId, documentId: DOCUMENT_ID });
+    expect(await findOne(otherRowId, 'content-api')).toMatchObject({ id: otherRowId, documentId: OTHER_DOCUMENT_ID });
+  });
+
+  it('looks up a value made only of digits as the id, and anything else as the documentId', async () => {
+    await findOne('12', 'content-api');
+    await findOne(DOCUMENT_ID, 'content-api');
+
+    expect(fake.db.query(ASSET_MODEL).findOne.mock.calls).toEqual([
+      [{ where: { id: '12' } }],
+      [{ where: { documentId: DOCUMENT_ID } }],
+    ]);
+  });
+
+  it.each([
+    ['documentId', 'a1b2c3d4e5f6g7h8i9j0k1l2'],
+    ['numeric id', 999],
+  ])('answers nothing, so a 404, for an unknown %s', async (_, id) => {
+    expect(await findOne(id, 'content-api')).toBeNull();
+  });
+
+  it('still ignores fields and populate in the query', async () => {
+    const result = await findOne(DOCUMENT_ID, 'content-api', { fields: ['title'], populate: '*' });
+
+    expect(fake.db.query(ASSET_MODEL).findOne).toHaveBeenCalledWith({ where: { documentId: DOCUMENT_ID } });
+    expect(result).toMatchObject({ title: 'A video', asset_id: 'ast_1', isReady: true });
+  });
+
+  it('keeps the admin users out of the content API answer', async () => {
+    await fake.db.query(ASSET_MODEL).update({
+      where: { id: assetRowId },
+      data: { createdBy: ADMIN_USER, updatedBy: ADMIN_USER },
+    });
+
+    const result = await findOne(DOCUMENT_ID, 'content-api');
+
+    expect(result).toMatchObject({ id: assetRowId, title: 'A video' });
+    expect(result).not.toHaveProperty('createdBy');
+    expect(result).not.toHaveProperty('updatedBy');
+  });
+
+  it('answers the admin page, which sends the numeric id, with the stored row', async () => {
+    const stored = fake.db.rows(ASSET_MODEL).find((row) => row.id === assetRowId);
+
+    expect(await findOne(assetRowId, 'admin')).toEqual(stored);
+  });
+});
 
 describe('Update a video', () => {
   it('stores the description and tags, trimming each tag', async () => {
