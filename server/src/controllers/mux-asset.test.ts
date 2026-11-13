@@ -58,11 +58,15 @@ describe('Update a video', () => {
     expect((await update({ title: 'x'.repeat(255) })).stored.title).toHaveLength(255);
   });
 
-  it('trims tags, drops blanks, splits on commas and drops repeats that differ only in case', async () => {
-    const { ctx, stored } = await update({ tags: [' a ', 'A', 'a', 'b,c', '  ', '', 'C', 'Mux'] });
+  it('trims tags, drops blanks and drops repeats that differ only in case', async () => {
+    const { ctx, stored } = await update({ tags: [' a ', 'A', 'a', 'b', '  ', '', 'B', 'Mux'] });
 
     expect(ctx.status).not.toBe(400);
-    expect(stored.tags).toEqual(['a', 'b', 'c', 'Mux']);
+    expect(stored.tags).toEqual(['a', 'b', 'Mux']);
+  });
+
+  it('keeps commas inside a tag, as Robots writes them', async () => {
+    expect((await update({ tags: ['$15,000', 'Mux'] })).stored.tags).toEqual(['$15,000', 'Mux']);
   });
 
   it.each([
@@ -179,6 +183,37 @@ describe('Create a video', () => {
       description: 'Described',
       tags: ['a'],
       robots_outputs: { summarize: { job_id: 'rjob_1', title: 'Summary' } },
+    });
+  });
+
+  it('fills the description and tags from the newest summary, whichever workflow wrote it', async () => {
+    const completed = {
+      asset_id: 'ast_9',
+      status: 'completed',
+      detail_loaded: true,
+      parameters: { asset_id: 'ast_9' },
+    };
+    fake.db.seed(ROBOT_JOB_MODEL, [
+      jobRow({
+        ...completed,
+        mux_updated_at: '2026-10-01T00:00:00.000Z',
+        outputs: { description: 'Summarized', tags: ['older'] },
+      }),
+      jobRow({
+        ...completed,
+        mux_id: 'rjob_2',
+        workflow: 'analyze-structure',
+        mux_updated_at: '2026-10-02T00:00:00.000Z',
+        outputs: { summary: 'Analyzed', tags: ['newer'] },
+      }),
+    ]);
+
+    await create({ title: 'Imported', asset_id: 'ast_9' });
+
+    expect(created()).toMatchObject({
+      description: 'Analyzed',
+      tags: ['newer'],
+      robots_outputs: { summarize: { job_id: 'rjob_1' }, analyze_structure: { job_id: 'rjob_2' } },
     });
   });
 });

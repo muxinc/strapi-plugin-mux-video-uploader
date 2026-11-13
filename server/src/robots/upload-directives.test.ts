@@ -51,6 +51,19 @@ describe('resolveUploadDirectives', () => {
     ]);
   });
 
+  it('still attaches a configured v0 directive, which Mux runs on v0, and asks for a v1 copy in the log', async () => {
+    mux.client.robots.directives.list.mockResolvedValue(
+      page([
+        { id: 'drv_a', name: 'Summarize', _links: { self: { href: '/robots/v0/directives/drv_a' } } },
+        { id: 'drv_b', name: 'Moderate', _links: { self: { href: '/robots/v1/directives/drv_b' } } },
+      ])
+    );
+
+    expect(await resolveUploadDirectives({ canRunRobots: false })).toEqual([{ id: 'drv_a' }, { id: 'drv_b' }]);
+    expect(fake.log.warn).toHaveBeenCalledTimes(1);
+    expect(fake.log.warn).toHaveBeenCalledWith(expect.stringMatching(/Attaching Robots v0 directives: drv_a\./));
+  });
+
   it("drops ids Mux doesn't have when the listing is complete, and names them in the log", async () => {
     configure(['drv_a', 'drv_doesnotexist']);
 

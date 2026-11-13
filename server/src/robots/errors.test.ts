@@ -67,6 +67,24 @@ describe('classifyMuxError', () => {
     expect(classifyMuxError(error, 'run').message).toBe('That directive is already running on this video.');
   });
 
+  it.each(['asset_not_ready', 'track_not_ready'])(
+    "says a 409 %s is about something not ready yet, in Mux's words, not a run already going",
+    (type) => {
+      expect(classifyMuxError(muxApiError(409, body(type, ['Asset is not ready.'])), 'job')).toMatchObject({
+        reason: 'not-ready',
+        message: 'Asset is not ready.',
+      });
+    }
+  );
+
+  it("explains a run's 404 as a directive Robots v1 doesn't have, which a v0 one is", () => {
+    expect(classifyMuxError(muxApiError(404, body('not_found', ['Directive not found'])), 'run')).toMatchObject({
+      reason: 'mux-error',
+      message: expect.stringContaining('create a v1 copy of it in the Mux dashboard'),
+    });
+    expect(classifyMuxError(muxApiError(404, body('not_found', ['Job not found']))).message).toBe('Job not found');
+  });
+
   it("keeps Mux's words for a conflict on anything but a create", () => {
     const error = muxApiError(409, body('conflict', ['This job has already finished.']));
 

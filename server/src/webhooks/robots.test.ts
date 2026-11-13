@@ -126,6 +126,106 @@ describe('Robots events captured from Mux', () => {
   });
 });
 
+/** Both namespaces as Mux delivered them after the cutover to v1 (see `__fixtures__/README.md`). */
+const v1Events: Array<{ type: string; data: Job }> = readFileSync(
+  join(__dirname, '__fixtures__', 'robots-events.v1.ndjson'),
+  'utf8'
+)
+  .trim()
+  .split('\n')
+  .map((line) => JSON.parse(line));
+
+const v1Captured = (type: string) => v1Events.find((event) => event.type === type)!;
+
+const V1_ASSET = 'lpvutTD5CeB7Ezi669NdvATi5WaPaEWKuyjYF6NjllE';
+
+describe('Robots v1 and v0 events captured from Mux side by side', () => {
+  const dispatchAll = async () => {
+    for (const event of v1Events) expect(await dispatchWebhookEvent(event)).toBe('handled');
+    await refreshesSettled();
+  };
+  const stored = (muxId: string) => rows().find((row) => row.mux_id === muxId);
+
+  it('stores every job and run once, on the version whose event it came in', async () => {
+    seedAsset(fake.db, { asset_id: V1_ASSET });
+
+    await dispatchAll();
+
+    const muxIds = new Set(v1Events.map((event) => event.data.id));
+    expect(rows()).toHaveLength(muxIds.size);
+    for (const event of v1Events) {
+      expect(stored(event.data.id)).toMatchObject({
+        api_version: event.type.startsWith('robots.v1.') ? 'v1' : 'v0',
+        asset_id: V1_ASSET,
+      });
+    }
+  });
+
+  it('reads a v1 run by its subject_id, and links the v1 job it dispatched', async () => {
+    seedAsset(fake.db, { asset_id: V1_ASSET });
+
+    await dispatchAll();
+
+    const run = v1Captured('robots.v1.directive_run.completed').data;
+    const [node] = run.node_states;
+    expect(node).toMatchObject({ workflow: 'summarize', status: 'dispatched' });
+    expect(stored(run.id)).toMatchObject({
+      is_directive_run: true,
+      status: 'completed',
+      directive_id: run.directive_id,
+      run_data: expect.objectContaining({ node_states: run.node_states }),
+    });
+    expect(stored(node.job_id)).toMatchObject({
+      api_version: 'v1',
+      status: 'completed',
+      directive_id: run.directive_id,
+      directive_run_id: run.id,
+    });
+  });
+
+  it('keeps a v0 directive working after the upgrade: its run and the v0 job it dispatched', async () => {
+    seedAsset(fake.db, { asset_id: V1_ASSET });
+
+    await dispatchAll();
+
+    const run = v1Captured('robots.directive_run.completed').data;
+    expect(stored(run.id)).toMatchObject({ api_version: 'v0', status: 'completed' });
+    expect(stored(run.node_states[0].job_id)).toMatchObject({
+      api_version: 'v0',
+      workflow: 'edit-captions',
+      status: 'completed',
+      outputs: expect.objectContaining({ uploaded_track_id: expect.any(String) }),
+    });
+  });
+
+  it("keeps Analyze structure's title, summary and tags on the asset, and fills its empty description", async () => {
+    const { id } = seedAsset(fake.db, { asset_id: V1_ASSET });
+
+    await dispatchAll();
+
+    const { data } = v1Captured('robots.v1.job.analyze_structure.completed');
+    expect(asset(id)?.robots_outputs?.analyze_structure).toEqual({
+      job_id: data.id,
+      completed_at: isoAt(data.updated_at),
+      title: data.outputs.title,
+      summary: data.outputs.summary,
+      tags: data.outputs.tags,
+    });
+    expect(asset(id)?.robots_outputs?.analyze_structure).not.toHaveProperty('scenes');
+    expect(asset(id)?.description).toBeTruthy();
+  });
+
+  it('settles on completed whatever order the states arrive in', async () => {
+    seedAsset(fake.db, { asset_id: V1_ASSET });
+    const keyMoments = v1Events.filter((event) => event.type.startsWith('robots.v1.job.find_key_moments.'));
+
+    // Mux delivered processing before pending; completed comes first here too.
+    for (const event of [...keyMoments].reverse()) await dispatchWebhookEvent(event);
+
+    expect(stored(keyMoments[0].data.id)).toMatchObject({ status: 'completed', detail_loaded: true });
+  });
+});
+
 describe('Robots job webhooks', () => {
   it('keeps one row per job as it goes from pending to processing to completed', async () => {
     seedAsset(fake.db);
@@ -237,6 +337,15 @@ describe('Robots outputs on the asset', () => {
         },
       },
     });
+  });
+
+  it('keeps commas inside a tag', async () => {
+    const { id } = seedAsset(fake.db);
+    const withComma = job({ id: 'rjob_1', status: 'completed', updated_at: T0 + 60, outputs: { tags: ['$15,000'] } });
+
+    await dispatchWebhookEvent(jobEvent(withComma));
+
+    expect(asset(id)).toMatchObject({ tags: ['$15,000'], robots_outputs: { summarize: { tags: ['$15,000'] } } });
   });
 
   it('fills description and tags only while they are empty', async () => {

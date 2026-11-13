@@ -37,9 +37,13 @@ export async function callMux<T>(request: () => Promise<T>): Promise<T> {
   try {
     return await request();
   } catch (error) {
+    if (error instanceof RobotsRequestError) throw error;
     throw RobotsRequestError.fromMux(classifyMuxError(error));
   }
 }
+
+/** Mux's 404, which Robots also answers for a job or directive asked for through the other version. */
+export const isNotFound = (error: unknown) => isRecord(error) && error.status === 404;
 
 /** The human-readable part of a Mux error body. Mux's endpoints put it in different places, so each is tried in turn. */
 export function readMuxErrorMessage(body: unknown, status: number): string {
@@ -100,6 +104,22 @@ export function classifyMuxError(error: unknown, kind: 'job' | 'run' | 'other' =
   }
 
   if (type === 'robots_units_limit_exceeded') return { reason: 'units-exhausted', message, status };
+
+  // Runs start on v1, whose route answers a v0 directive as an id it doesn't have.
+  if (status === 404 && kind === 'run') {
+    return {
+      reason: 'mux-error',
+      message:
+        `${message.replace(/\.?$/, '.')} If it's a Robots v0 directive, Strapi can't run it: create a v1 copy of ` +
+        'it in the Mux dashboard.',
+      status,
+    };
+  }
+
+  // Robots v1 also answers 409 while the video, or the caption track a workflow reads, is being prepared.
+  if (status === 409 && (type === 'asset_not_ready' || type === 'track_not_ready')) {
+    return { reason: 'not-ready', message, status };
+  }
 
   // A conflict means "already running" only for creates; anything else keeps Mux's own words.
   if (status === 409) {

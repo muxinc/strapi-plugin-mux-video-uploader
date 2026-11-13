@@ -24,6 +24,8 @@ export default {
   },
   attributes: {
     mux_id: { type: 'string', maxLength: 255 },
+    // No default: rows stored before 4.0 stay null, which reads as "unknown", never as v1.
+    api_version: { type: 'string', maxLength: 8 },
     is_directive_run: { type: 'boolean', default: false },
     workflow: { type: 'string', maxLength: 64 },
     directive_id: { type: 'string', maxLength: 255 },
