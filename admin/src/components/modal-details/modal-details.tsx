@@ -294,6 +294,8 @@ export default function ModalDetails(props: {
     const now = current.current;
     // A request can outlive the video it was made for: the modal may show another one by now.
     if (!fresh || fresh.id !== now.latestAsset?.id) return;
+    // Nothing new: closing then needn't reload the list.
+    if (JSON.stringify(fresh) === JSON.stringify(now.latestAsset)) return;
 
     if (playbackSignature(fresh) !== playbackSignature(now.latestAsset)) setPlayerKey((key) => key + 1);
     setLatestAsset(fresh);
@@ -318,6 +320,18 @@ export default function ModalDetails(props: {
       // The next re-read, or reopening the video, catches up.
     }
   };
+
+  // The list may have loaded before Robots finished: a directive started on upload writes its summary
+  // minutes later, and Apply summary reads it from this copy. By id from the props, since the reset
+  // above hasn't reached `latestAsset` yet.
+  React.useEffect(() => {
+    const assetId = props.muxAsset?.id;
+    if (!isOpen || assetId === undefined) return;
+
+    robotsApi.getAsset(assetId).then(showFreshAsset, () => {
+      // The copy from the list stays.
+    });
+  }, [isOpen, props.muxAsset?.id]);
 
   const createPlaybackId = async () => {
     if (!latestAsset) return;

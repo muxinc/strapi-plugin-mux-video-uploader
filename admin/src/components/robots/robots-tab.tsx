@@ -132,6 +132,8 @@ export default function RobotsTab({ muxAsset, canRun, onAssetMayHaveChanged }: R
       setReadError(result.error);
       placeholderChecksLeft.current = PLACEHOLDER_CHECKS;
       showRows(result.rows);
+      // The sync writes onto the video any result it stored without, such as a directive's summary.
+      onAssetMayHaveChangedRef.current();
     } catch (error) {
       setReadError(robotsErrorOf(error));
     } finally {
@@ -443,7 +445,16 @@ export default function RobotsTab({ muxAsset, canRun, onAssetMayHaveChanged }: R
         blockedReason={directiveWaiting}
       />
 
-      <OutputViewer row={viewing} api={api} onRowLoaded={replaceRow} onClose={() => setViewing(undefined)} />
+      <OutputViewer
+        row={viewing}
+        api={api}
+        onRowLoaded={(row) => {
+          replaceRow(row);
+          // Reading a job's output from Mux also writes it onto the video.
+          onAssetMayHaveChangedRef.current();
+        }}
+        onClose={() => setViewing(undefined)}
+      />
     </Flex>
   );
 }
