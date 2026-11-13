@@ -39,18 +39,15 @@ const find = async (ctx: Context) => {
   return { items, totalCount };
 };
 
+/** A row's numeric `id`, which the admin page and older clients send. Strapi's `documentId`s start with a letter. */
+const NUMERIC_ID = /^\d+$/;
+
 const findOne = async (ctx: Context) => {
   const { documentId } = ctx.params;
+  const where = NUMERIC_ID.test(String(documentId)) ? { id: documentId } : { documentId };
 
   // Doesn't read the query, so the row comes back without relations.
-  const entity = await strapi.db.query(ASSET_MODEL).findOne({
-    where: { id: documentId },
-  });
-  // @ts-ignore - v5 migration
-  // return await strapi.documents(ASSET_MODEL).findOne({
-  //   documentId,
-  //   filters: ctx.query,
-  // });
+  const entity = await strapi.db.query(ASSET_MODEL).findOne({ where });
 
   return sanitizeMuxAssetOutput(ctx, entity);
 };
