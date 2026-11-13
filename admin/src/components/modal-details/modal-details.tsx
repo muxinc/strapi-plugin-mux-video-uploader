@@ -344,8 +344,11 @@ export default function ModalDetails(props: {
     setCreatingPlaybackId(true);
     try {
       const { asset } = await robotsApi.createPlaybackId(assetId);
-      latestRead.current += 1;
-      showFreshAsset(asset);
+      // Only while the modal still shows this video: another one's reads must still land.
+      if (current.current.latestAsset?.id === assetId) {
+        latestRead.current += 1;
+        showFreshAsset(asset);
+      }
     } catch (error) {
       toggleNotification({ type: 'danger', message: robotsErrorOf(error).message });
     } finally {
