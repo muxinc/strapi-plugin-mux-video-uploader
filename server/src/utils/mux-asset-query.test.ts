@@ -161,18 +161,23 @@ describe('Admin API query', () => {
     const query = await getMuxAssetQuery(
       adminContext({
         start: '0',
-        limit: '10',
-        sort: 'createdAt',
-        order: 'desc',
-        filters: { $or: [{ title: { $containsi: 'demo' } }, { asset_id: { $containsi: 'demo' } }] },
+        limit: '12',
+        sort: 'createdAt:desc',
+        filters: { title: { $containsi: 'a&b #1+2' } },
       })
     );
 
     expect(query).toEqual({
-      filters: { $or: [{ title: { $containsi: 'demo' } }, { asset_id: { $containsi: 'demo' } }] },
-      sort: 'createdAt',
+      filters: { title: { $containsi: 'a&b #1+2' } },
+      sort: 'createdAt:desc',
       fields: undefined,
     });
+  });
+
+  it('drops the order parameter that older admin pages sent', async () => {
+    const query = await getMuxAssetQuery(adminContext({ sort: 'createdAt', order: 'desc' }));
+
+    expect(query).toEqual({ filters: undefined, sort: 'createdAt', fields: undefined });
   });
 
   it.each([
@@ -187,7 +192,10 @@ describe('Admin API query', () => {
   });
 });
 
-describe('Pagination', () => {
+describe.each([
+  ['Content API', contentApiContext],
+  ['Admin API', adminContext],
+])('%s pagination', (_, context) => {
   it.each([
     ['nothing', {}, { start: 0, limit: 100 }],
     ['start and limit', { start: '20', limit: '10' }, { start: 20, limit: 10 }],
@@ -197,19 +205,43 @@ describe('Pagination', () => {
     ['a limit of -1', { limit: '-1' }, { start: 0, limit: 100 }],
     ['a limit below 1', { limit: '0' }, { start: 0, limit: 1 }],
   ])('turns %s into a bounded window', (_, query, expected) => {
-    expect(getPagination(query)).toEqual(expected);
-  });
-
-  it('caps at api.rest.maxLimit when the app sets it', () => {
-    installStrapi({ maxLimit: 25 });
-
-    expect(getPagination({ limit: '1000' })).toEqual({ start: 0, limit: 25 });
+    expect(getPagination(context(query))).toEqual(expected);
   });
 
   it.each([
     ['a limit that is not an integer', { limit: 'abc' }],
     ['offset and page pagination together', { start: '0', page: '1' }],
   ])('refuses %s with a 400', (_, query) => {
-    expect(() => getPagination(query)).toThrow(expect.objectContaining({ name: 'ValidationError', status: 400 }));
+    expect(() => getPagination(context(query))).toThrow(
+      expect.objectContaining({ name: 'ValidationError', status: 400 })
+    );
+  });
+});
+
+describe('api.rest.maxLimit', () => {
+  it('caps the content API', () => {
+    installStrapi({ maxLimit: 25 });
+
+    expect(getPagination(contentApiContext({ limit: '1000' }))).toEqual({ start: 0, limit: 25 });
+  });
+
+  it('caps the content API below the 12 videos a page of the admin asks for', () => {
+    installStrapi({ maxLimit: 2 });
+
+    expect(getPagination(contentApiContext({ start: '12', limit: '12' }))).toEqual({ start: 12, limit: 2 });
+  });
+
+  it('leaves the admin page its 12 videos a page', () => {
+    installStrapi({ maxLimit: 2 });
+
+    expect(getPagination(adminContext({ start: '0', limit: '12' }))).toEqual({ start: 0, limit: 12 });
+    expect(getPagination(adminContext({ start: '12', limit: '12' }))).toEqual({ start: 12, limit: 12 });
+  });
+
+  it('never lifts the admin API above 100', () => {
+    installStrapi({ maxLimit: 1000 });
+
+    expect(getPagination(adminContext({ limit: '1000' }))).toEqual({ start: 0, limit: 100 });
+    expect(getPagination(contentApiContext({ limit: '1000' }))).toEqual({ start: 0, limit: 1000 });
   });
 });

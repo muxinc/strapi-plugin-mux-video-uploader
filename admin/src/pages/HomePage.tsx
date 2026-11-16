@@ -59,9 +59,13 @@ const HomePage = () => {
   const [page, setPage] = React.useState<number>();
   const [isDetailsOpen, setIsDetailsOpen] = React.useState<boolean>(false);
   const [detailsTab, setDetailsTab] = React.useState<DetailsTab>('details');
+  // Each page change and search keystroke starts a request; only the latest one may fill the list.
+  const latestRequest = React.useRef(0);
 
   const loadMuxAssets = async () => {
     if (page === undefined) return;
+
+    const request = ++latestRequest.current;
 
     let searchVector: SearchVector | undefined = undefined;
 
@@ -80,12 +84,12 @@ const HomePage = () => {
 
     switch (searchVector?.field) {
       case 'by_title': {
-        search = `&filters[title][$containsi]=${searchVector.value}`;
+        search = `&filters[title][$containsi]=${encodeURIComponent(searchVector.value)}`;
 
         break;
       }
       case 'by_asset_id': {
-        search = `&filters[asset_id][$containsi]=${searchVector.value}`;
+        search = `&filters[asset_id][$containsi]=${encodeURIComponent(searchVector.value)}`;
 
         break;
       }
@@ -94,9 +98,12 @@ const HomePage = () => {
       }
     }
 
-    const sort = sortVector ? `&sort=${sortVector.field}&order=${sortVector.desc ? 'desc' : 'asc'}` : '';
+    const sort = sortVector ? `&sort=${sortVector.field}:${sortVector.desc ? 'desc' : 'asc'}` : '';
 
     const { data } = await get(`${PLUGIN_ID}/mux-asset?start=${start}${sort}&limit=${pageLimit}${search}`);
+
+    // A newer request started while this one was in flight: its response is the one to show.
+    if (request !== latestRequest.current) return;
 
     const pages = Math.ceil(data.totalCount / pageLimit);
 
@@ -112,16 +119,12 @@ const HomePage = () => {
     });
   }, []);
 
+  // The URL holds the page and the search: a new search sets `page=1` there itself.
   React.useEffect(() => {
     const { page, field, value } = Object.fromEntries(new URLSearchParams(location.search));
     setSearchField((field as SearchField) || SearchField.BY_TITLE);
     setSearchValue(value);
-
-    if ((value && value !== searchValue) || (field && field !== searchField)) {
-      setPage(1);
-    } else {
-      setPage(parseInt(page) || 1);
-    }
+    setPage(parseInt(page) || 1);
   }, [location]);
 
   React.useEffect(() => {
@@ -168,12 +171,18 @@ const HomePage = () => {
 
   const handleOnUploadNewAssetModalClose = () => loadMuxAssets();
 
+  // A new search starts on page 1. Both go through the URL, which the pagination links build on.
   const handleOnSearchFieldChange = (field: string) => {
-    navigate(appendQueryParameter(location, { field }));
+    navigate(appendQueryParameter(location, { field, page: '1' }));
   };
 
   const handleOnSearchValueChange = (event: any) => {
-    navigate(appendQueryParameter(location, { value: event?.target.value || '' }));
+    navigate(appendQueryParameter(location, { value: event?.target.value || '', page: '1' }));
+  };
+
+  // Like a search, so the pagination links don't bring the old search back.
+  const handleOnSearchClear = () => {
+    navigate(appendQueryParameter(location, { value: '', page: '1' }));
   };
 
   const handleOnMuxAssetClick = (muxAsset: MuxAsset) => {
@@ -231,7 +240,7 @@ const HomePage = () => {
                   <Box width="100%">
                     <Searchbar
                       name="searchbar"
-                      onClear={() => setSearchValue('')}
+                      onClear={handleOnSearchClear}
                       value={searchValue}
                       onChange={handleOnSearchValueChange}
                       clearLabel={formatMessage({
