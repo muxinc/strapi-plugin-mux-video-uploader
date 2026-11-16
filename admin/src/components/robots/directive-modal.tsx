@@ -15,6 +15,7 @@ import type { RobotsDirectiveSummary } from '../../../../types/robots';
 import { useRobotsIntl } from './intl';
 import { PricingLink, ROBOTS_DASHBOARD_URL } from './links';
 import Note from './note';
+import V0DirectivesNote from './v0-directives-note';
 
 interface DirectiveModalProps {
   isOpen: boolean;
@@ -23,8 +24,33 @@ interface DirectiveModalProps {
   onRun: (directiveId: string) => Promise<unknown>;
   videoTitle: string;
   directives?: RobotsDirectiveSummary[];
+  /** `defaultDirectiveIds`, so the note can name the v0 directives every upload still gets. */
+  configuredDirectiveIds: string[];
   loadError?: string;
   blockedReason?: string;
+}
+
+/** Runs start on Robots v1, which can't run a v0 directive. */
+const isV0 = (directive: RobotsDirectiveSummary) => directive.api_version === 'v0';
+
+/** Ids are long enough to push the list past the window, so an option shows one only to tell apart directives that share a name. */
+function optionNames(directives: RobotsDirectiveSummary[]) {
+  const counts = new Map<string, number>();
+  directives.forEach(({ name }) => counts.set(name, (counts.get(name) ?? 0) + 1));
+
+  return new Map(
+    directives.map(({ id, name }) => [id, name !== id && (counts.get(name) ?? 0) > 1 ? `${name} (${id})` : name])
+  );
+}
+
+/** A long name is cut, never the version after it. */
+function OptionLabel({ name, version }: { name: string; version?: string }) {
+  return (
+    <span style={{ display: 'flex', gap: '0.5rem', maxWidth: 'min(36rem, 70vw)' }}>
+      <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</span>
+      {version && <span style={{ flexShrink: 0 }}>· {version}</span>}
+    </span>
+  );
 }
 
 export default function DirectiveModal({
@@ -33,6 +59,7 @@ export default function DirectiveModal({
   onRun,
   videoTitle,
   directives,
+  configuredDirectiveIds,
   loadError,
   blockedReason,
 }: DirectiveModalProps) {
@@ -50,7 +77,9 @@ export default function DirectiveModal({
 
   if (!isOpen) return null;
 
-  const directive = directives?.find((candidate) => candidate.id === selected);
+  const directive = directives?.find((candidate) => candidate.id === selected && !isV0(candidate));
+  const v0Directives = (directives ?? []).filter(isV0);
+  const names = optionNames(directives ?? []);
 
   const run = async () => {
     if (!directive || submitting) return;
@@ -105,6 +134,11 @@ export default function DirectiveModal({
             </Note>
           ) : (
             <Flex direction="column" alignItems="stretch" gap={3}>
+              {v0Directives.length > 0 && (
+                <V0DirectivesNote
+                  configured={v0Directives.filter((candidate) => configuredDirectiveIds.includes(candidate.id))}
+                />
+              )}
               <Field.Root name="directive">
                 <Field.Label>{t('Robots.directive.label', 'Directive')}</Field.Label>
                 <SingleSelect
@@ -113,8 +147,11 @@ export default function DirectiveModal({
                   onChange={(next: string | number) => setSelected(String(next))}
                 >
                   {directives.map((candidate) => (
-                    <SingleSelectOption key={candidate.id} value={candidate.id}>
-                      {candidate.name === candidate.id ? candidate.id : `${candidate.name} (${candidate.id})`}
+                    <SingleSelectOption key={candidate.id} value={candidate.id} disabled={isV0(candidate)}>
+                      <OptionLabel
+                        name={names.get(candidate.id) ?? candidate.name}
+                        version={isV0(candidate) ? t('Robots.directive.v0-option', 'Robots v0') : undefined}
+                      />
                     </SingleSelectOption>
                   ))}
                 </SingleSelect>

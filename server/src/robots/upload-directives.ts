@@ -1,3 +1,4 @@
+import { ROBOTS_DIRECTIVES_MIGRATION_URL } from '../../../types/robots';
 import { Config, getService } from '../utils';
 import { RobotsRequestError } from './errors';
 
@@ -45,6 +46,17 @@ export async function resolveUploadDirectives({
         );
         attached = chosen.filter((id) => known.has(id));
       }
+    }
+
+    // Still attached: Mux runs a v0 directive on v0 until its sunset, whatever the plugin calls.
+    const v0Ids = directives
+      .filter((directive) => directive.api_version === 'v0' && attached.includes(directive.id))
+      .map((directive) => directive.id);
+    if (v0Ids.length > 0) {
+      strapi.log.warn(
+        `[mux-video-uploader] Attaching Robots v0 directives: ${v0Ids.join(', ')}. Robots v0 is deprecated: ` +
+          `create a v1 copy of each in the Mux dashboard and put its id in defaultDirectiveIds (${ROBOTS_DIRECTIVES_MIGRATION_URL}).`
+      );
     }
   } catch (error) {
     if (error instanceof RobotsRequestError && (error.reason === 'scope-missing' || error.reason === 'not-enabled')) {

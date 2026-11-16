@@ -26,6 +26,17 @@ export const formatMs = (ms: unknown) => {
 export const formatSeconds = (seconds: unknown) =>
   typeof seconds === 'number' && Number.isFinite(seconds) ? formatMs(seconds * 1000) : EM_DASH;
 
+/**
+ * A media time from v1 seconds or v0 milliseconds, read by key rather than by version so nothing is
+ * converted twice: `start_time` is seconds, `start_ms` milliseconds.
+ */
+export function formatMediaTime(item: Record<string, unknown>, secondsKey: string, msKey: string) {
+  return typeof item[secondsKey] === 'number' ? formatSeconds(item[secondsKey]) : formatMs(item[msKey]);
+}
+
+export const formatMediaRange = (item: Record<string, unknown>) =>
+  `${formatMediaTime(item, 'start_time', 'start_ms')} – ${formatMediaTime(item, 'end_time', 'end_ms')}`;
+
 export const formatScore = (score: unknown) => (typeof score === 'number' ? score.toFixed(2) : EM_DASH);
 
 export const formatText = (value: unknown) =>

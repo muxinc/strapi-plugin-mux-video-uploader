@@ -4,7 +4,7 @@ import { ArrowClockwise, Play } from '@strapi/icons';
 import { useNotification } from '@strapi/strapi/admin';
 
 import type { MuxAsset } from '../../../../server/src/content-types/mux-asset/types';
-import { assetContextFrom, readyCaptionTracks, RobotsWorkflow } from '../../../../types/robots-catalog';
+import { assetContextFrom, RobotsWorkflow } from '../../../../types/robots-catalog';
 import {
   isPlaceholderRow,
   isUnfinishedRow,
@@ -60,13 +60,6 @@ export default function RobotsTab({ muxAsset, canRun, onAssetMayHaveChanged }: R
   const videoTitle = muxAsset.title || muxAsset.asset_id || '';
   const assetData = muxAsset.asset_data as Parameters<typeof assetContextFrom>[0];
   const context = React.useMemo(() => assetContextFrom(assetData), [assetData]);
-  const captions = React.useMemo(
-    () =>
-      readyCaptionTracks(
-        assetData as { tracks?: Array<{ id?: string; name?: string; language_code?: string }> }
-      ).flatMap((track) => (track.id ? [{ id: track.id, name: track.name, language_code: track.language_code }] : [])),
-    [assetData]
-  );
 
   const [loading, setLoading] = React.useState(ready);
   const [capability, setCapability] = React.useState<RobotsCapability>('ok');
@@ -78,6 +71,7 @@ export default function RobotsTab({ muxAsset, canRun, onAssetMayHaveChanged }: R
   const [runOpen, setRunOpen] = React.useState(false);
   const [directiveOpen, setDirectiveOpen] = React.useState(false);
   const [directives, setDirectives] = React.useState<RobotsDirectiveSummary[]>();
+  const [configuredDirectiveIds, setConfiguredDirectiveIds] = React.useState<string[]>([]);
   const [directivesError, setDirectivesError] = React.useState<string>();
   const [viewing, setViewing] = React.useState<RobotsJobRow>();
   const [cancellingIds, setCancellingIds] = React.useState<number[]>([]);
@@ -138,6 +132,8 @@ export default function RobotsTab({ muxAsset, canRun, onAssetMayHaveChanged }: R
       setReadError(result.error);
       placeholderChecksLeft.current = PLACEHOLDER_CHECKS;
       showRows(result.rows);
+      // The sync writes onto the video any result it stored without, such as a directive's summary.
+      onAssetMayHaveChangedRef.current();
     } catch (error) {
       setReadError(robotsErrorOf(error));
     } finally {
@@ -155,6 +151,10 @@ export default function RobotsTab({ muxAsset, canRun, onAssetMayHaveChanged }: R
   const jobs = rows.filter((row) => !row.is_directive_run);
   const runs = rows.filter((row) => row.is_directive_run);
   const placeholders = rows.filter(isPlaceholderRow);
+  // A row stored before 4.0 doesn't know its version, and those versions ran on v0.
+  const runningV0Workflows = jobs.flatMap((row) =>
+    row.api_version !== 'v1' && row.workflow && isUnfinishedRow(row, nowMs) ? [row.workflow] : []
+  );
 
   const shouldPoll =
     ready &&
@@ -205,6 +205,7 @@ export default function RobotsTab({ muxAsset, canRun, onAssetMayHaveChanged }: R
     setDirectivesError(undefined);
     try {
       const result = await api.listDirectives();
+      setConfiguredDirectiveIds(result.defaultDirectiveIds);
       if (result.error) {
         directivesRequested.current = false;
         setDirectivesError(result.error.message);
@@ -236,6 +237,7 @@ export default function RobotsTab({ muxAsset, canRun, onAssetMayHaveChanged }: R
         setUnitsExhausted(true);
         break;
       case 'invalid-parameters':
+      case 'not-ready':
         // The run form shows it: under the form, or as a toast if the form has gone.
         break;
       default:
@@ -279,11 +281,16 @@ export default function RobotsTab({ muxAsset, canRun, onAssetMayHaveChanged }: R
   const runWorkflow = (workflow: RobotsWorkflow, values: Record<string, unknown>) =>
     createRun(() => api.createJob(muxAsset.id, workflow, values), handleCreateError);
 
-  // The directive modal has no form to show `invalid-parameters` under, so it's reported like any other refusal.
+  // The directive modal has no form to show a refusal under, so it's reported like any other.
   const runDirective = (directiveId: string) =>
     createRun(
       () => api.runDirective(muxAsset.id, directiveId),
-      (error) => handleCreateError(error.reason === 'invalid-parameters' ? { ...error, reason: 'mux-error' } : error)
+      (error) =>
+        handleCreateError(
+          error.reason === 'invalid-parameters' || error.reason === 'not-ready'
+            ? { ...error, reason: 'mux-error' }
+            : error
+        )
     );
 
   const notifyError = (error: unknown) => toggleNotification({ type: 'danger', message: robotsErrorOf(error).message });
@@ -423,7 +430,7 @@ export default function RobotsTab({ muxAsset, canRun, onAssetMayHaveChanged }: R
         onRun={runWorkflow}
         videoTitle={videoTitle}
         context={context}
-        captions={captions}
+        runningV0Workflows={runningV0Workflows}
         blockedReason={workflowWaiting}
       />
 
@@ -433,11 +440,21 @@ export default function RobotsTab({ muxAsset, canRun, onAssetMayHaveChanged }: R
         onRun={runDirective}
         videoTitle={videoTitle}
         directives={directives}
+        configuredDirectiveIds={configuredDirectiveIds}
         loadError={directivesError}
         blockedReason={directiveWaiting}
       />
 
-      <OutputViewer row={viewing} api={api} onRowLoaded={replaceRow} onClose={() => setViewing(undefined)} />
+      <OutputViewer
+        row={viewing}
+        api={api}
+        onRowLoaded={(row) => {
+          replaceRow(row);
+          // Reading a job's output from Mux also writes it onto the video.
+          onAssetMayHaveChangedRef.current();
+        }}
+        onClose={() => setViewing(undefined)}
+      />
     </Flex>
   );
 }

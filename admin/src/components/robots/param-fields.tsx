@@ -17,6 +17,7 @@ import { Plus, Trash } from '@strapi/icons';
 
 import {
   asTaxonomyValue,
+  captionLanguages,
   emptyQuestionRow,
   emptyTaxonomyRow,
   groupFieldsBySection,
@@ -31,25 +32,19 @@ import {
 import { SUPPORTED_MUX_LANGUAGES } from '../../../../types/shared-types';
 import { useRobotsIntl } from './intl';
 
-export interface CaptionTrackOption {
-  id: string;
-  name?: string;
-  language_code?: string;
-}
-
 interface ParamFieldsProps {
   fields: RobotsParamField[];
   values: Record<string, unknown>;
   onChange: (name: string, value: unknown) => void;
-  /** Ready caption tracks only. */
-  captions: CaptionTrackOption[];
   context: RobotsAssetContext;
 }
+
+const languageLabel = (code: string) => SUPPORTED_MUX_LANGUAGES.find((language) => language.code === code)?.label;
 
 /** The design system's selects can't hold an empty value, so "leave this out" travels as this. */
 export const NONE = '__none__';
 
-export default function ParamFields({ fields, values, onChange, captions, context }: ParamFieldsProps) {
+export default function ParamFields({ fields, values, onChange, context }: ParamFieldsProps) {
   const { t } = useRobotsIntl();
 
   if (fields.length === 0) {
@@ -63,7 +58,7 @@ export default function ParamFields({ fields, values, onChange, captions, contex
   const visible = fields.filter((field) => isFieldVisible(field, values, context));
   const renderFields = (group: RobotsParamField[]) =>
     group.map((field) => (
-      <ParamField key={field.name} field={field} value={values[field.name]} onChange={onChange} captions={captions} />
+      <ParamField key={field.name} field={field} value={values[field.name]} onChange={onChange} context={context} />
     ));
 
   return (
@@ -97,15 +92,16 @@ function ParamField({
   field,
   value,
   onChange,
-  captions,
+  context,
 }: {
   field: RobotsParamField;
   value: unknown;
   onChange: (name: string, value: unknown) => void;
-  captions: CaptionTrackOption[];
+  context: RobotsAssetContext;
 }) {
   const { t } = useRobotsIntl();
   const set = (next: unknown) => onChange(field.name, next);
+  const captions = context.captionTracks ?? [];
 
   const wrap = (control: React.ReactNode, error?: string) => (
     <Field.Root name={field.name} hint={field.helpText} required={field.isRequired} error={error}>
@@ -164,23 +160,53 @@ function ParamField({
           : undefined
       );
 
-    case 'language': {
-      const current = typeof value === 'string' && value ? value : field.isRequired ? undefined : NONE;
+    case 'language':
       return wrap(
-        <SingleSelect
-          value={current}
-          placeholder={t('Robots.form.choose-language', 'Choose a language')}
-          onChange={(next: string | number) => set(next === NONE ? '' : String(next))}
-        >
-          {!field.isRequired && (
-            <SingleSelectOption value={NONE}>{t('Robots.form.language-empty', 'Leave empty')}</SingleSelectOption>
-          )}
-          {SUPPORTED_MUX_LANGUAGES.map((language) => (
-            <SingleSelectOption key={language.code} value={language.code}>
-              {`${language.label} (${language.code})`}
-            </SingleSelectOption>
-          ))}
-        </SingleSelect>
+        <LanguageSelect
+          field={field}
+          value={value}
+          onChange={set}
+          options={SUPPORTED_MUX_LANGUAGES.map((language) => ({
+            value: language.code,
+            label: `${language.label} (${language.code})`,
+          }))}
+        />
+      );
+
+    case 'captionLanguage': {
+      // Without the asset's tracks there's nothing to choose from, so any language can be typed in.
+      if (!context.captionTracks) {
+        return wrap(
+          <TextInput
+            placeholder="en"
+            value={(value as string) ?? ''}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => set(event.target.value)}
+          />
+        );
+      }
+
+      const languages = captionLanguages(context);
+      if (languages.length === 0) {
+        return wrap(
+          <Typography variant="omega" textColor="neutral600">
+            {t('Robots.form.no-caption-languages', 'This video has no ready caption track.')}
+          </Typography>
+        );
+      }
+
+      return wrap(
+        <LanguageSelect
+          field={field}
+          value={value}
+          onChange={set}
+          options={languages.map((code) => {
+            const names = captions.filter((track) => track.language_code === code).map((track) => track.name);
+            return {
+              value: code,
+              label: [`${languageLabel(code) ?? code} (${code})`, ...names.filter(Boolean)].join(' · '),
+            };
+          })}
+        />
       );
     }
 
@@ -247,6 +273,9 @@ function ParamField({
     case 'replacements':
       return wrap(<ReplacementsInput value={value} onChange={set} />);
 
+    case 'speakerReplacements':
+      return wrap(<ReplacementsInput value={value} onChange={set} speakers />);
+
     case 'taxonomy':
       return wrap(<TaxonomyInput field={field} value={value} onChange={set} />);
 
@@ -260,6 +289,38 @@ function ParamField({
         />
       );
   }
+}
+
+function LanguageSelect({
+  field,
+  value,
+  onChange,
+  options,
+}: {
+  field: RobotsParamField;
+  value: unknown;
+  onChange: (next: string) => void;
+  options: Array<{ value: string; label: string }>;
+}) {
+  const { t } = useRobotsIntl();
+  const current = typeof value === 'string' && value ? value : field.isRequired ? undefined : NONE;
+
+  return (
+    <SingleSelect
+      value={current}
+      placeholder={t('Robots.form.choose-language', 'Choose a language')}
+      onChange={(next: string | number) => onChange(next === NONE ? '' : String(next))}
+    >
+      {!field.isRequired && (
+        <SingleSelectOption value={NONE}>{t('Robots.form.language-empty', 'Leave empty')}</SingleSelectOption>
+      )}
+      {options.map((option) => (
+        <SingleSelectOption key={option.value} value={option.value}>
+          {option.label}
+        </SingleSelectOption>
+      ))}
+    </SingleSelect>
+  );
 }
 
 const splitLines = (text: string) =>
@@ -396,7 +457,16 @@ function QuestionsInput({ value, onChange }: { value: unknown; onChange: (next: 
   );
 }
 
-function ReplacementsInput({ value, onChange }: { value: unknown; onChange: (next: ReplacementRow[]) => void }) {
+/** Find/replace rows. `speakers` rows rename speaker labels, which Mux matches without a case option. */
+function ReplacementsInput({
+  value,
+  onChange,
+  speakers = false,
+}: {
+  value: unknown;
+  onChange: (next: ReplacementRow[]) => void;
+  speakers?: boolean;
+}) {
   const { t } = useRobotsIntl();
   const rows = Array.isArray(value) ? (value as ReplacementRow[]) : [];
   const patch = (index: number, changes: Partial<ReplacementRow>) => onChange(patchAt(rows, index, changes));
@@ -407,26 +477,42 @@ function ReplacementsInput({ value, onChange }: { value: unknown; onChange: (nex
         <Flex key={index} gap={2} alignItems="center">
           <Box grow={1}>
             <TextInput
-              aria-label={t('Robots.form.find', 'Find text {number}', { number: index + 1 })}
-              placeholder={t('Robots.form.find-placeholder', 'Find')}
+              aria-label={
+                speakers
+                  ? t('Robots.form.speaker', 'Speaker label {number}', { number: index + 1 })
+                  : t('Robots.form.find', 'Find text {number}', { number: index + 1 })
+              }
+              placeholder={
+                speakers ? t('Robots.form.speaker-placeholder', 'Speaker 1') : t('Robots.form.find-placeholder', 'Find')
+              }
               value={row.find}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => patch(index, { find: event.target.value })}
             />
           </Box>
           <Box grow={1}>
             <TextInput
-              aria-label={t('Robots.form.replace', 'Replacement text {number}', { number: index + 1 })}
-              placeholder={t('Robots.form.replace-placeholder', 'Replace with')}
+              aria-label={
+                speakers
+                  ? t('Robots.form.speaker-name', 'Name for speaker label {number}', { number: index + 1 })
+                  : t('Robots.form.replace', 'Replacement text {number}', { number: index + 1 })
+              }
+              placeholder={
+                speakers
+                  ? t('Robots.form.speaker-name-placeholder', 'Name')
+                  : t('Robots.form.replace-placeholder', 'Replace with')
+              }
               value={row.replace}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => patch(index, { replace: event.target.value })}
             />
           </Box>
-          <Checkbox
-            checked={row.caseSensitive}
-            onCheckedChange={(next: boolean | 'indeterminate') => patch(index, { caseSensitive: next === true })}
-          >
-            {t('Robots.form.case-sensitive', 'Case sensitive')}
-          </Checkbox>
+          {!speakers && (
+            <Checkbox
+              checked={row.caseSensitive}
+              onCheckedChange={(next: boolean | 'indeterminate') => patch(index, { caseSensitive: next === true })}
+            >
+              {t('Robots.form.case-sensitive', 'Case sensitive')}
+            </Checkbox>
+          )}
           <RemoveButton
             label={t('Robots.form.remove-replacement', 'Remove replacement {number}', { number: index + 1 })}
             onClick={() => onChange(removeAt(rows, index))}
@@ -434,8 +520,17 @@ function ReplacementsInput({ value, onChange }: { value: unknown; onChange: (nex
         </Flex>
       ))}
       <Box>
-        <AddButton onClick={() => onChange([...rows, { find: '', replace: '', caseSensitive: false }])}>
-          {t('Robots.form.add-replacement', 'Add replacement')}
+        <AddButton
+          onClick={() =>
+            onChange([
+              ...rows,
+              speakers ? { find: '', replace: '' } : { find: '', replace: '', caseSensitive: false },
+            ] as ReplacementRow[])
+          }
+        >
+          {speakers
+            ? t('Robots.form.add-speaker', 'Add speaker name')
+            : t('Robots.form.add-replacement', 'Add replacement')}
         </AddButton>
       </Box>
     </Flex>

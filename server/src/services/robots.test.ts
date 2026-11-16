@@ -7,11 +7,11 @@ import {
   muxTimeoutError,
   page,
   resetMux,
-  WORKFLOW_SDK_KEYS,
+  V1_WORKFLOW_SDK_KEYS,
 } from '../../../test/mux';
 import { isoAt, jobRow, muxJob, placeholderRow, seedAsset, unixNow } from '../../../test/fixtures';
 import { FakeStrapi, installFakeStrapi } from '../../../test/strapi';
-import { ROBOTS_CATALOG } from '../../../types/robots-catalog';
+import { isRunnableWorkflow, ROBOTS_CATALOG } from '../../../types/robots-catalog';
 import { MuxError } from '@mux/ts/core/error';
 
 import { RobotsRequestError } from '../robots/errors';
@@ -61,6 +61,7 @@ describe('creating a job', () => {
       expect.objectContaining({
         id: result.row.id,
         mux_id: 'rjob_1',
+        api_version: 'v1',
         status: 'pending',
         workflow: 'summarize',
         asset_id: 'ast_1',
@@ -167,8 +168,8 @@ describe('creating a job', () => {
   it('takes the request back when a webhook gave its placeholder to another job of the workflow', async () => {
     mux.client.robots.jobs.summarize.create.mockImplementation(async () => {
       await dispatchWebhookEvent({
-        type: 'robots.job.summarize.processing',
-        'robots.job.summarize.processing': muxJob({ id: 'rjob_elsewhere', status: 'processing' }),
+        type: 'robots.v1.job.summarize.processing',
+        data: muxJob({ id: 'rjob_elsewhere', status: 'processing' }),
       });
       return muxJob({ status: 'pending' });
     });
@@ -223,48 +224,128 @@ describe('creating a job', () => {
     });
   });
 
-  it.each(ROBOTS_CATALOG.map((definition) => [definition.key, definition.sdkKey] as const))(
-    'creates %s through client.robots.jobs.%s',
-    async (workflow, sdkKey) => {
-      const values: Record<string, Record<string, unknown>> = {
-        'edit-captions': { track_id: 'trk_en', censor_profanity: true },
-        'translate-captions': { track_id: 'trk_en', to_language_code: 'es' },
-        'translate-audio': { to_language_code: 'es' },
-        'ask-questions': { questions: [{ question: 'Is there a dog?', answerOptions: '', answerMode: 'options' }] },
-      };
-      mux.client.robots.jobs[sdkKey].create.mockResolvedValue(muxJob({ workflow }));
+  it.each(
+    ROBOTS_CATALOG.filter(isRunnableWorkflow).map(
+      (definition) => [definition.key, definition.sdkKey as (typeof V1_WORKFLOW_SDK_KEYS)[number]] as const
+    )
+  )('creates %s through Robots v1, client.robots.jobs.%s', async (workflow, sdkKey) => {
+    const values: Record<string, Record<string, unknown>> = {
+      'edit-captions': { track_id: 'trk_en', censor_profanity: true },
+      'translate-captions': { track_id: 'trk_en', output_language_code: 'es' },
+      'translate-audio': { output_language_code: 'es' },
+      'ask-questions': { questions: [{ question: 'Is there a dog?', answerOptions: '', answerMode: 'options' }] },
+    };
+    mux.client.robots.jobs[sdkKey].create.mockResolvedValue(muxJob({ workflow }));
 
-      await robots().createJob({ userId: 7, muxAsset, workflow, values: values[workflow] ?? {} });
+    const result = await robots().createJob({ userId: 7, muxAsset, workflow, values: values[workflow] ?? {} });
 
-      expect(mux.client.robots.jobs[sdkKey].create).toHaveBeenCalledWith({
-        parameters: expect.objectContaining({ asset_id: 'ast_1' }),
-        passthrough: ROBOTS_PASSTHROUGH,
-      });
-      for (const other of WORKFLOW_SDK_KEYS.filter((key) => key !== sdkKey)) {
-        expect(mux.client.robots.jobs[other].create).not.toHaveBeenCalled();
-      }
+    expect(result.row.api_version).toBe('v1');
+    expect(mux.client.robots.jobs[sdkKey].create).toHaveBeenCalledWith({
+      parameters: expect.objectContaining({ asset_id: 'ast_1' }),
+      passthrough: ROBOTS_PASSTHROUGH,
+    });
+    for (const other of V1_WORKFLOW_SDK_KEYS.filter((key) => key !== sdkKey)) {
+      expect(mux.client.robots.jobs[other].create).not.toHaveBeenCalled();
     }
-  );
+    expect(mux.client.robotsV0.jobs[sdkKey].create).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['find-scenes', "Find scenes isn't in Robots v1. Run Analyze structure instead."],
+    ['generate-contextual-text', "Generate contextual text can't be run from Strapi."],
+  ])('refuses %s, which Strapi only lists, without calling Mux', async (workflow, message) => {
+    await expect(robots().createJob({ userId: 7, muxAsset, workflow, values: {} })).rejects.toMatchObject({
+      status: 400,
+      reason: 'invalid-parameters',
+      message,
+    });
+    expect(mux.client.robotsV0.jobs.findScenes.create).not.toHaveBeenCalled();
+    expect(rows()).toEqual([]);
+  });
+
+  it('keeps a v0 webhook from claiming the placeholder of a v1 create', async () => {
+    mux.client.robots.jobs.summarize.create.mockImplementation(async () => {
+      await dispatchWebhookEvent({
+        type: 'robots.job.summarize.pending',
+        data: muxJob({ id: 'rjob_v0', status: 'pending' }),
+      });
+      return muxJob({ status: 'pending' });
+    });
+
+    const result = await createSummarize();
+
+    const v0Row = rows().find((row) => row.mux_id === 'rjob_v0');
+    expect(v0Row).toMatchObject({ api_version: 'v0' });
+    expect(v0Row?.request_id ?? null).toBeNull();
+    expect(result.row).toMatchObject({ mux_id: 'rjob_1', api_version: 'v1', requested_by: 7 });
+  });
+
+  it('lets a v1 event claim a placeholder whose version is unknown, as after a rollback to 3.2.0', async () => {
+    const requestedAt = unixNow() - 5;
+    fake.db.seed(ROBOT_JOB_MODEL, [placeholderRow({ status: 'requested', requested_at: isoAt(requestedAt) })]);
+
+    await dispatchWebhookEvent({
+      type: 'robots.v1.job.summarize.processing',
+      data: muxJob({ id: 'rjob_v1', status: 'processing', created_at: requestedAt + 1 }),
+    });
+
+    expect(rows()).toEqual([expect.objectContaining({ mux_id: 'rjob_v1', api_version: 'v1', requested_by: 1 })]);
+  });
+
+  it("reports a 409 for a video or caption track that isn't ready yet in Mux's words", async () => {
+    mux.client.robots.jobs.summarize.create.mockRejectedValue(
+      muxApiError(409, {
+        error: { type: 'asset_not_ready', messages: ['Asset is not ready (status: "preparing").'] },
+      })
+    );
+
+    await expect(createSummarize()).rejects.toMatchObject({
+      reason: 'not-ready',
+      message: 'Asset is not ready (status: "preparing").',
+    });
+    expect(rows()).toEqual([]);
+  });
 });
 
 describe('running a directive', () => {
-  it('sends only the asset id, and records the run', async () => {
+  it('sends only the asset id to Robots v1, and records the run', async () => {
     mux.client.robots.directives.runs.create.mockResolvedValue({
-      run_id: 'drvrun_1',
-      status: 'pending',
+      id: 'drvrun_1',
+      directive_id: 'drv_1',
       subject_id: 'ast_1',
+      status: 'pending',
+      node_states: [],
+      started_at: unixNow(),
+      completed_at: null,
     });
 
     const result = await robots().runDirective({ userId: 7, muxAsset, directiveId: 'drv_1' });
 
     expect(mux.client.robots.directives.runs.create).toHaveBeenCalledWith('drv_1', { asset_id: 'ast_1' });
+    expect(mux.client.robotsV0.directives.runs.create).not.toHaveBeenCalled();
     expect(result.row).toMatchObject({
       mux_id: 'drvrun_1',
+      api_version: 'v1',
       is_directive_run: true,
       directive_id: 'drv_1',
+      asset_id: 'ast_1',
       status: 'pending',
       requested_by: 7,
     });
+  });
+
+  it("explains the 404 Robots v1 answers for a v0 directive, and doesn't fall back to v0", async () => {
+    mux.client.robots.directives.runs.create.mockRejectedValue(
+      muxApiError(404, { error: { type: 'not_found', messages: ['Directive not found'] } })
+    );
+
+    await expect(robots().runDirective({ userId: 7, muxAsset, directiveId: 'drv_v0' })).rejects.toMatchObject({
+      reason: 'mux-error',
+      message:
+        "Directive not found. If it's a Robots v0 directive, Strapi can't run it: create a v1 copy of it in the Mux dashboard.",
+    });
+    expect(mux.client.robotsV0.directives.runs.create).not.toHaveBeenCalled();
+    expect(rows()).toEqual([]);
   });
 
   it('runs a directive whose id is as long as the ones Mux issues', async () => {
@@ -324,6 +405,40 @@ describe('syncing an asset', () => {
         ['rjob_b', 'processing', false],
       ])
     );
+  });
+
+  it('stores the jobs of both versions with the version their link names, Find scenes included', async () => {
+    const link = (version: string, workflow: string, id: string) => ({
+      self: { href: `/robots/${version}/jobs/${workflow}/${id}` },
+    });
+    fake.db.seed(ROBOT_JOB_MODEL, [jobRow({ mux_id: 'rjob_stored', status: 'completed' })]);
+    mux.client.robots.jobs.list.mockResolvedValue(
+      page([
+        muxJob({ id: 'rjob_v1', status: 'completed', _links: link('v1', 'summarize', 'rjob_v1') }),
+        muxJob({
+          id: 'rjob_scenes',
+          workflow: 'find-scenes',
+          status: 'completed',
+          _links: link('v0', 'find-scenes', 'rjob_scenes'),
+        }),
+        muxJob({
+          id: 'rjob_text',
+          workflow: 'generate-contextual-text',
+          status: 'completed',
+          _links: link('v1', 'generate-contextual-text', 'rjob_text'),
+        }),
+        muxJob({ id: 'rjob_stored', status: 'completed', _links: link('v0', 'summarize', 'rjob_stored') }),
+      ])
+    );
+
+    await robots().syncAsset(muxAsset);
+
+    expect(Object.fromEntries(rows().map((row) => [row.mux_id, [row.workflow, row.api_version]]))).toEqual({
+      rjob_stored: ['summarize', 'v0'],
+      rjob_v1: ['summarize', 'v1'],
+      rjob_scenes: ['find-scenes', 'v0'],
+      rjob_text: ['generate-contextual-text', 'v1'],
+    });
   });
 
   it("takes units from the job's full copy, not from the list, which can say 0 for a finished job", async () => {
@@ -448,18 +563,22 @@ describe('other job actions', () => {
   const stored = (overrides: Record<string, unknown> = {}) =>
     fake.db.seed(ROBOT_JOB_MODEL, [jobRow(overrides)])[0] as any;
 
-  it('cancels a running job and records the status Mux answers with', async () => {
-    const row = stored();
-    mux.client.robots.jobs.cancel.mockResolvedValue(muxJob({ status: 'cancelled', parameters: undefined }));
+  it.each([
+    ['v1', 'robots'],
+    ['v0', 'robotsV0'],
+  ] as const)('cancels a running %s job on its own version', async (apiVersion, resource) => {
+    const row = stored({ api_version: apiVersion });
+    mux.client[resource].jobs.cancel.mockResolvedValue(muxJob({ status: 'cancelled', parameters: undefined }));
 
     const result = await robots().cancelJob(row);
 
-    expect(mux.client.robots.jobs.cancel).toHaveBeenCalledWith('rjob_1');
-    expect(result).toMatchObject({ id: row.id, status: 'cancelled' });
+    expect(mux.client[resource].jobs.cancel).toHaveBeenCalledWith('rjob_1');
+    expect(mux.client[resource === 'robots' ? 'robotsV0' : 'robots'].jobs.cancel).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ id: row.id, status: 'cancelled', api_version: apiVersion });
   });
 
-  it('reads a finished job once and stores its outputs and units', async () => {
-    const row = stored({ status: 'completed', detail_loaded: false });
+  it('reads a finished v1 job once and stores its outputs and units', async () => {
+    const row = stored({ status: 'completed', detail_loaded: false, api_version: 'v1' });
     mux.client.robots.jobs.summarize.retrieve.mockResolvedValue(
       muxJob({
         status: 'completed',
@@ -471,6 +590,7 @@ describe('other job actions', () => {
     const result = await robots().loadJobDetail(row);
 
     expect(mux.client.robots.jobs.summarize.retrieve).toHaveBeenCalledWith('rjob_1');
+    expect(mux.client.robotsV0.jobs.summarize.retrieve).not.toHaveBeenCalled();
     expect(result).toMatchObject({ units_consumed: 5, detail_loaded: true, outputs: { title: 'Loaded' } });
     expect(fake.db.rows(ASSET_MODEL)[0]).toMatchObject({ description: 'From Mux', tags: ['a'] });
 
@@ -478,28 +598,77 @@ describe('other job actions', () => {
     expect(mux.client.robots.jobs.summarize.retrieve).toHaveBeenCalledTimes(1);
   });
 
+  it('reads a row stored before 4.0 on v0, then on v1 after a 404, and records the version that answered', async () => {
+    const row = stored({ status: 'completed', detail_loaded: false });
+    mux.client.robotsV0.jobs.summarize.retrieve.mockRejectedValue(
+      muxApiError(404, { error: { type: 'not_found', messages: ['Job not found'] } })
+    );
+    mux.client.robots.jobs.summarize.retrieve.mockResolvedValue(
+      muxJob({ status: 'completed', units_consumed: 5, outputs: { title: 'From a v1 directive' } })
+    );
+
+    const result = await robots().loadJobDetail(row);
+
+    expect(mux.client.robotsV0.jobs.summarize.retrieve).toHaveBeenCalledWith('rjob_1');
+    expect(mux.client.robots.jobs.summarize.retrieve).toHaveBeenCalledWith('rjob_1');
+    expect(result).toMatchObject({ api_version: 'v1', detail_loaded: true });
+  });
+
+  it("stops at the first answer that isn't a 404", async () => {
+    const row = stored({ status: 'completed', detail_loaded: false });
+    mux.client.robotsV0.jobs.summarize.retrieve.mockRejectedValue(muxApiError(500, { error: { messages: ['Boom'] } }));
+
+    await expect(robots().loadJobDetail(row)).rejects.toMatchObject({ reason: 'mux-error', message: 'Boom' });
+    expect(mux.client.robots.jobs.summarize.retrieve).not.toHaveBeenCalled();
+  });
+
+  it('says Mux deleted a job that neither version has', async () => {
+    const row = stored({ status: 'completed', detail_loaded: false });
+    const notFound = muxApiError(404, { error: { type: 'not_found', messages: ['Job not found'] } });
+    mux.client.robotsV0.jobs.summarize.retrieve.mockRejectedValue(notFound);
+    mux.client.robots.jobs.summarize.retrieve.mockRejectedValue(notFound);
+
+    await expect(robots().loadJobDetail(row)).rejects.toMatchObject({
+      reason: 'mux-error',
+      message: expect.stringContaining('deletes jobs 30 days after'),
+    });
+  });
+
+  it('reads a Find scenes job only on v0, which is the only version that has it', async () => {
+    const row = stored({ workflow: 'find-scenes', status: 'completed', detail_loaded: false });
+    mux.client.robotsV0.jobs.findScenes.retrieve.mockResolvedValue(
+      muxJob({ workflow: 'find-scenes', status: 'completed', units_consumed: 9, outputs: { scenes: [] } })
+    );
+
+    expect(await robots().loadJobDetail(row)).toMatchObject({ api_version: 'v0', units_consumed: 9 });
+  });
+
   it("doesn't read an unfinished job", async () => {
     const row = stored();
 
     expect(await robots().loadJobDetail(row)).toEqual(row);
     expect(mux.client.robots.jobs.summarize.retrieve).not.toHaveBeenCalled();
+    expect(mux.client.robotsV0.jobs.summarize.retrieve).not.toHaveBeenCalled();
   });
 
-  it('lists directives and says when the listing may be incomplete', async () => {
+  it('lists the directives of both versions through v1, with the version each one belongs to', async () => {
     mux.client.robots.directives.list.mockResolvedValue(
       page([
-        { id: 'drv_1', name: 'Summarize and moderate' },
-        { id: 'drv_2', name: '' },
+        { id: 'drv_1', name: 'Summarize and moderate', _links: { self: { href: '/robots/v1/directives/drv_1' } } },
+        { id: 'drv_2', name: '', _links: { self: { href: '/robots/v0/directives/drv_2' } } },
+        { id: 'drv_3', name: 'No links' },
       ])
     );
 
     expect(await robots().listDirectives()).toEqual({
       directives: [
-        { id: 'drv_1', name: 'Summarize and moderate' },
-        { id: 'drv_2', name: 'drv_2' },
+        { id: 'drv_1', name: 'Summarize and moderate', api_version: 'v1' },
+        { id: 'drv_2', name: 'drv_2', api_version: 'v0' },
+        { id: 'drv_3', name: 'No links' },
       ],
       complete: true,
     });
+    expect(mux.client.robotsV0.directives.list).not.toHaveBeenCalled();
 
     mux.client.robots.directives.list.mockResolvedValue(
       page(Array.from({ length: 100 }, (_, i) => ({ id: `drv_${i}`, name: 'x' })))

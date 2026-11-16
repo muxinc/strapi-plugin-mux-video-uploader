@@ -16,6 +16,7 @@ import {
   confirmWarnings,
   DEFAULT_ROBOTS_WORKFLOW,
   defaultParamValues,
+  isRunnableWorkflow,
   ROBOTS_CATALOG,
   ROBOTS_CATALOG_BY_KEY,
   ROBOTS_CATEGORIES,
@@ -29,18 +30,26 @@ import {
 import { Translate, useRobotsIntl } from './intl';
 import { PricingLink } from './links';
 import Note from './note';
-import ParamFields, { CaptionTrackOption } from './param-fields';
+import ParamFields from './param-fields';
 
 export type RunOutcome = { ok: true } | { ok: false; reason: string; message: string };
+
+/** Refusals the person can act on from the form: they keep it open, with Mux's message under it. */
+const FORM_REFUSALS = ['invalid-parameters', 'not-ready'];
+
+const RUNNABLE_WORKFLOWS = ROBOTS_CATALOG.filter(isRunnableWorkflow);
 
 interface RunModalProps {
   isOpen: boolean;
   onClose: () => void;
-  /** A refusal for `invalid-parameters` keeps the modal open, with Mux's message under the form. */
   onRun: (workflow: RobotsWorkflow, values: Record<string, unknown>) => Promise<RunOutcome>;
   videoTitle: string;
   context: RobotsAssetContext;
-  captions: CaptionTrackOption[];
+  /**
+   * Workflows with a Robots v0 job still running on this video. Robots v1 doesn't see those as
+   * duplicates, so a run starts a second job and both are billed.
+   */
+  runningV0Workflows: string[];
   blockedReason?: string;
 }
 
@@ -88,13 +97,27 @@ function UnavailableWorkflowNote({
   );
 }
 
+function RunningV0Note({ label }: { label: string }) {
+  const { t } = useRobotsIntl();
+
+  return (
+    <Note variant="warning" title={t('Robots.run.running-v0.title', 'A Robots v0 job is still running')}>
+      {t(
+        'Robots.run.running-v0.body',
+        '{workflow} is already running on this video from Robots v0, started before Strapi was upgraded or by a v0 directive. Robots v1 starts a second job anyway, and both are billed.',
+        { workflow: label }
+      )}
+    </Note>
+  );
+}
+
 export default function RunModal({
   isOpen,
   onClose,
   onRun,
   videoTitle,
   context,
-  captions,
+  runningV0Workflows,
   blockedReason,
 }: RunModalProps) {
   const { t } = useRobotsIntl();
@@ -140,7 +163,7 @@ export default function RunModal({
 
     const outcome = await onRun(selected, values);
 
-    if (!outcome.ok && outcome.reason === 'invalid-parameters') {
+    if (!outcome.ok && FORM_REFUSALS.includes(outcome.reason)) {
       if (!shown.current) {
         toggleNotification({ type: 'danger', message: outcome.message });
         return;
@@ -196,6 +219,7 @@ export default function RunModal({
                   {note}
                 </Note>
               ))}
+              {runningV0Workflows.includes(definition.key) && <RunningV0Note label={definition.label} />}
               {warnings.map((warning) => (
                 <Note key={warning.title} variant="danger" title={warning.title}>
                   {warning.body}
@@ -211,7 +235,7 @@ export default function RunModal({
                   onChange={(next: string | number) => setSelected(next as RobotsWorkflow)}
                 >
                   {ROBOTS_CATEGORIES.flatMap((category) =>
-                    ROBOTS_CATALOG.filter((candidate) => candidate.category === category).map((candidate) => (
+                    RUNNABLE_WORKFLOWS.filter((candidate) => candidate.category === category).map((candidate) => (
                       <SingleSelectOption key={candidate.key} value={candidate.key}>
                         {`${category} · ${candidate.label}`}
                       </SingleSelectOption>
@@ -241,11 +265,12 @@ export default function RunModal({
                 <Note key={note}>{note}</Note>
               ))}
 
+              {runningV0Workflows.includes(definition.key) && <RunningV0Note label={definition.label} />}
+
               <ParamFields
                 fields={definition.params}
                 values={values}
                 onChange={(name, value) => setValues((previous) => ({ ...previous, [name]: value }))}
-                captions={captions}
                 context={context}
               />
 

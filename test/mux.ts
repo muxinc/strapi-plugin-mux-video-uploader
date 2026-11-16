@@ -2,13 +2,15 @@ import { vi } from 'vitest';
 import { APIConnectionError, APIConnectionTimeoutError, APIError } from '@mux/ts/core/error';
 
 // Listed by hand rather than read from the catalog, so a misspelt `sdkKey` there fails the tests.
-export const WORKFLOW_SDK_KEYS = [
+// `client.robots` is Robots v1, which has no Find Scenes; `client.robotsV0` has every workflow.
+export const V1_WORKFLOW_SDK_KEYS = [
+  'analyzeStructure',
   'askQuestions',
   'editCaptions',
   'findBestThumbnails',
   'findKeyMoments',
-  'findScenes',
   'generateChapters',
+  'generateContextualText',
   'generateEngagementInsights',
   'generatePremiumCaptions',
   'moderate',
@@ -17,14 +19,19 @@ export const WORKFLOW_SDK_KEYS = [
   'translateCaptions',
 ] as const;
 
-function createMuxClient() {
-  const workflows = Object.fromEntries(
-    WORKFLOW_SDK_KEYS.map((key) => [key, { create: vi.fn(), retrieve: vi.fn() }])
-  ) as Record<
-    (typeof WORKFLOW_SDK_KEYS)[number],
-    { create: ReturnType<typeof vi.fn>; retrieve: ReturnType<typeof vi.fn> }
-  >;
+export const V0_WORKFLOW_SDK_KEYS = [...V1_WORKFLOW_SDK_KEYS, 'findScenes'] as const;
 
+type WorkflowMock = { create: ReturnType<typeof vi.fn>; retrieve: ReturnType<typeof vi.fn> };
+
+const workflowMocks = <K extends string>(keys: readonly K[]) =>
+  Object.fromEntries(keys.map((key) => [key, { create: vi.fn(), retrieve: vi.fn() }])) as Record<K, WorkflowMock>;
+
+const robotsMock = <K extends string>(keys: readonly K[]) => ({
+  jobs: { list: vi.fn(), cancel: vi.fn(), ...workflowMocks(keys) },
+  directives: { list: vi.fn(), runs: { create: vi.fn(), list: vi.fn(), retrieve: vi.fn() } },
+});
+
+function createMuxClient() {
   return {
     video: {
       assets: {
@@ -38,10 +45,8 @@ function createMuxClient() {
       },
       uploads: { create: vi.fn() },
     },
-    robots: {
-      jobs: { list: vi.fn(), cancel: vi.fn(), ...workflows },
-      directives: { list: vi.fn(), runs: { create: vi.fn(), list: vi.fn(), retrieve: vi.fn() } },
-    },
+    robots: robotsMock(V1_WORKFLOW_SDK_KEYS),
+    robotsV0: robotsMock(V0_WORKFLOW_SDK_KEYS),
     webhooks: { unwrap: vi.fn() },
     jwt: { signPlaybackId: vi.fn() },
   };

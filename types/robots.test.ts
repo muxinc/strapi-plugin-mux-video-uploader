@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  apiVersionFromHref,
   firstErrorMessage,
   isUnfinishedRow,
+  newestSummary,
   placeholderPhase,
   ROBOTS_CONFIRM_GRACE_MS,
   ROBOTS_STALE_MS,
@@ -125,5 +127,49 @@ describe('temporaryDownloads', () => {
     );
 
     expect(downloads.map((download) => download.key)).toEqual(['temporary_srt_url', 'temporary_words_url']);
+  });
+});
+
+describe('apiVersionFromHref', () => {
+  it('reads the version from the route a v1 listing links to', () => {
+    expect(apiVersionFromHref('/robots/v0/jobs/summarize/rjob_1')).toBe('v0');
+    expect(apiVersionFromHref('/robots/v1/directives/drv_1')).toBe('v1');
+    expect(apiVersionFromHref('/robots/v2/jobs/x')).toBeUndefined();
+    expect(apiVersionFromHref(undefined)).toBeUndefined();
+  });
+});
+
+describe('newestSummary', () => {
+  const summarize = { job_id: 'rjob_a', completed_at: '2026-11-01T10:00:00.000Z', title: 'S', description: 'Desc' };
+  const analyzed = { job_id: 'rjob_b', completed_at: '2026-11-02T10:00:00.000Z', title: 'A', summary: 'Sum' };
+
+  it("picks the newer of Summarize and Analyze structure, reading the latter's summary as the description", () => {
+    expect(newestSummary({ summarize, analyze_structure: analyzed })).toEqual({
+      source: 'analyze-structure',
+      job_id: 'rjob_b',
+      completed_at: analyzed.completed_at,
+      title: 'A',
+      description: 'Sum',
+    });
+    expect(
+      newestSummary({
+        summarize: { ...summarize, completed_at: '2026-11-03T10:00:00.000Z' },
+        analyze_structure: analyzed,
+      })
+    ).toMatchObject({ source: 'summarize', description: 'Desc' });
+  });
+
+  it('breaks a tie on the job id, so every order settles the same', () => {
+    const same = '2026-11-02T10:00:00.000Z';
+    expect(
+      newestSummary({ summarize: { ...summarize, completed_at: same }, analyze_structure: analyzed })?.job_id
+    ).toBe('rjob_b');
+  });
+
+  it('works with either one alone, and with none', () => {
+    expect(newestSummary({ summarize })?.source).toBe('summarize');
+    expect(newestSummary({ analyze_structure: analyzed })?.source).toBe('analyze-structure');
+    expect(newestSummary({ moderate: { job_id: 'rjob_m' } })).toBeUndefined();
+    expect(newestSummary(null)).toBeUndefined();
   });
 });

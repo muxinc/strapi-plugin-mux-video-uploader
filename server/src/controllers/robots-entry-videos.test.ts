@@ -57,7 +57,45 @@ describe('entry videos for Apply summary', () => {
       populate: { video: true, createdBy: { fields: ['id'] } },
     });
     expect(ctx.body).toEqual({
-      fields: [{ name: 'video', videos: [{ id: 4, title: 'A video', asset_id: 'ast_1', summary }] }],
+      fields: [
+        {
+          name: 'video',
+          videos: [{ id: 4, title: 'A video', asset_id: 'ast_1', summary: { ...summary, source: 'summarize' } }],
+        },
+      ],
+    });
+  });
+
+  it('offers a newer Analyze structure result instead, its summary as the description', async () => {
+    findOne.mockResolvedValue({
+      documentId: 'doc_1',
+      video: {
+        id: 4,
+        title: 'A video',
+        asset_id: 'ast_1',
+        robots_outputs: {
+          summarize: { ...summary, completed_at: '2026-11-01T10:00:00.000Z' },
+          analyze_structure: {
+            job_id: 'rjob_2',
+            completed_at: '2026-11-02T10:00:00.000Z',
+            title: 'Analyzed',
+            summary: 'From the structure',
+            tags: ['b'],
+          },
+        },
+      },
+    });
+    const ctx = request({ model: ARTICLE, documentId: 'doc_1' });
+
+    await robots.entryVideos(ctx as any);
+
+    expect(ctx.body.fields[0].videos[0].summary).toEqual({
+      source: 'analyze-structure',
+      job_id: 'rjob_2',
+      completed_at: '2026-11-02T10:00:00.000Z',
+      title: 'Analyzed',
+      description: 'From the structure',
+      tags: ['b'],
     });
   });
 

@@ -56,7 +56,7 @@ export default function AutomationSection({
   if (configured.length === 0) return null;
 
   const known = knownIdsOf(listing);
-  const nameOf = (id: string) => listing.directives.find((directive) => directive.id === id)?.name;
+  const directiveOf = (id: string) => listing.directives.find((directive) => directive.id === id);
   const checked = value ?? configured;
 
   return (
@@ -82,6 +82,7 @@ export default function AutomationSection({
           <Flex direction="column" alignItems="stretch" gap={3}>
             {configured.map((id) => {
               const unknown = !!known && !known.has(id);
+              const directive = directiveOf(id);
               return (
                 <Box key={id} style={{ overflowWrap: 'anywhere' }}>
                   <Checkbox
@@ -91,12 +92,20 @@ export default function AutomationSection({
                       onChange(next === true ? [...checked, id] : checked.filter((entry) => entry !== id))
                     }
                   >
-                    {nameOf(id) ?? id}
+                    {directive?.name ?? id}
                   </Checkbox>
                   <Box paddingLeft={6}>
                     <Typography variant="pi" textColor="neutral600">
                       {id}
                     </Typography>
+                    {directive?.api_version === 'v0' && (
+                      <Typography variant="pi" textColor="warning600" tag="p">
+                        {t(
+                          'Robots.upload.v0',
+                          'A Robots v0 directive. It still runs, on v0; an admin can replace it with a v1 copy.'
+                        )}
+                      </Typography>
+                    )}
                     {unknown && (
                       <Typography variant="pi" textColor="danger600" tag="p">
                         {t(

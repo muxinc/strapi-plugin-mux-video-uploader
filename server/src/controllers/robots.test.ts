@@ -172,7 +172,7 @@ describe('Robots routes', () => {
   );
 
   it('loads a job from Mux only when asked to', async () => {
-    const [row] = fake.db.seed(ROBOT_JOB_MODEL, [jobRow({ status: 'completed' })]);
+    const [row] = fake.db.seed(ROBOT_JOB_MODEL, [jobRow({ status: 'completed', api_version: 'v1' })]);
     mux.client.robots.jobs.summarize.retrieve.mockResolvedValue(
       muxJob({ status: 'completed', units_consumed: 2, outputs: { title: 'T' } })
     );

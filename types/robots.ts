@@ -2,6 +2,20 @@ import { z } from 'zod';
 
 // Field names follow Mux's payloads (snake_case), like the rest of the plugin's stored data.
 
+/**
+ * The Robots API version a job, run or directive belongs to. Mux keeps each on the version that
+ * created it, and reading it through the other one is a 404.
+ */
+export type RobotsApiVersion = 'v0' | 'v1';
+
+/** Robots v1 links each listed job and directive to its own route, such as `/robots/v0/jobs/…`. */
+export function apiVersionFromHref(href: unknown): RobotsApiVersion | undefined {
+  const version = typeof href === 'string' ? /^\/robots\/(v0|v1)\//.exec(href)?.[1] : undefined;
+  return version as RobotsApiVersion | undefined;
+}
+
+export const ROBOTS_DIRECTIVES_MIGRATION_URL = 'https://www.mux.com/docs/guides/robots-migrate-directives-to-v1';
+
 export type RobotsJobStatus = 'pending' | 'processing' | 'completed' | 'errored' | 'cancelled';
 
 export type RobotsRunStatus = 'pending' | 'dispatching' | 'running' | 'waiting' | 'completed' | 'partial' | 'errored';
@@ -59,16 +73,27 @@ export const statusRank = (row: { status?: string | null; is_directive_run?: boo
   return ranks[row.status] ?? 0;
 };
 
-/** One step of a directive run, as Mux reports it in `node_states`. */
+/** One step of a directive run, as Mux reports it in `node_states`: v1 and v0 names both. */
 export interface RobotsNodeState {
   reference_id?: string;
-  status?: 'dispatched' | 'failed' | 'waiting_for_resources' | 'waiting_for_source_workflow' | string;
+  status?:
+    | 'dispatched'
+    | 'failed'
+    | 'waiting_for_resources'
+    | 'waiting_for_source_bindings'
+    | 'waiting_for_source_workflow'
+    | string;
+  /** v1. */
+  workflow?: string;
+  /** v0. */
   workflow_name?: string;
   /** `dispatched` only. */
   job_id?: string;
   /** `failed` only. */
   reason?: string;
-  /** `waiting_for_source_workflow` only. */
+  /** v1 `waiting_for_source_bindings`: binding reference ids, not workflows. */
+  source_bindings?: string[];
+  /** v0 `waiting_for_source_workflow`. */
   source_workflows?: string[];
 }
 
@@ -91,6 +116,11 @@ export interface RobotsJobRow {
   id: number;
   /** `rjob_…` or `drvrun_…`; null while a create is unconfirmed. */
   mux_id: string | null;
+  /**
+   * The Robots version that created it, which every later read and cancel must use. Null on rows
+   * stored before 4.0, which didn't record it: those are read on v0, then on v1 after a 404.
+   */
+  api_version: RobotsApiVersion | null;
   is_directive_run: boolean;
   /** Catalog key, e.g. `generate-premium-captions`. Null for directive runs. */
   workflow: string | null;
@@ -137,13 +167,79 @@ export interface RobotsModerateOutput {
 }
 
 /**
- * `mux-asset.robots_outputs`: one slot per workflow, the newest completed job winning. Only these two
+ * The newest completed analyze-structure on an asset, as stored in `robots_outputs.analyze_structure`:
+ * only what Apply summary uses. Chapters, scenes and key moments stay on the job row, since scenes
+ * repeat the transcript and would grow the asset with every run.
+ */
+export interface RobotsAnalyzeStructureOutput {
+  job_id: string;
+  completed_at?: string;
+  title?: string;
+  summary?: string;
+  tags?: string[];
+}
+
+/**
+ * `mux-asset.robots_outputs`: one slot per workflow, the newest completed job winning. Only these
  * workflows are kept on the asset; the others' results live on the Mux asset itself (tracks,
  * chapters, thumbnail) or in the job rows.
  */
 export interface RobotsOutputs {
   summarize?: RobotsSummarizeOutput;
   moderate?: RobotsModerateOutput;
+  analyze_structure?: RobotsAnalyzeStructureOutput;
+}
+
+/** What Apply summary offers: the newer of the Summarize and Analyze structure slots. */
+export interface RobotsSummary {
+  source: 'summarize' | 'analyze-structure';
+  job_id: string;
+  completed_at?: string;
+  title?: string;
+  description?: string;
+  tags?: string[];
+}
+
+/** Missing or unreadable reads as oldest, so a damaged slot can't pin itself forever. */
+export const slotCompletionMs = (slot: { completed_at?: unknown } | null | undefined) => {
+  const ms = typeof slot?.completed_at === 'string' ? Date.parse(slot.completed_at) : NaN;
+  return Number.isFinite(ms) ? ms : 0;
+};
+
+/**
+ * Whether `candidate` is newer than `current`: the later completion, ties going to the greater job
+ * id, so every order of delivery settles on the same answer.
+ */
+export function isNewerSlot(
+  current: { job_id?: unknown; completed_at?: unknown } | null | undefined,
+  candidate: { job_id: string; completed_at?: unknown }
+): boolean {
+  if (typeof current?.job_id !== 'string') return true;
+
+  const currentAt = slotCompletionMs(current);
+  const candidateAt = slotCompletionMs(candidate);
+
+  return candidateAt > currentAt || (candidateAt === currentAt && candidate.job_id > current.job_id);
+}
+
+const nonEmptyText = (value: unknown) => (typeof value === 'string' && value.trim() !== '' ? value : undefined);
+
+/** The summary Apply summary uses: the newest of the asset's Summarize and Analyze structure results. */
+export function newestSummary(outputs: RobotsOutputs | null | undefined): RobotsSummary | undefined {
+  const candidates: RobotsSummary[] = [];
+  const summarize = outputs?.summarize;
+  const analyzed = outputs?.analyze_structure;
+
+  if (typeof summarize?.job_id === 'string') candidates.push({ ...summarize, source: 'summarize' });
+  if (typeof analyzed?.job_id === 'string') {
+    const { summary, ...rest } = analyzed;
+    candidates.push({ ...rest, description: nonEmptyText(summary), source: 'analyze-structure' });
+  }
+
+  return candidates.reduce<RobotsSummary | undefined>(
+    (newest, candidate) => (isNewerSlot(newest, candidate) ? candidate : newest),
+    undefined
+  );
 }
 
 /** Why Mux refused or couldn't be asked. The admin decides what to show from this, never from Mux's status. */
@@ -152,6 +248,8 @@ export type RobotsErrorReason =
   | 'not-enabled'
   | 'units-exhausted'
   | 'conflict'
+  /** The video, or the caption track a workflow reads, is still being prepared. */
+  | 'not-ready'
   | 'invalid-parameters'
   | 'mux-error'
   | 'unconfirmed'
@@ -184,6 +282,8 @@ export interface RobotsRowResponse {
 export interface RobotsDirectiveSummary {
   id: string;
   name: string;
+  /** Unknown when Mux's listing didn't link it. Only v1 directives can be run from Strapi. */
+  api_version?: RobotsApiVersion;
 }
 
 export interface RobotsDirectivesResponse {
@@ -315,7 +415,7 @@ export interface RobotsEntryVideo {
   id: number;
   title: string;
   asset_id: string | null;
-  summary: RobotsSummarizeOutput | null;
+  summary: RobotsSummary | null;
 }
 
 export interface RobotsEntryVideosResponse {

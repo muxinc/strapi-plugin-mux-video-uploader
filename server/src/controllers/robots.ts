@@ -1,7 +1,7 @@
 import { Context } from 'koa';
 import { z } from 'zod';
 
-import { RobotsCreateJobBody, RobotsJobRow, RobotsRunDirectiveBody } from '../../../types/robots';
+import { newestSummary, RobotsCreateJobBody, RobotsJobRow, RobotsRunDirectiveBody } from '../../../types/robots';
 import { muxAssetRelationFields } from '../../../types/robots-format';
 import { MuxAsset } from '../content-types/mux-asset/types';
 import { RobotsRequestError } from '../robots/errors';
@@ -71,8 +71,8 @@ const userId = (ctx: Context) => (typeof ctx.state?.user?.id === 'number' ? ctx.
 
 export default {
   /**
-   * The Mux videos an entry links to, with their newest summary, for the Content Manager's summary
-   * panel. Needs Content Manager read access to the entry, not the plugin's permissions. `status` is
+   * The Mux videos an entry links to, with their newest summary (Summarize or Analyze structure), for
+   * the Content Manager's summary panel. Needs Content Manager read access to the entry, not the plugin's permissions. `status` is
    * the version the panel shows: `draft` (the default) or `published`.
    */
   entryVideos: async (ctx: Context) => {
@@ -137,7 +137,7 @@ export default {
           id: video.id,
           title: video.title,
           asset_id: video.asset_id,
-          summary: video.robots_outputs?.summarize ?? null,
+          summary: newestSummary(video.robots_outputs) ?? null,
         })),
       };
     });

@@ -3,7 +3,17 @@ import { Badge, Box, Flex, Link, Td, Tr, Typography } from '@strapi/design-syste
 
 import { RobotsJobRow, temporaryDownloads } from '../../../../types/robots';
 import { SUPPORTED_MUX_LANGUAGES } from '../../../../types/shared-types';
-import { asRows, asStrings, EM_DASH, formatDateTime, formatMs, formatScore, formatSeconds, formatText } from './format';
+import {
+  asRows,
+  asStrings,
+  EM_DASH,
+  formatDateTime,
+  formatMediaRange,
+  formatMediaTime,
+  formatScore,
+  formatSeconds,
+  formatText,
+} from './format';
 import { Translate } from './intl';
 import Note from './note';
 import RobotsTable from './table';
@@ -60,6 +70,7 @@ const SUMMARIZE: OutputView = {
     const tags = asStrings(outputs.tags);
     return (
       <>
+        <AssetUpdateNotes outputs={outputs} updates={['title']} t={t} />
         {typeof outputs.title === 'string' && (
           <Labelled label={t('Robots.output.title', 'Title')}>
             <Typography variant="omega">{outputs.title}</Typography>
@@ -127,49 +138,98 @@ const ASK_QUESTIONS: OutputView = {
   ),
 };
 
+type AssetUpdateKey = 'title' | 'chapters' | 'thumbnail';
+
+interface AssetUpdate {
+  status?: unknown;
+  replaced_track_ids?: unknown;
+}
+
+/** One outcome in `asset_updates`. Generate chapters reported its own as `asset_update` on Robots v0. */
+function assetUpdateOf(outputs: Outputs, key: AssetUpdateKey): AssetUpdate | undefined {
+  const updates = (outputs.asset_updates ?? {}) as Record<string, unknown>;
+  const update = updates[key] ?? (key === 'chapters' ? outputs.asset_update : undefined);
+  return update && typeof update === 'object' ? (update as AssetUpdate) : undefined;
+}
+
+/**
+ * What a job wrote onto the Mux asset. Writing is best effort: a job can complete while its update
+ * failed, so each outcome is shown on its own.
+ */
+function AssetUpdateNotes({ outputs, updates, t }: { outputs: Outputs; updates: AssetUpdateKey[]; t: Translate }) {
+  const notes = updates.flatMap((key) => {
+    const update = assetUpdateOf(outputs, key);
+    if (!update) return [];
+
+    const failed = update.status === 'failed';
+    const messages: Record<AssetUpdateKey, [string, string]> = {
+      title: [
+        t('Robots.output.title-updated', "The Mux asset's title was set to the generated one."),
+        t('Robots.output.title-failed', "Mux couldn't set the Mux asset's title to the generated one."),
+      ],
+      chapters: [
+        t(
+          'Robots.output.chapters-added',
+          'The chapters were added to the Mux video. The player shows them in its progress bar.'
+        ),
+        asStrings(update.replaced_track_ids).length > 0
+          ? t(
+              'Robots.output.chapters-failed-replaced',
+              "Mux deleted the video's chapters track but couldn't add these chapters, so the video may have no chapters now."
+            )
+          : t('Robots.output.chapters-failed', "Mux couldn't add these chapters to the video. They're listed below."),
+      ],
+      thumbnail: [
+        t('Robots.output.thumbnail-updated', "The Mux asset's thumbnail was set to the best frame."),
+        t('Robots.output.thumbnail-failed', "Mux couldn't set the Mux asset's thumbnail."),
+      ],
+    };
+
+    return [
+      <Note key={key} variant={failed ? 'warning' : 'success'}>
+        {messages[key][failed ? 1 : 0]}
+      </Note>,
+    ];
+  });
+
+  if (notes.length === 0) return null;
+
+  return (
+    <Flex direction="column" alignItems="stretch" gap={2} paddingBottom={4}>
+      {notes}
+    </Flex>
+  );
+}
+
+function ChaptersTable({ chapters, t }: { chapters: Array<Record<string, unknown>>; t: Translate }) {
+  return (
+    <SimpleTable
+      columns={[t('Robots.output.start', 'Start'), t('Robots.output.title', 'Title')]}
+      rows={chapters.map((chapter) => [formatSeconds(chapter.start_time), formatText(chapter.title)])}
+    />
+  );
+}
+
 const GENERATE_CHAPTERS: OutputView = {
   hasContent: (outputs) => asRows(outputs.chapters).length > 0,
-  render: (outputs, _row, t) => {
-    const status = (outputs.asset_update as { status?: unknown } | undefined)?.status;
-    return (
-      <>
+  render: (outputs, _row, t) => (
+    <>
+      {assetUpdateOf(outputs, 'chapters') ? (
+        <AssetUpdateNotes outputs={outputs} updates={['chapters']} t={t} />
+      ) : (
         <Box paddingBottom={4}>
-          {status === 'created' ? (
-            <Note variant="success">
-              {t(
-                'Robots.output.chapters-added',
-                'The chapters were added to the Mux video. The player shows them in its progress bar.'
-              )}
-            </Note>
-          ) : status === 'failed' ? (
-            <Note variant="warning">
-              {t(
-                'Robots.output.chapters-failed',
-                "Mux couldn't add these chapters to the video. They're listed below."
-              )}
-            </Note>
-          ) : (
-            <Note>
-              {t(
-                'Robots.output.chapters-not-added',
-                "These chapters weren't added to the Mux video; they're listed below."
-              )}
-            </Note>
-          )}
+          <Note>
+            {t(
+              'Robots.output.chapters-not-added',
+              "These chapters weren't added to the Mux video; they're listed below."
+            )}
+          </Note>
         </Box>
-        <SimpleTable
-          columns={[t('Robots.output.start', 'Start'), t('Robots.output.title', 'Title')]}
-          rows={asRows(outputs.chapters).map((chapter) => [
-            formatSeconds(chapter.start_time),
-            formatText(chapter.title),
-          ])}
-        />
-      </>
-    );
-  },
+      )}
+      <ChaptersTable chapters={asRows(outputs.chapters)} t={t} />
+    </>
+  ),
 };
-
-const formatRange = (startMs: unknown, endMs: unknown) => `${formatMs(startMs)} – ${formatMs(endMs)}`;
 
 const narrative = (t: Translate, moment: Record<string, unknown>) => {
   const parts: string[] = [];
@@ -184,9 +244,8 @@ const narrative = (t: Translate, moment: Record<string, unknown>) => {
   return parts.length > 0 ? parts.map((part) => <Box key={part}>{part}</Box>) : EM_DASH;
 };
 
-const FIND_KEY_MOMENTS: OutputView = {
-  hasContent: (outputs) => asRows(outputs.moments).length > 0,
-  render: (outputs, _row, t) => (
+function MomentsTable({ moments, t }: { moments: Array<Record<string, unknown>>; t: Translate }) {
+  return (
     <SimpleTable
       columns={[
         t('Robots.output.range', 'Range'),
@@ -194,50 +253,141 @@ const FIND_KEY_MOMENTS: OutputView = {
         t('Robots.output.score', 'Score'),
         t('Robots.output.narrative', 'Narrative'),
       ]}
-      rows={asRows(outputs.moments).map((moment) => [
-        formatRange(moment.start_ms, moment.end_ms),
+      rows={moments.map((moment) => [
+        formatMediaRange(moment),
         formatText(moment.title),
         formatScore(moment.overall_score),
         narrative(t, moment),
       ])}
     />
-  ),
-};
+  );
+}
 
-const FIND_SCENES: OutputView = {
-  hasContent: (outputs) => asRows(outputs.scenes).length > 0,
-  render: (outputs, _row, t) => (
+function ScenesTable({ scenes, t }: { scenes: Array<Record<string, unknown>>; t: Translate }) {
+  return (
     <SimpleTable
       columns={[
         t('Robots.output.range', 'Range'),
         t('Robots.output.title', 'Title'),
         t('Robots.output.summary', 'Summary'),
       ]}
-      rows={asRows(outputs.scenes).map((scene) => [
-        formatRange(scene.start_ms, scene.end_ms),
+      rows={scenes.map((scene) => [
+        formatMediaRange(scene),
         formatText(scene.title),
         formatText(scene.blended_narrative ?? scene.audible_narrative ?? scene.visual_narrative),
       ])}
     />
-  ),
+  );
+}
+
+const FIND_KEY_MOMENTS: OutputView = {
+  hasContent: (outputs) => asRows(outputs.moments).length > 0,
+  render: (outputs, _row, t) => <MomentsTable moments={asRows(outputs.moments)} t={t} />,
+};
+
+/** Robots v0 only: its times are milliseconds. */
+const FIND_SCENES: OutputView = {
+  hasContent: (outputs) => asRows(outputs.scenes).length > 0,
+  render: (outputs, _row, t) => <ScenesTable scenes={asRows(outputs.scenes)} t={t} />,
 };
 
 const FIND_BEST_THUMBNAILS: OutputView = {
   hasContent: (outputs) => asRows(outputs.best_thumbnails).length > 0,
   render: (outputs, _row, t) => (
-    <SimpleTable
-      columns={[
-        t('Robots.output.time', 'Time'),
-        t('Robots.output.score', 'Score'),
-        t('Robots.output.description', 'Description'),
-      ]}
-      rows={asRows(outputs.best_thumbnails).map((thumbnail) => [
-        formatMs(thumbnail.timestamp_ms),
-        formatScore(thumbnail.overall),
-        formatText(thumbnail.description),
-      ])}
-    />
+    <>
+      <AssetUpdateNotes outputs={outputs} updates={['thumbnail']} t={t} />
+      <SimpleTable
+        columns={[
+          t('Robots.output.time', 'Time'),
+          t('Robots.output.score', 'Score'),
+          t('Robots.output.description', 'Description'),
+        ]}
+        rows={asRows(outputs.best_thumbnails).map((thumbnail) => [
+          formatMediaTime(thumbnail, 'time', 'timestamp_ms'),
+          formatScore(thumbnail.overall),
+          formatText(thumbnail.description),
+        ])}
+      />
+    </>
   ),
+};
+
+/** A titled part of a view that says why it's empty instead of drawing an empty table. */
+function Part({ label, empty, children }: React.PropsWithChildren<{ label: string; empty?: string }>) {
+  return (
+    <Labelled label={label}>
+      {empty ? (
+        <Typography variant="omega" textColor="neutral600">
+          {empty}
+        </Typography>
+      ) : (
+        children
+      )}
+    </Labelled>
+  );
+}
+
+const ANALYZE_STRUCTURE: OutputView = {
+  hasContent: (outputs) =>
+    typeof outputs.title === 'string' ||
+    typeof outputs.summary === 'string' ||
+    ['tags', 'chapters', 'scenes', 'key_moments'].some(
+      (key) => asRows(outputs[key]).length + asStrings(outputs[key]).length > 0
+    ),
+  render: (outputs, _row, t) => {
+    const tags = asStrings(outputs.tags);
+    const chapters = asRows(outputs.chapters);
+    const scenes = asRows(outputs.scenes);
+    const moments = asRows(outputs.key_moments);
+
+    return (
+      <>
+        <AssetUpdateNotes outputs={outputs} updates={['title', 'chapters']} t={t} />
+        {typeof outputs.title === 'string' && (
+          <Labelled label={t('Robots.output.title', 'Title')}>
+            <Typography variant="omega">{outputs.title}</Typography>
+          </Labelled>
+        )}
+        {typeof outputs.summary === 'string' && (
+          <Labelled label={t('Robots.output.summary', 'Summary')}>
+            <Typography variant="omega">{outputs.summary}</Typography>
+          </Labelled>
+        )}
+        {tags.length > 0 && (
+          <Labelled label={t('Robots.output.tags', 'Tags')}>
+            <Tags tags={tags} />
+          </Labelled>
+        )}
+        <Part
+          label={t('Robots.output.chapters', 'Chapters')}
+          empty={
+            chapters.length === 0
+              ? t(
+                  'Robots.output.no-chapters',
+                  'No chapters. Mux only makes them when the analyzed part is at least 60 seconds long.'
+                )
+              : undefined
+          }
+        >
+          <ChaptersTable chapters={chapters} t={t} />
+        </Part>
+        <Part
+          label={t('Robots.output.scenes', 'Scenes')}
+          empty={
+            scenes.length === 0 ? t('Robots.output.no-scenes', 'No scenes. An audio-only video has none.') : undefined
+          }
+        >
+          <ScenesTable scenes={scenes} t={t} />
+        </Part>
+        <Part
+          label={t('Robots.output.key-moments', 'Key moments')}
+          empty={moments.length === 0 ? t('Robots.output.no-key-moments', 'No moment qualified.') : undefined}
+        >
+          <MomentsTable moments={moments} t={t} />
+        </Part>
+      </>
+    );
+  },
 };
 
 const ENGAGEMENT_INSIGHTS: OutputView = {
@@ -346,6 +496,7 @@ const trackView = (audio: boolean): OutputView => ({
 
     const language =
       languageName(outputs.language_code) ??
+      languageName(parameters.output_language_code) ??
       languageName(parameters.to_language_code) ??
       languageName(parameters.language_code) ??
       '';
@@ -369,6 +520,7 @@ export const OUTPUT_VIEWS: Record<string, OutputView> = {
   moderate: MODERATE,
   'ask-questions': ASK_QUESTIONS,
   'generate-chapters': GENERATE_CHAPTERS,
+  'analyze-structure': ANALYZE_STRUCTURE,
   'find-key-moments': FIND_KEY_MOMENTS,
   'find-scenes': FIND_SCENES,
   'find-best-thumbnails': FIND_BEST_THUMBNAILS,

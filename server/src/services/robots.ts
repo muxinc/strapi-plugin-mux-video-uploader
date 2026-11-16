@@ -2,15 +2,19 @@ import { randomBytes } from 'node:crypto';
 
 import {
   assetContextFrom,
+  isRunnableWorkflow,
   paramsFromFormValues,
   robotsValuesSchema,
+  RobotsWorkflowDefinition,
   validateParams,
   workflowByKey,
   workflowUnavailableReason,
 } from '../../../types/robots-catalog';
 import {
+  apiVersionFromHref,
   isTerminalRow,
   PLACEHOLDER_STATUSES,
+  RobotsApiVersion,
   RobotsDirectiveSummary,
   RobotsJobRow,
   RobotsRowResponse,
@@ -18,7 +22,7 @@ import {
   statusRank,
 } from '../../../types/robots';
 import { MuxAsset } from '../content-types/mux-asset/types';
-import { callMux, classifyMuxError, RobotsRequestError } from '../robots/errors';
+import { callMux, classifyMuxError, isNotFound, RobotsRequestError } from '../robots/errors';
 import { withAssetLock } from '../robots/lock';
 import { backfillOutputs, writeOutputs } from '../robots/outputs';
 import {
@@ -48,6 +52,58 @@ const MUX_ID = /^[A-Za-z0-9_-]{1,255}$/;
 
 /** 64 random bits, never sent to Mux: it only tells placeholders apart. */
 const newRequestId = () => randomBytes(8).toString('hex');
+
+/** Everything Strapi starts goes to Robots v1. v0 is only read, for jobs and runs it created. */
+const CREATE_VERSION: RobotsApiVersion = 'v1';
+
+type MuxClient = Awaited<ReturnType<typeof getMuxClient>>;
+
+interface WorkflowJobs {
+  create(body: object): PromiseLike<unknown>;
+  retrieve(jobId: string): PromiseLike<unknown>;
+}
+
+/** One workflow's resource on one Robots version. Find scenes has none on v1. */
+function workflowJobs(client: MuxClient, version: RobotsApiVersion, definition: RobotsWorkflowDefinition) {
+  const jobs = version === 'v1' ? client.robots.jobs : client.robotsV0.jobs;
+  const resource = (jobs as unknown as Record<string, WorkflowJobs | undefined>)[definition.sdkKey];
+  if (!resource)
+    throw new RobotsRequestError(400, 'invalid-parameters', `${definition.label} isn't in Robots ${version}.`);
+  return resource;
+}
+
+/**
+ * The versions to read a stored job through, in order. A row stored before 4.0 doesn't know its own:
+ * those versions created only on v0, but stored the v1 jobs Mux's v0 listing returned too.
+ */
+const versionsToRead = (row: RobotsJobRow, definition: RobotsWorkflowDefinition): RobotsApiVersion[] =>
+  definition.legacy ? ['v0'] : row.api_version ? [row.api_version] : ['v0', 'v1'];
+
+const JOB_GONE = "Mux no longer has this job: it deletes jobs 30 days after they're created.";
+
+/**
+ * Calls Mux for a stored job on each of its possible versions, moving on only after a 404: any other
+ * answer is the job's. Says which version answered.
+ */
+async function onJobVersion<T>(
+  row: RobotsJobRow,
+  definition: RobotsWorkflowDefinition,
+  request: (client: MuxClient, version: RobotsApiVersion) => PromiseLike<T>
+): Promise<{ result: T; version: RobotsApiVersion }> {
+  return callMux(async () => {
+    const client = await getMuxClient();
+
+    for (const version of versionsToRead(row, definition)) {
+      try {
+        return { result: await request(client, version), version };
+      } catch (error) {
+        if (!isNotFound(error)) throw error;
+      }
+    }
+
+    throw new RobotsRequestError(400, 'mux-error', JOB_GONE);
+  });
+}
 
 const sortTime = (row: RobotsJobRow) => secondsFromDate(row.mux_created_at ?? row.requested_at) ?? 0;
 
@@ -214,6 +270,9 @@ const robotsService = () => ({
   /**
    * The one Mux read when the Robots tab opens: capability, and jobs missing here. Also writes stored
    * results the video doesn't show yet, whether or not Mux answers.
+   *
+   * Robots v1 lists the jobs of both versions, each linked to its own version's route: that link is
+   * how rows stored before 4.0 learn their version.
    */
   async syncAsset(muxAsset: MuxAsset): Promise<RobotsSyncResponse> {
     const assetId = muxAsset.asset_id;
@@ -272,6 +331,15 @@ const robotsService = () => ({
   }): Promise<RobotsRowResponse> {
     const definition = workflowByKey(workflow);
     if (!definition) throw new RobotsRequestError(400, 'invalid-parameters', 'Unknown Robots workflow.');
+    if (!isRunnableWorkflow(definition)) {
+      throw new RobotsRequestError(
+        400,
+        'invalid-parameters',
+        definition.legacy
+          ? `${definition.label} isn't in Robots v1. Run Analyze structure instead.`
+          : `${definition.label} can't be run from Strapi.`
+      );
+    }
 
     const assetId = requireReadyAsset(muxAsset);
 
@@ -294,19 +362,24 @@ const robotsService = () => ({
     const parameters = paramsFromFormValues(definition, assetId, parsed.data, context);
 
     const placeholder = await insertPlaceholder(assetId, 'job', {
+      api_version: CREATE_VERSION,
       workflow: definition.key,
       parameters,
       requested_by: userId,
     });
 
     return createOnce(assetId, placeholder, 'job', async () => {
-      const { robots } = await getMuxClient();
-      const job = await robots.jobs[definition.sdkKey].create({
+      const job = await workflowJobs(await getMuxClient(), CREATE_VERSION, definition).create({
         parameters,
         passthrough: ROBOTS_PASSTHROUGH,
-      } as any);
+      });
 
-      return rowFromJob(job as MuxJobLike, { workflow: definition.key, assetId, detail: true });
+      return rowFromJob(job as MuxJobLike, {
+        workflow: definition.key,
+        assetId,
+        detail: true,
+        apiVersion: CREATE_VERSION,
+      });
     });
   },
 
@@ -325,6 +398,7 @@ const robotsService = () => ({
 
     const assetId = requireReadyAsset(muxAsset);
     const placeholder = await insertPlaceholder(assetId, 'run', {
+      api_version: CREATE_VERSION,
       directive_id: directiveId,
       requested_by: userId,
     });
@@ -332,7 +406,7 @@ const robotsService = () => ({
     return createOnce(assetId, placeholder, 'run', async () => {
       const { robots } = await getMuxClient();
       const run = await robots.directives.runs.create(directiveId, { asset_id: assetId });
-      const row = rowFromRun(run, { directiveId, assetId });
+      const row = rowFromRun(run, { directiveId, assetId, apiVersion: CREATE_VERSION });
 
       if (!row) throw new Error('Mux answered without naming the run it started.');
 
@@ -341,19 +415,26 @@ const robotsService = () => ({
   },
 
   async cancelJob(row: RobotsJobRow): Promise<RobotsJobRow> {
-    const { mux_id: muxId, workflow } = row;
-    if (row.is_directive_run || !muxId || !workflow) {
+    const { mux_id: muxId } = row;
+    const definition = workflowByKey(row.workflow);
+    if (row.is_directive_run || !muxId || !definition) {
       throw new RobotsRequestError(400, 'invalid-parameters', 'Only a job Mux has started can be cancelled.');
     }
     if (isTerminalRow(row)) return row;
 
-    const job = await callMux(async () => {
-      const { robots } = await getMuxClient();
-      return (await robots.jobs.cancel(muxId)) as MuxJobLike;
-    });
+    const { result: job, version } = await onJobVersion(row, definition, (client, apiVersion) =>
+      apiVersion === 'v1' ? client.robots.jobs.cancel(muxId) : client.robotsV0.jobs.cancel(muxId)
+    );
 
     return withAssetLock(row.asset_id, () =>
-      upsertRobotsRow(rowFromJob(job, { workflow, assetId: row.asset_id, detail: false }))
+      upsertRobotsRow(
+        rowFromJob(job as MuxJobLike, {
+          workflow: definition.key,
+          assetId: row.asset_id,
+          detail: false,
+          apiVersion: version,
+        })
+      )
     );
   },
 
@@ -366,14 +447,14 @@ const robotsService = () => ({
     const muxId = row.mux_id;
     if (row.is_directive_run || !muxId || row.detail_loaded || !isTerminalRow(row) || !definition) return row;
 
-    const job = await callMux(async () => {
-      const { robots } = await getMuxClient();
-      return (await robots.jobs[definition.sdkKey].retrieve(muxId)) as MuxJobLike;
-    });
+    const { result, version } = await onJobVersion(row, definition, (client, apiVersion) =>
+      workflowJobs(client, apiVersion, definition).retrieve(muxId)
+    );
+    const job = result as MuxJobLike;
 
     return withAssetLock(row.asset_id, async () => {
       const stored = await upsertRobotsRow(
-        rowFromJob(job, { workflow: definition.key, assetId: row.asset_id, detail: true })
+        rowFromJob(job, { workflow: definition.key, assetId: row.asset_id, detail: true, apiVersion: version })
       );
 
       if (stored.asset_id) await writeOutputs(stored.asset_id, definition.key, job);
@@ -383,6 +464,7 @@ const robotsService = () => ({
   },
 
   /**
+   * Robots v1 lists the directives of both versions, each linked to its own version's route.
    * `complete` is false when there may be more directives than one listing returns. `timeoutMs`
    * replaces the client's 60 s for callers that can't wait that long.
    */
@@ -397,7 +479,14 @@ const robotsService = () => ({
           .data ?? [];
 
       return {
-        directives: listed.map((directive) => ({ id: directive.id, name: directive.name || directive.id })),
+        directives: listed.map((directive) => {
+          const apiVersion = apiVersionFromHref(directive._links?.self?.href);
+          return {
+            id: directive.id,
+            name: directive.name || directive.id,
+            ...(apiVersion ? { api_version: apiVersion } : {}),
+          };
+        }),
         complete: listed.length < DIRECTIVES_PAGE_SIZE,
       };
     });

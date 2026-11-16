@@ -22,6 +22,7 @@ import { isFetchError, useFetchClient, useNotification } from '@strapi/strapi/ad
 import { Cross, Duplicate, Trash, WarningCircle } from '@strapi/icons';
 
 import { MuxAsset, MuxAssetUpdate } from '../../../../server/src/content-types/mux-asset/types';
+import { newestSummary } from '../../../../types/robots';
 import type { EntryFieldOption } from '../../../../types/robots-format';
 import { normalizeTags } from '../../../../types/shared-types';
 import usePluginIntl from '../../utils/use-plugin-intl';
@@ -293,6 +294,8 @@ export default function ModalDetails(props: {
     const now = current.current;
     // A request can outlive the video it was made for: the modal may show another one by now.
     if (!fresh || fresh.id !== now.latestAsset?.id) return;
+    // Nothing new: closing then needn't reload the list.
+    if (JSON.stringify(fresh) === JSON.stringify(now.latestAsset)) return;
 
     if (playbackSignature(fresh) !== playbackSignature(now.latestAsset)) setPlayerKey((key) => key + 1);
     setLatestAsset(fresh);
@@ -308,22 +311,44 @@ export default function ModalDetails(props: {
     }
   };
 
-  const reloadAsset = async () => {
-    const assetId = current.current.latestAsset?.id;
-    if (!assetId) return;
+  // Reads can answer out of order. A copy read after another started is at least as new, so only the
+  // latest one may land; a write's answer supersedes every read started before it.
+  const latestRead = React.useRef(0);
+
+  const readAsset = async (assetId: number) => {
+    const read = ++latestRead.current;
     try {
-      showFreshAsset(await robotsApi.getAsset(assetId));
+      const fresh = await robotsApi.getAsset(assetId);
+      if (read === latestRead.current) showFreshAsset(fresh);
     } catch {
       // The next re-read, or reopening the video, catches up.
     }
   };
+
+  const reloadAsset = async () => {
+    const assetId = current.current.latestAsset?.id;
+    if (assetId) await readAsset(assetId);
+  };
+
+  // The list may have loaded before Robots finished: a directive started on upload writes its summary
+  // minutes later, and Apply summary reads it from this copy. By id from the props, since the reset
+  // above hasn't reached `latestAsset` yet.
+  React.useEffect(() => {
+    const assetId = props.muxAsset?.id;
+    if (isOpen && assetId !== undefined) readAsset(assetId);
+  }, [isOpen, props.muxAsset?.id]);
 
   const createPlaybackId = async () => {
     if (!latestAsset) return;
     const assetId = latestAsset.id;
     setCreatingPlaybackId(true);
     try {
-      showFreshAsset((await robotsApi.createPlaybackId(assetId)).asset);
+      const { asset } = await robotsApi.createPlaybackId(assetId);
+      // Only while the modal still shows this video: another one's reads must still land.
+      if (current.current.latestAsset?.id === assetId) {
+        latestRead.current += 1;
+        showFreshAsset(asset);
+      }
     } catch (error) {
       toggleNotification({ type: 'danger', message: robotsErrorOf(error).message });
     } finally {
@@ -359,7 +384,7 @@ export default function ModalDetails(props: {
 
   if (!latestAsset) return null;
 
-  const summary = latestAsset.robots_outputs?.summarize;
+  const summary = newestSummary(latestAsset.robots_outputs);
   const titleLabel = formatMessage('Common.title-label', 'Title');
   const descriptionLabel = formatMessage('ModalDetails.description-label', 'Description');
   const tagsLabel = formatMessage('ModalDetails.tags-label', 'Tags');
@@ -581,7 +606,7 @@ export default function ModalDetails(props: {
                             <Tooltip
                               label={formatMessage(
                                 'ModalDetails.apply-summary-disabled',
-                                'Run a Summarize job on this video to apply its title, description and tags.'
+                                'Run Summarize or Analyze structure on this video to apply its title, description and tags.'
                               )}
                             >
                               <span>{applySummaryButton}</span>
@@ -712,7 +737,7 @@ function TagsField({
   // isn't added: the first spelling stays.
   const add = () => {
     const known = new Set(tags.map((tag) => tag.toLowerCase()));
-    const added = normalizeTags([draft]).filter((tag) => !known.has(tag.toLowerCase()));
+    const added = normalizeTags(draft.split(',')).filter((tag) => !known.has(tag.toLowerCase()));
     setDraft('');
     if (added.length > 0) onChange([...tags, ...added]);
   };

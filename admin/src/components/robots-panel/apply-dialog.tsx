@@ -13,7 +13,8 @@ import {
   Typography,
 } from '@strapi/design-system';
 
-import type { RobotsSummarizeOutput } from '../../../../types/robots';
+import type { RobotsSummary } from '../../../../types/robots';
+import { workflowLabel } from '../../../../types/robots-catalog';
 import {
   buildApplyRows,
   defaultTargets,
@@ -45,7 +46,8 @@ export default function ApplyDialog({
 }: {
   title: string;
   help: string;
-  summary: RobotsSummarizeOutput;
+  /** The newest of the video's Summarize and Analyze structure results, which the dialog names. */
+  summary: RobotsSummary;
   fields: EntryFieldOption[];
   /** What each field holds now, by name. */
   values: Record<string, unknown>;
@@ -96,8 +98,13 @@ export default function ApplyDialog({
         </Modal.Header>
         <Modal.Body>
           <Box paddingBottom={4}>
-            <Typography variant="omega" textColor="neutral600">
+            <Typography variant="omega" textColor="neutral600" tag="p">
               {help}
+            </Typography>
+            <Typography variant="omega" textColor="neutral600" tag="p">
+              {t('Robots.apply.source', 'These are the newest results, from {workflow}.', {
+                workflow: workflowLabel(summary.source),
+              })}
             </Typography>
           </Box>
           <RobotsTable columns={columns} rowCount={rows.length}>
